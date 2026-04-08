@@ -1,0 +1,48 @@
+---
+sidebar_position: 3
+title: API Endpoints
+---
+
+# API Endpoints
+
+The TechWriter SDK provides a set of methods to interact with the core resources of our platform. All endpoints are relative to the base URL: `https://api.techwriter.io/v1`.
+
+## Projects
+
+### List All Projects
+Retrieve a list of all projects available in your workspace.
+
+**Method:** `GET`  
+**Endpoint:** `/projects`
+
+```javascript
+const projects = await client.projects.list();
+```
+
+### Get Project by ID
+
+Fetch details of a specific project.
+
+**Method**: `GET`
+
+**Endpoint:** `/projects/{projectId}`
+
+```javascript
+const project = await client.projects.get('proj_123');
+```
+## Documents
+
+### Create a Document
+
+Create a new Markdown-based document.
+
+Method: `POST`
+
+Endpoint: `/projects/{projectId}/documents`
+
+```javascript
+const newDoc = await client.documents.create('proj_123', {
+  title: 'API Reference',
+  content: '# Welcome'
+});
+```

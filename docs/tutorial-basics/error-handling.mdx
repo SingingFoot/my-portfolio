@@ -1,0 +1,38 @@
+---
+sidebar_position: 4
+title: Error Handling
+---
+
+# Error Handling
+
+The TechWriter SDK uses standard HTTP response codes to indicate the success or failure of an API request. This guide will help you interpret and handle errors effectively.
+
+## Common Status Codes
+
+| Code | Status | Description |
+| :--- | :--- | :--- |
+| **200** | OK | The request was successful. |
+| **400** | Bad Request | Missing required parameters or malformed syntax. |
+| **401** | Unauthorized | Your API Key is invalid or has expired. |
+| **404** | Not Found | The requested project or document does not exist. |
+| **429** | Too Many Requests | Rate limit exceeded. Please slow down. |
+| **500** | Server Error | Internal issue on TechWriter's side. |
+
+## Handling Errors in Code
+
+When an error occurs, the SDK throws an exception. We recommend wrapping your calls in a `try...catch` block to ensure your application remains stable.
+
+```javascript
+try {
+  const result = await client.projects.get('non_existent_id');
+} catch (error) {
+  if (error.status === 404) {
+    console.error('Project not found. Check your Project ID.');
+  } else {
+    console.error('An unexpected error occurred:', error.message);
+  }
+}
+```
+
+## Support
+If you encounter an error that isn't documented here, please reach out to our developer support team at support@techwriter.io.

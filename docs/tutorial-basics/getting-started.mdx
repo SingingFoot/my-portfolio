@@ -1,0 +1,85 @@
+---
+sidebar_position: 1
+title: Getting Started
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Getting Started with TechWriter SDK
+
+The **TechWriter SDK** is a powerful library designed for developers to programmatically manage documentation assets.
+
+## Installation
+
+To add the SDK to your project, use your preferred package manager:
+
+<Tabs>
+  <TabItem value="npm" label="npm">
+
+```bash
+npm install @techwriter/sdk-core
+```
+  </TabItem>
+    <TabItem value="yarn" label="yarn">
+
+```bash
+yarn add @techwriter/sdk-core
+```
+  </TabItem>
+</Tabs>
+
+
+### Initial Configuration
+
+Once the package is installed, you need to initialize the client. The client acts as the central hub for all API interactions.
+
+```js
+const { TechWriterClient } = require('@techwriter/sdk-core');
+
+// Initialize with minimal configuration
+const client = new TechWriterClient({
+  apiKey: process.env.TECHWRITER_API_KEY,
+  region: 'eu-central-1', // Choose your data residency
+  timeout: 5000           // Request timeout in milliseconds
+});
+```
+
+### Core Concepts
+
+To make the most of the SDK, it is important to understand the three main pillars of our architecture:
+
+- Workspaces: Logical containers for your documentation projects.
+- Assets: Individual files, images, or Markdown documents.
+- Deployments: Actions that push your local changes to the live documentation portal.
+
+### Basic Usage Example
+
+Here is a quick example of how to fetch all active projects in your workspace:
+
+```js
+async function listProjects() {
+  try {
+    const projects = await client.projects.list();
+    console.log(`Found ${projects.length} projects.`);
+    projects.forEach((p) => console.log(`- ${p.name} (ID: ${p.id})`));
+  } catch (error) {
+    console.error('Failed to retrieve projects:', error.message);
+  }
+}
+
+listProjects();
+```
+
+### Next Steps
+
+Now that you have initialized the SDK, you can explore the following topics:
+
+- [Authentication:](./authentication) Learn how to manage scopes and token rotation.
+
+- [API Endpoints:](./api-endpoints) Detailed reference of all available methods.
+
+- [Error Handling:](./error-handling) How to interpret status codes and implement retries.
+
+- [Webhooks:](./webhooks) Real-time event notifications and secure payload verification.
+
+- [Best Practices:](./best-practices) Optimization tips for high-concurrency environments and data consistency.

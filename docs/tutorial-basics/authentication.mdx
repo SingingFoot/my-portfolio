@@ -1,0 +1,51 @@
+---
+sidebar_position: 2
+title: Authentication
+---
+
+# Authentication
+
+To interact with the TechWriter API, all requests must be authenticated using a Bearer Token or an API Key. This ensures that your documentation assets remain secure.
+
+## API Keys
+
+You can generate API keys in your Developer Dashboard. API keys do not expire unless revoked.
+
+### Using API Key in Headers
+
+Include the `X-API-KEY` in your HTTP request header:
+
+```http
+GET /v1/projects HTTP/1.1
+Host: api.techwriter.io
+X-API-KEY: your_api_key_here
+```
+
+### OAuth2 (Bearer Token)
+
+For applications requiring user-level permissions, we support OAuth2. First, exchange your credentials for an access token.
+
+```js
+const response = await fetch('[https://api.techwriter.io/oauth/token](https://api.techwriter.io/oauth/token)', {
+  method: 'POST',
+  body: JSON.stringify({
+    client_id: 'YOUR_CLIENT_ID',
+    client_secret: 'YOUR_CLIENT_SECRET',
+    grant_type: 'client_credentials'
+  })
+});
+
+const data = await response.json();
+console.log(data.access_token);
+```
+
+### Security Best Practices
+
+- Never hardcode tokens in your source code.
+
+- Use Environment Variables (e.g., .env files) to store credentials.
+
+- Rotate your API keys every 90 days to maintain security.
+
+### Error Codes
+If your authentication fails, the API will return a 401 Unauthorized status code. Check if your token has expired or if the header name is spelled correctly.

@@ -1,0 +1,62 @@
+---
+sidebar_position: 2
+title: Authorization Through OAuth 2.0
+---
+
+# Authorization Through OAuth 2.0
+
+All requests to the **TechWriter API** must be authorized. We use the OAuth 2.0 protocol to ensure secure access to your documentation assets.
+
+## Getting Your Credentials
+
+To begin the authorization process, you need a `Client ID` and a `Client Secret`. You can generate these in the **Developer Settings** section of your TechWriter dashboard.
+
+## Authorization Flow
+
+TechWriter supports the **Client Credentials** grant type, which is ideal for server-to-server integrations.
+
+### 1. Request an Access Token
+Send a `POST` request to our authorization server:
+
+**Endpoint:** `https://auth.techwriter.io/oauth/token`
+
+```http
+POST /oauth/token HTTP/1.1
+Host: auth.techwriter.io
+Content-Type: application/json
+
+{
+  "client_id": "YOUR_CLIENT_ID",
+  "client_secret": "YOUR_CLIENT_SECRET",
+  "grant_type": "client_credentials"
+}
+```
+### 2. Receive the Token
+
+If successful, the server returns a JSON response containing your access token:
+
+```JSON
+{
+  "access_token": "tw_tok_789abc...",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+```
+
+### 3. Using the Bearer Token
+
+Once you have the access_token, include it in the Authorization header of your API requests:
+
+```HTTP
+GET /api/public/groups HTTP/1.1
+Host: api.techwriter.io
+Authorization: Bearer tw_tok_789abc...
+```
+
+:::tip 
+
+Note
+
+Access tokens are valid for 1 hour. Your application should implement logic to refresh the token before it expires.
+
+:::

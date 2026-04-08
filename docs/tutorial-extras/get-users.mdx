@@ -1,0 +1,101 @@
+---
+sidebar_position: 3
+title: GET - Users
+---
+
+# GET - Users
+
+## Overview
+This endpoint retrieves a list of users from the TechWriter Platform. You can use query parameters such as `top`, `skip`, `orderby`, `select`, `filter`, and `count` to paginate, sort, filter, and shape the response. The response includes user metadata such as user ID, email, name, status, role, and timestamps.
+
+## API Endpoint
+**GET** `{{env_base_uri}}/api/public/users?count=true`
+
+## Query Parameters
+
+| Parameter | Value example | Description |
+| :--- | :--- | :--- |
+| **filter** | `email eq 'admin@techwriter.io'` | Optional filter expression used to narrow the returned users. |
+| **select** | `firstName,lastName,email` | Optional list of properties to include in the response. |
+| **top** | `20` | Maximum number of users to return. |
+| **skip** | `0` | Number of users to skip. Commonly used for pagination. |
+| **orderby** | `lastName asc` | Specifies the sort order of the returned users. |
+| **count** | `true` | When `true`, the response includes `data.totalCount`. |
+
+:::tip Note
+In the API integration, `count` is frequently used to calculate total pages for dashboard pagination.
+:::
+
+## Request Headers
+
+| Header | Value | Description |
+| :--- | :--- | :--- |
+| **Authorization** | `Bearer {YOUR_BEARER_TOKEN}` | Access token used to authenticate the API request. |
+| **Accept** | `*/*` | Indicates the response formats the client can accept. |
+
+---
+
+## Response
+If the request is successful, the API returns `200 OK` and a list of users.
+
+### Response Fields
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| **data.totalCount** | `number` | Total number of users that match the query. |
+| **data.items** | `array` | List of returned users. |
+| **data.items[].userId** | `string` | Unique identifier of the user. |
+| **data.items[].email** | `string` | User's email address. |
+| **data.items[].firstName** | `string` | User's first name. |
+| **data.items[].lastName** | `string` | User's last name. |
+| **data.items[].isActive** | `boolean` | Indicates whether the account is active. |
+| **data.items[].role** | `string` | System role (e.g., `admin`, `editor`, `viewer`). |
+| **data.items[].createdAt** | `string` | User creation timestamp in ISO 8601 format. |
+| **data.items[].lastLogin** | `string \| null` | Timestamp of the most recent login. |
+| **success** | `boolean` | Indicates whether the request completed successfully. |
+
+---
+
+## Example Request
+```http
+GET {{env_base_uri}}/api/public/users?count=true&top=2
+Authorization: Bearer {YOUR_BEARER_TOKEN}
+Accept: */*
+```
+
+## Example Response
+
+```JSON
+{
+  "data": {
+    "totalCount": 150,
+    "items": [
+      {
+        "userId": "u123-abc-456",
+        "email": "john.doe@techwriter.io",
+        "firstName": "John",
+        "lastName": "Doe",
+        "isActive": true,
+        "role": "admin",
+        "createdAt": "2024-01-15T09:00:00+00:00",
+        "lastLogin": "2026-04-08T14:20:11+00:00"
+      },
+      {
+        "userId": "u789-def-012",
+        "email": "jane.smith@techwriter.io",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "isActive": true,
+        "role": "editor",
+        "createdAt": "2024-02-10T11:30:45+00:00",
+        "lastLogin": null
+      }
+    ]
+  },
+  "success": true
+}
+```
+## Response Codes
+
+- 200 OK – Users were retrieved successfully.
+- 401 Unauthorized – Authentication failed or the bearer token is invalid.
