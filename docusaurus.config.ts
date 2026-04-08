@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Oleh Shynkarenko',
+  title: 'TechWriter',
   tagline: 'Hire an experienced and skilled contract technical writer to craft your documentation in the best possible manner.',
   favicon: 'img/favicon.ico',
 
@@ -56,7 +56,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'Oleh Shynkarenko',
+      title: 'TechWriter',
       logo: {
         alt: 'TechWriter logo',
         src: 'img/logo.svg',
