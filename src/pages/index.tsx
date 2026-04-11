@@ -8,14 +8,40 @@ import Heading from '@theme/Heading';
 import styles from './index.module.css';
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
-        <Heading as="h1" className="hero__title">
-          {siteConfig.title}
-        </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <div style={{display: 'flex', alignItems: 'center', gap: '2rem'}}>
+          
+          <img
+            src="/img/os.jpg"
+            alt="Oleh Shynkarenko"
+            style={{
+              width: '140px',
+              borderRadius: '8px',
+            }}
+          />
+
+          <div style={{textAlign: 'left'}}>
+            <Heading as="h2" style={{marginBottom: '0.5rem'}}>
+              About Oleh Shynkarenko
+            </Heading>
+
+            <p className="hero__subtitle" style={{maxWidth: '700px', fontSize: '1rem', lineHeight: '1.6'}}>
+              I am a technical writer and documentation specialist based in Budapest. 
+              I specialize in API documentation, docs-as-code workflows, and AI-assisted 
+              documentation. My work focuses on turning complex technical concepts into 
+              clear, scalable, and user-friendly content for developers and end users.
+            </p>
+
+            <p style={{marginTop: '1rem'}}>
+              <Link className="button button--secondary" to="/docs/intro">
+                View Portfolio
+              </Link>
+            </p>
+          </div>
+
+        </div>
       </div>
     </header>
   );
@@ -107,14 +133,15 @@ function HomepageContent() {
 
               <Heading as="h3">PROJECTS & BLOGS</Heading>
               <ul style={{fontSize: '0.85rem', listStyle: 'none', paddingLeft: '0'}}>
-                <li>🔗 <a href="https://sci-fi-ua.netlify.app/">Ukrainian Sci-Fi</a></li>
+                <li>🔗 <a href="https://medbiotech.academia.edu/OlehShynkarenko">Academy</a></li>
+                <li>🔗 <a href="https://sci-fi-ua.netlify.app/">Ukrainian Sci-Fi (My dissertation)</a></li>
                 <li>🔗 <a href="https://olehshynkarenko.medium.com/">Medium Blog</a></li>
               </ul>
 
               <hr />
 
               <Link className="button button--secondary button--block" to="/docs/intro">
-                Full Portfolio 📂
+                Full Portfolio
               </Link>
             </div>
           </div>

@@ -3,8 +3,9 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'TechWriter',
-  tagline: 'Hire an experienced and skilled contract technical writer to craft your documentation in the best possible manner.',
+  title: 'I am your TechWriter',
+  tagline:
+    'Hire an experienced contract technical writer with strong AI-driven documentation expertise to create clear, scalable, and high-quality technical content tailored to your needs.',
   favicon: 'img/favicon.ico',
 
   future: {
