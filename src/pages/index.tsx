@@ -148,17 +148,7 @@ function HomepageContent() {
 
               <hr />
 
-              <Link
-                className="button"
-                to="/docs/intro"
-                style={{
-                  backgroundColor: '#F68B1F',
-                  borderColor: '#F68B1F',
-                  color: '#fff',
-                }}
-              >
-                View Portfolio
-              </Link>
+
             </div>
           </div>
 
