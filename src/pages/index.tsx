@@ -35,7 +35,15 @@ function HomepageHeader() {
             </p>
 
             <p style={{marginTop: '1rem'}}>
-              <Link className="button button--secondary" to="/docs/intro">
+              <Link
+                className="button"
+                to="/docs/intro"
+                style={{
+                  backgroundColor: '#F68B1F',
+                  borderColor: '#F68B1F',
+                  color: '#fff',
+                }}
+              >
                 View Portfolio
               </Link>
             </p>
@@ -140,8 +148,16 @@ function HomepageContent() {
 
               <hr />
 
-              <Link className="button button--secondary button--block" to="/docs/intro">
-                Full Portfolio
+              <Link
+                className="button"
+                to="/docs/intro"
+                style={{
+                  backgroundColor: '#F68B1F',
+                  borderColor: '#F68B1F',
+                  color: '#fff',
+                }}
+              >
+                View Portfolio
               </Link>
             </div>
           </div>
