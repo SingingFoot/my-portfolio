@@ -7,8 +7,14 @@ import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
 
+type TomPost = {
+  title: string;
+  link: string;
+  description?: string;
+};
+
 function TomJohnsonLatestPost() {
-  const [post, setPost] = useState<any>(null);
+  const [post, setPost] = useState<TomPost | null>(null);
 
   useEffect(() => {
     async function fetchPost() {
@@ -17,7 +23,10 @@ function TomJohnsonLatestPost() {
           'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/idratherbewriting'
         );
         const data = await res.json();
-        setPost(data.items[0]);
+
+        if (data.items && data.items.length > 0) {
+          setPost(data.items[0]);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -33,14 +42,14 @@ function TomJohnsonLatestPost() {
   return (
     <>
       <hr />
-      <h3>FROM TOM JOHNSON</h3>
+      <Heading as="h3">FROM TOM JOHNSON</Heading>
 
       <a href={post.link} target="_blank" rel="noopener noreferrer">
         <strong>{post.title}</strong>
       </a>
 
       <p style={{fontSize: '0.85rem'}}>
-        {post.description.replace(/<[^>]+>/g, '').slice(0, 200)}...
+        {(post.description ?? '').replace(/<[^>]+>/g, '').slice(0, 200)}...
       </p>
     </>
   );
@@ -51,7 +60,6 @@ function HomepageHeader() {
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
         <div style={{display: 'flex', alignItems: 'center', gap: '2rem'}}>
-          
           <img
             src="/img/os.jpg"
             alt="Oleh Shynkarenko"
@@ -66,10 +74,13 @@ function HomepageHeader() {
               About Oleh Shynkarenko
             </Heading>
 
-            <p className="hero__subtitle" style={{maxWidth: '700px', fontSize: '1rem', lineHeight: '1.6'}}>
-              I am a technical writer and documentation specialist based in Budapest. 
-              I specialize in API documentation, docs-as-code workflows, and AI-assisted 
-              documentation. My work focuses on turning complex technical concepts into 
+            <p
+              className="hero__subtitle"
+              style={{maxWidth: '700px', fontSize: '1rem', lineHeight: '1.6'}}
+            >
+              I am a technical writer and documentation specialist based in Budapest.
+              I specialize in API documentation, docs-as-code workflows, and AI-assisted
+              documentation. My work focuses on turning complex technical concepts into
               clear, scalable, and user-friendly content for developers and end users.
             </p>
 
@@ -87,7 +98,6 @@ function HomepageHeader() {
               </Link>
             </p>
           </div>
-
         </div>
       </div>
     </header>
@@ -96,102 +106,234 @@ function HomepageHeader() {
 
 function HomepageContent() {
   return (
-    <section style={{padding: '3rem 0', backgroundColor: 'var(--ifm-background-color)'}}>
+    <section
+      style={{padding: '3rem 0', backgroundColor: 'var(--ifm-background-color)'}}
+    >
       <div className="container">
         <div className="row">
-          
-          {/* Ліва колонка (Основна): PROFESSIONAL SUMMARY + EXPERIENCE */}
           <div className="col col--8">
             <Heading as="h3">PROFESSIONAL SUMMARY</Heading>
             <p>
-              Technical Documentation Manager and Senior Technical Writer with 15+ years of experience in
-              technical communication, translation, and content production. Over 6 years of experience in
-              software, IoT, and engineering documentation, combined with 4+ years of leadership in
-              automation and documentation workflow management.
+              Technical Documentation Manager and Senior Technical Writer with 15+ years
+              of experience in technical communication, translation, and content
+              production. Over 6 years of experience in software, IoT, and engineering
+              documentation, combined with 4+ years of leadership in automation and
+              documentation workflow management.
             </p>
 
-            <Heading as="h3" style={{marginTop: '2rem'}}>PROFESSIONAL EXPERIENCE</Heading>
-            
-            <div style={{borderLeft: '2px solid #ddd', paddingLeft: '1.5rem', marginBottom: '2rem'}}>
+            <Heading as="h3" style={{marginTop: '2rem'}}>
+              PROFESSIONAL EXPERIENCE
+            </Heading>
+
+            <div
+              style={{
+                borderLeft: '2px solid #ddd',
+                paddingLeft: '1.5rem',
+                marginBottom: '2rem',
+              }}
+            >
               <h4>Senior Technical Writer (Contract)</h4>
-              <small>SimpliGov | Remote | Jul 2023 – Apr 2026</small>
+              <small>
+                <a
+                  href="https://simpligov.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="orange-link"
+                >
+                  SimpliGov
+                </a>{' '}
+                | Remote | Jul 2023 – Apr 2026
+              </small>
               <ul style={{fontSize: '0.9rem', marginTop: '0.5rem'}}>
                 <li>Developed and maintained API and developer documentation</li>
                 <li>Managed release notes and status page updates</li>
               </ul>
             </div>
 
-            <div style={{borderLeft: '2px solid #ddd', paddingLeft: '1.5rem', marginBottom: '2rem'}}>
+            <div
+              style={{
+                borderLeft: '2px solid #ddd',
+                paddingLeft: '1.5rem',
+                marginBottom: '2rem',
+              }}
+            >
               <h4>Senior Technical Writer</h4>
-              <small>GlobalLogic | Kyiv, Ukraine | Nov 2021 – Jun 2023</small>
+              <small>
+                <a
+                  href="https://www.globallogic.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="orange-link"
+                >
+                  GlobalLogic
+                </a>{' '}
+                | Kyiv, Ukraine | Nov 2021 – Jun 2023
+              </small>
               <ul style={{fontSize: '0.9rem', marginTop: '0.5rem'}}>
                 <li>Created documentation using Docs-as-Code (Markdown, MkDocs, GitHub)</li>
                 <li>Wrote user guides, developer documentation, and manuals</li>
               </ul>
             </div>
 
-            <div style={{borderLeft: '2px solid #ddd', paddingLeft: '1.5rem', marginBottom: '2rem'}}>
+            <div
+              style={{
+                borderLeft: '2px solid #ddd',
+                paddingLeft: '1.5rem',
+                marginBottom: '2rem',
+              }}
+            >
               <h4>Senior Technical Writer</h4>
-              <small>BJet | Lviv, Ukraine | Aug 2021 – Nov 2021</small>
+              <small>
+                <a
+                  href="https://bjetpro.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="orange-link"
+                >
+                  BJet
+                </a>{' '}
+                | Lviv, Ukraine | Aug 2021 – Nov 2021
+              </small>
               <ul style={{fontSize: '0.9rem', marginTop: '0.5rem'}}>
                 <li>Developed ERP documentation (Odoo), dashboards, and integrations</li>
               </ul>
             </div>
 
-            <div style={{borderLeft: '2px solid #ddd', paddingLeft: '1.5rem', marginBottom: '2rem'}}>
+            <div
+              style={{
+                borderLeft: '2px solid #ddd',
+                paddingLeft: '1.5rem',
+                marginBottom: '2rem',
+              }}
+            >
               <h4>Technical Writer</h4>
-              <small>ASBIS Ukraine | Kyiv, Ukraine | Sep 2020 – Aug 2021</small>
+              <small>
+                <a
+                  href="https://asbis.ua/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="orange-link"
+                >
+                  ASBIS Ukraine
+                </a>{' '}
+                | Kyiv, Ukraine | Sep 2020 – Aug 2021
+              </small>
               <ul style={{fontSize: '0.9rem', marginTop: '0.5rem'}}>
                 <li>Created user manuals, quick-start guides, and online help</li>
               </ul>
             </div>
 
-            <div style={{borderLeft: '2px solid #ddd', paddingLeft: '1.5rem', marginBottom: '2rem'}}>
+            <div
+              style={{
+                borderLeft: '2px solid #ddd',
+                paddingLeft: '1.5rem',
+                marginBottom: '2rem',
+              }}
+            >
               <h4>Technical Writer / Project Manager</h4>
-              <small>EGIS Ukraine | Dec 2018 – Sep 2020</small>
+              <small>
+                <a
+                  href="https://www.egis-group.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="orange-link"
+                >
+                  EGIS Ukraine
+                </a>{' '}
+                | Dec 2018 – Sep 2020
+              </small>
             </div>
 
-            <div style={{borderLeft: '2px solid #ddd', paddingLeft: '1.5rem', marginBottom: '2rem'}}>
+            <div
+              style={{
+                borderLeft: '2px solid #ddd',
+                paddingLeft: '1.5rem',
+                marginBottom: '2rem',
+              }}
+            >
               <h4>Journalist / Project Manager</h4>
-              <small>Ukrainian Helsinki Human Rights Union | 2015 – 2018</small>
+              <small>
+                <a
+                  href="https://helsinki.org.ua/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="orange-link"
+                >
+                  Ukrainian Helsinki Human Rights Union
+                </a>{' '}
+                | 2015 – 2018
+              </small>
             </div>
           </div>
 
-          {/* Права колонка (Сайдбар): SKILLS, LANGUAGES, LINKS */}
           <div className="col col--4">
-            <div style={{backgroundColor: 'rgba(0,0,0,0.03)', padding: '1.5rem', borderRadius: '8px'}}>
+            <div
+              style={{
+                backgroundColor: 'rgba(0,0,0,0.03)',
+                padding: '1.5rem',
+                borderRadius: '8px',
+              }}
+            >
               <Heading as="h3">CORE SKILLS</Heading>
               <p style={{fontSize: '0.85rem'}}>
-                API Documentation • Docs-as-Code • Markdown • GitHub • CI/CD • Docusaurus • MkDocs • AI Tools • XML Authoring
+                API Documentation • Docs-as-Code • Markdown • GitHub • CI/CD •
+                Docusaurus • MkDocs • AI Tools • XML Authoring
               </p>
-              
+
               <hr />
-              
+
               <Heading as="h3">LANGUAGES</Heading>
               <p style={{fontSize: '0.85rem'}}>
-              🇺🇦 Ukrainian (Native)<br />
-              🇬🇧 English (C1–C2)<br />
-              🇭🇺 Hungarian (Duolingo 60)<br />
-              🇩🇪 German (Duolingo 80)<br />
-              🇫🇷 French (Duolingo 80)
-            </p>
+                🇺🇦 Ukrainian (Native)
+                <br />
+                🇬🇧 English (C1–C2)
+                <br />
+                🇭🇺 Hungarian (Duolingo 60)
+                <br />
+                🇩🇪 German (Duolingo 80)
+                <br />
+                🇫🇷 French (Duolingo 80)
+              </p>
 
               <hr />
 
               <Heading as="h3">PROJECTS & BLOGS</Heading>
               <ul style={{fontSize: '0.85rem', listStyle: 'none', paddingLeft: '0'}}>
-                <li>🔗 <a href="https://medbiotech.academia.edu/OlehShynkarenko">Academy</a></li>
-                <li>🔗 <a href="https://sci-fi-ua.netlify.app/">Ukrainian Sci-Fi (My dissertation)</a></li>
-                <li>🔗 <a href="https://olehshynkarenko.medium.com/">Medium Blog</a></li>
+                <li>
+                  🔗{' '}
+                  <a
+                    href="https://medbiotech.academia.edu/OlehShynkarenko"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Academy
+                  </a>
+                </li>
+                <li>
+                  🔗{' '}
+                  <a
+                    href="https://sci-fi-ua.netlify.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Ukrainian Sci-Fi (My dissertation)
+                  </a>
+                </li>
+                <li>
+                  🔗{' '}
+                  <a
+                    href="https://olehshynkarenko.medium.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Medium Blog
+                  </a>
+                </li>
               </ul>
-             
-            <TomJohnsonLatestPost/>
-              <hr />
 
-
+              <TomJohnsonLatestPost />
             </div>
           </div>
-
         </div>
       </div>
     </section>
@@ -200,10 +342,9 @@ function HomepageContent() {
 
 export default function Home(): React.ReactNode {
   const {siteConfig} = useDocusaurusContext();
+
   return (
-    <Layout
-      title={siteConfig.title}
-      description={siteConfig.tagline}>
+    <Layout title={siteConfig.title} description={siteConfig.tagline}>
       <HomepageHeader />
       <main>
         <HomepageContent />
