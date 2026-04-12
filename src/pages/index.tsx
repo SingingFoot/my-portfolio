@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
@@ -6,6 +6,45 @@ import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 
 import styles from './index.module.css';
+
+function TomJohnsonLatestPost() {
+  const [post, setPost] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchPost() {
+      try {
+        const res = await fetch(
+          'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.feedburner.com/idratherbewriting'
+        );
+        const data = await res.json();
+        setPost(data.items[0]);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    fetchPost();
+  }, []);
+
+  if (!post) {
+    return <p style={{fontSize: '0.85rem'}}>Loading...</p>;
+  }
+
+  return (
+    <>
+      <hr />
+      <h3>FROM TOM JOHNSON</h3>
+
+      <a href={post.link} target="_blank" rel="noopener noreferrer">
+        <strong>{post.title}</strong>
+      </a>
+
+      <p style={{fontSize: '0.85rem'}}>
+        {post.description.replace(/<[^>]+>/g, '').slice(0, 200)}...
+      </p>
+    </>
+  );
+}
 
 function HomepageHeader() {
   return (
@@ -145,7 +184,8 @@ function HomepageContent() {
                 <li>🔗 <a href="https://sci-fi-ua.netlify.app/">Ukrainian Sci-Fi (My dissertation)</a></li>
                 <li>🔗 <a href="https://olehshynkarenko.medium.com/">Medium Blog</a></li>
               </ul>
-
+             
+            <TomJohnsonLatestPost/>
               <hr />
 
 
