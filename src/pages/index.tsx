@@ -329,6 +329,16 @@ function HomepageContent() {
                     Medium Blog
                   </a>
                 </li>
+                <li>
+                  🔗{' '}
+                  <a
+                    href="https://github.com/SingingFoot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    GitHub
+                  </a>
+                </li>
               </ul>
 
               <TomJohnsonLatestPost />

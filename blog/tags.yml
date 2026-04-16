@@ -17,3 +17,53 @@ hola:
   label: Hola
   permalink: /hola
   description: Hola tag description
+
+introduction:
+  label: Introduction
+  permalink: /introduction
+  description: Introductory content and overviews
+
+tech-writing:
+  label: Tech Writing
+  permalink: /tech-writing
+  description: Technical writing and documentation
+
+portfolio:
+  label: Portfolio
+  permalink: /portfolio
+  description: Portfolio and personal projects
+
+AI:
+  label: AI
+  permalink: /AI
+  description: Artificial Intelligence topics
+
+Technical Writing:
+  label: Technical Writing
+  permalink: /Technical-Writing
+  description: Technical writing profession and practices
+
+Career:
+  label: Career
+  permalink: /Career
+  description: Career development and opportunities
+
+Future of Work:
+  label: Future of Work
+  permalink: /Future-of-Work
+  description: Future trends in work and employment
+
+Philosophy:
+  label: Philosophy
+  permalink: /Philosophy
+  description: Philosophical discussions and concepts
+
+Deep Learning:
+  label: Deep Learning
+  permalink: /Deep-Learning
+  description: Deep learning and neural networks
+
+Ethics:
+  label: Ethics
+  permalink: /Ethics
+  description: Ethical considerations and dilemmas
