@@ -14,6 +14,27 @@ Below are three examples of diagrams built using **Mermaid.js**.
 ## 1. Flowchart — Basic Level
 This is a fundamental example showing a logical execution path or a decision-making process. Each node has a specific shape (diamonds for conditions, rectangles for actions). It is the perfect tool for describing business logic and process flows.
 
+<details>
+<summary><b>Click to see the detailed explanation of the Basic Flowchart</b></summary>
+
+### Diagram Overview
+This flowchart illustrates a standard decision-making process during a development cycle. It uses standard UML shapes: **Rectangles** for actions/processes and a **Diamond** for a decision point.
+
+### The Logic Flow
+
+1. **Start**: The process begins at the entry point.
+2. **Decision Point (`Is there an error?`)**: 
+   - The system checks for the presence of bugs or configuration issues.
+   - This acts as a logical gate that determines the next step based on a boolean (Yes/No) result.
+3. **Branch A (`Yes` -> `Fix the code`)**: 
+   - If an error is detected, the flow moves to the remediation phase. 
+   - After the fix, the logic loops back to the decision point to re-verify the status.
+4. **Branch B (`No` -> `Deploy project`)**: 
+   - If no errors are found, the system proceeds to the deployment phase.
+5. **End**: The process successfully terminates after the deployment is complete.
+
+</details>
+
 ```mermaid
 graph TD;
     Start[Start] --> Task1{Is there an error?};
@@ -23,10 +44,36 @@ graph TD;
     Deploy --> End[End];
 ```
 
-Each node has a specific shape (diamonds for conditions, rectangles for actions). It is the perfect tool for describing business logic and process flows.
 
 ## 2. Sequence Diagram — Intermediate Level
 This diagram illustrates how objects or services interact with each other over time. It displays the exchange of messages between different participants in the system. The vertical lines represent time moving from top to bottom.
+
+<details>
+<summary><b>Click to see the detailed explanation of the Authentication Sequence</b></summary>
+
+### Participants
+* **User**: The human actor interacting with the application's interface.
+* **Browser**: The frontend (client-side) application that handles the UI and user input.
+* **Server API**: The backend (server-side) system that manages data, logic, and authentication.
+
+### The Step-by-Step Process
+
+1. **User Input (`Enters credentials`)**
+   The process begins when the **User** interacts with the login form. They provide their identity data. The **Browser** captures this input.
+
+2. **Request Initiation (`POST /login request`)**
+   The **Browser** packages the credentials into a secure HTTP **POST** request and sends it to the `/login` endpoint on the **Server API**.
+
+3. **Server-Side Processing & Validation**
+   The **Server API** validates the credentials. If authenticated, it generates a **JWT (JSON Web Token)** as a session key.
+
+4. **Response (`200 OK (JWT Token)`)**
+   The **Server API** sends back an HTTP **200 OK** response containing the **JWT Token**.
+
+5. **Navigation (`Redirect to Dashboard`)**
+   The **Browser** stores the token and triggers a client-side redirect, moving the **User** to the **Dashboard**.
+
+</details>
 
 ```mermaid
 sequenceDiagram
@@ -42,6 +89,25 @@ sequenceDiagram
 
 ## 3. State Diagram — Advanced Level
 Used to describe the behavior of complex systems that change their state based on specific events. This scheme is indispensable for technical API documentation or order management systems where tracking transitions between statuses is critical.
+
+<details>
+<summary><b>Click to see the detailed explanation of the State Diagram</b></summary>
+
+### Diagram Overview
+This state diagram represents the lifecycle of a background task or a process worker. Unlike a flowchart which shows a path, a state diagram shows the different **states** a system can be in and the **events** that trigger transitions between them.
+
+### State Transitions and Logic
+
+1. **Initial State (Solid Circle)**: The entry point indicating where the system life cycle begins.
+2. **Idle**: The default state where the system is waiting for input. It is "listening" for a trigger.
+3. **Transition (`New task received`)**: An external event occurs that pushes the system out of the Idle state.
+4. **Processing**: The active state where the core logic or computation is being executed.
+5. **Conditional Outcomes**:
+    - **Success Branch (`Task completed`)**: If the work finishes correctly, the system moves to the **Success** state and then reaches the **Final State** (double circle).
+    - **Error Branch (`Execution failed`)**: If something goes wrong, the system transitions to the **Error** state.
+6. **Retry Logic**: From the Error state, the system doesn't just stop. It follows the "Retry logic" path back to **Processing** to attempt the task again.
+
+</details>
 
 ```mermaid
 stateDiagram-v2
