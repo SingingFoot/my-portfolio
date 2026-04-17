@@ -12,11 +12,11 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://singingfoot.github.io', // Оновлено під ваш GitHub Pages у майбутньому
+  url: 'https://singingfoot.github.io', 
   baseUrl: '/',
 
-  organizationName: 'SingingFoot', // Ваш GitHub username
-  projectName: 'my-portfolio',   // Назва вашого репозиторію
+  organizationName: 'SingingFoot', 
+  projectName: 'my-portfolio',   
 
   onBrokenLinks: 'throw',
 
@@ -24,6 +24,13 @@ const config: Config = {
     defaultLocale: 'en',
     locales: ['en'],
   },
+
+  // --- ДОДАНО ТУТ ---
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
+  // ------------------
 
   presets: [
     [
@@ -53,7 +60,7 @@ const config: Config = {
   themeConfig: {
     image: 'img/docusaurus-social-card.jpg',
     colorMode: {
-      defaultMode: 'dark', // Робимо темну тему основною для професійного вигляду
+      defaultMode: 'dark', 
       respectPrefersColorScheme: true,
     },
     navbar: {
@@ -115,7 +122,7 @@ const config: Config = {
           items: [
             {
               label: 'Email',
-              href: 'mailto:singingfoot@gmail.com', // Замініть на реальний email
+              href: 'mailto:singingfoot@gmail.com', 
             },
           ],
         },
@@ -129,4 +136,4 @@ const config: Config = {
   } satisfies Preset.ThemeConfig,
 };
 
-export default config;
+export default config; // Тільки один експорт у кінці

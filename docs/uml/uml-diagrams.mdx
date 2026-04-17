@@ -1,0 +1,54 @@
+---
+sidebar_position: 1
+title: About UML diagrams
+---
+
+# UML Diagrams in Documentation
+
+Unified Modeling Language (UML) is a standardized way to visualize system architecture. Using diagrams helps stakeholders and developers understand complex logic quickly without having to read hundreds of lines of text.
+
+Below are three examples of diagrams built using **Mermaid.js**.
+
+---
+
+## 1. Flowchart — Basic Level
+This is a fundamental example showing a logical execution path or a decision-making process. Each node has a specific shape (diamonds for conditions, rectangles for actions). It is the perfect tool for describing business logic and process flows.
+
+```mermaid
+graph TD;
+    Start[Start] --> Task1{Is there an error?};
+    Task1 -- Yes --> Fix[Fix the code];
+    Task1 -- No --> Deploy[Deploy project];
+    Fix --> Task1;
+    Deploy --> End[End];
+```
+
+Each node has a specific shape (diamonds for conditions, rectangles for actions). It is the perfect tool for describing business logic and process flows.
+
+## 2. Sequence Diagram — Intermediate Level
+This diagram illustrates how objects or services interact with each other over time. It displays the exchange of messages between different participants in the system. The vertical lines represent time moving from top to bottom.
+
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant Web as Browser
+    participant API as Server API
+
+    User->>Web: Enters credentials
+    Web->>API: POST /login request
+    API-->>Web: 200 OK (JWT Token)
+    Web-->>User: Redirect to Dashboard
+```
+
+## 3. State Diagram — Advanced Level
+Used to describe the behavior of complex systems that change their state based on specific events. This scheme is indispensable for technical API documentation or order management systems where tracking transitions between statuses is critical.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Processing: New task received
+    Processing --> Success: Task completed
+    Processing --> Error: Execution failed
+    Error --> Processing: Retry logic
+    Success --> [*]
+```
