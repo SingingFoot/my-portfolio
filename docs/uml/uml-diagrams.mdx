@@ -198,3 +198,56 @@ stateDiagram-v2
     
     FatalError --> [*]
 ```
+
+### 5. Docusaurus homepage
+
+This is a React-based Docusaurus homepage represented via a Component Architecture Diagram (Class Diagram style). This visualizes how the different functional components (`HomepageHeader`, `HomepageContent`, `TomJohnsonLatestPost`) relate to each other and the data they handle.
+
+<details>
+<summary><b>Technical Specification: Architectural Explanation</b></summary>
+
+- **The Root** (`Home`): This is your entry point that orchestrates the overall layout of the landing page.
+
+- **Encapsulation**: The logic for fetching external data is isolated within `TomJohnsonLatestPost`. This is a clean design because the rest of the homepage doesn't need to know about the RSS feed logic.
+
+- **Asynchronous Flow**: The diagram shows the dependency on `RSS_API`, representing the `useEffect` hook in your code that triggers the side effect of network communication.
+
+</details>
+
+```mermaid
+classDiagram
+    class Home {
+        <<Component>>
+        +render()
+    }
+    class HomepageHeader {
+        <<Component>>
+        +render()
+    }
+    class HomepageContent {
+        <<Component>>
+        +render()
+    }
+    class TomJohnsonLatestPost {
+        <<Component>>
+        -TomPost post
+        +fetchPost()
+        +render()
+    }
+    class TomPost {
+        <<Type>>
+        +String title
+        +String link
+        +String description
+    }
+    class RSS_API {
+        <<External Service>>
+        +GET feedburner
+    }
+
+    Home --> HomepageHeader : renders
+    Home --> HomepageContent : renders
+    HomepageContent --> TomJohnsonLatestPost : includes
+    TomJohnsonLatestPost ..> TomPost : uses type
+    TomJohnsonLatestPost --> RSS_API : fetches data
+```
