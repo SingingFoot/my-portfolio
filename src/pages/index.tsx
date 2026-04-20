@@ -211,14 +211,7 @@ function HomepageContent() {
                 <hr />
                 <Heading as="h3">LATEST ON LINKEDIN</Heading>
                 <div style={{ width: '100%', overflow: 'hidden', borderRadius: '8px' }}>
-                  <iframe 
-                    src="https://www.linkedin.com/embed/feed/update/urn:li:share:7450866306024644608?collapsed=1" 
-                    height="670" 
-                    width="100%" 
-                    frameBorder="0" 
-                    allowFullScreen={true} 
-                    title="Embedded post">
-                  </iframe>
+                  <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:7451563437169594368?collapsed=1" height="567" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
                 </div>
               </div>
             </div>
