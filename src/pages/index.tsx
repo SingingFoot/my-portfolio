@@ -53,13 +53,35 @@ function TomJohnsonLatestPost() {
 
 function HomepageHeader() {
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
-      <div className="container">
+    <header className={clsx('hero hero--primary', styles.heroBanner)} 
+            style={{ position: 'relative' }}> {/* Додаємо relative для позиціонування лінії */}
+      
+      {/* Створюємо лінію через самозакривний div або псевдоелемент inline */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: 0,
+        right: 0,
+        height: '1px',
+        backgroundColor: '#F68B1F', // Колір вашої кнопки
+        zIndex: 0, // Лінія йде на задній план
+        transform: 'translateY(-50%)'
+      }} />
+
+      <div className="container" style={{ position: 'relative', zIndex: 1 }}> {/* Контент поверх лінії */}
         <div style={{display: 'flex', alignItems: 'center', gap: '2rem'}}>
           <img
             src="/img/os.jpg"
             alt="Oleh Shynkarenko"
-            style={{ width: '140px', borderRadius: '8px' }}
+            style={{ 
+              width: '140px', 
+              height: '140px', 
+              borderRadius: '50%', 
+              objectFit: 'cover',
+              outline: '2px solid #F68B1F',
+              outlineOffset: '5px',
+              backgroundColor: 'var(--ifm-hero-background-color)', // Додаємо фон, щоб лінія не просвічувала крізь прозорі зони (якщо є)
+            }}
           />
           <div style={{textAlign: 'left'}}>
             <Heading as="h2" style={{marginBottom: '0.5rem'}}>
