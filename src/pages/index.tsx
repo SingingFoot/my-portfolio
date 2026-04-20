@@ -207,13 +207,13 @@ function HomepageContent() {
 
               <TomJohnsonLatestPost />
 
-              <div style={{ marginTop: '2rem' }}>
-                <hr />
-                <Heading as="h3">LATEST ON LINKEDIN</Heading>
-                <div style={{ width: '100%', overflow: 'hidden', borderRadius: '8px' }}>
-                  <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:7451563437169594368?collapsed=1" height="567" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+                <div style={{ marginTop: '2rem' }}>
+                  <hr />
+                  <Heading as="h3">LATEST ON LINKEDIN</Heading>
+                  <div style={{ width: '100%', overflow: 'hidden', borderRadius: '8px' }}>
+                    <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:7451563437169594368?collapsed=1" height="567" width="504" frameBorder="0" allowFullScreen title="Embedded post"></iframe>
+                  </div>
                 </div>
-              </div>
             </div>
           </div>
         </div>
