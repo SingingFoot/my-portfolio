@@ -1,0 +1,8 @@
+{
+  "label": "Sphinx Documentation",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Guide to using Sphinx for documentation."
+  }
+}

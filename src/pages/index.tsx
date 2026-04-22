@@ -225,6 +225,7 @@ function HomepageContent() {
                 <li>🔗 <a href="https://sci-fi-ua.netlify.app/" target="_blank">Ukrainian Sci-Fi</a></li>
                 <li>🔗 <a href="https://olehshynkarenko.medium.com/" target="_blank">Medium Blog</a></li>
                 <li>🔗 <a href="https://github.com/SingingFoot" target="_blank">GitHub</a></li>
+                <li>🔗 <a href="https://sphinxdoks.netlify.app/" target="_blank">Sphinx and reStructuredText</a></li>
               </ul>
 
               <TomJohnsonLatestPost />

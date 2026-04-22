@@ -1,0 +1,102 @@
+---
+sidebar_position: 1
+title: reStructuredText
+---
+
+# How to Create and Deploy a Sphinx Site: A Step-by-Step Guide
+
+This guide provides a comprehensive workflow for setting up a Sphinx documentation project in an Ubuntu environment (UTM) and deploying it to Netlify via GitHub.
+
+## Step 1: Preparing the Python Environment
+
+Modern Linux distributions (like Ubuntu 24.04+) protect the system Python from accidental changes. To install Sphinx and its themes, we must use a Virtual Environment (**venv**).
+
+### Terminal Commands:
+
+1. **Create a virtual environment:**
+
+   ```bash
+   python3 -m venv venv
+   ```
+:::info
+Why: This creates an isolated "sandbox" folder where we can install specific project tools without affecting the rest of the system.
+:::
+
+2. **Activate the environment:**
+
+```Bash
+source venv/bin/activate
+```
+:::info
+Why: This tells the terminal to use the Python and Pip located inside our project folder.
+:::
+
+3. **Install Sphinx and Extensions:**
+
+```Bash
+pip install sphinx sphinx-rtd-theme sphinxcontrib-httpdomain sphinxcontrib-mermaid
+```
+:::info
+Why: We need the core engine (Sphinx), the visual design (Read the Docs theme), and extensions to support HTTP domains and Mermaid diagrams.
+:::
+
+## Step 2: File Management & Assets
+
+To move assets (like your logo.png) from Mac to the Ubuntu VM, we utilized UTM's Shared Directory via WebDAV.
+
+**Accessing files:** In Ubuntu Files, go to **Other Locations** or **Network** and connect to `dav://localhost:9843`.
+
+**Asset Placement:** Move your logo to `source/_static/logo.png`.
+
+**Configuration:** Update `source/conf.py` to recognize the logo:
+
+```Python
+html_logo = "_static/logo.png"
+```
+## Step 3: Pushing to GitHub
+
+Since GitHub no longer accepts standard account passwords in the terminal, we used a **Personal Access Token (PAT)** for authentication.
+
+Initialize Git and Commit:
+
+```Bash
+git init
+git add .
+git commit -m "Initial commit with logo and theme settings"
+```
+Set User Identity:
+
+```Bash
+git config --global user.name "YourName"
+git config --global user.email "your-email@example.com"
+```
+Link and Push:
+
+```Bash
+git remote add origin [https://github.com/YourUsername/your-repo.git](https://github.com/YourUsername/your-repo.git)
+git push -u origin main
+```
+## Step 4: Netlify Deployment
+
+We configured Netlify to automatically build the site every time we push new code to GitHub.
+
+### Build Settings:
+
+**Build command:** `pip install sphinx sphinx-rtd-theme sphinxcontrib-httpdomain sphinxcontrib-mermaid && make html`
+
+**Publish directory:** `build/html`
+
+### The requirements.txt File:
+
+To keep the deployment stable, ensure your requirements.txt includes:
+
+```Plaintext
+sphinx
+sphinx-rtd-theme
+sphinxcontrib-httpdomain
+sphinxcontrib-mermaid
+```
+
+### Live Result
+
+[You can view the final documentation site here.](https://sphinxdoks.netlify.app/)
