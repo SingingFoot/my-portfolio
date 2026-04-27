@@ -69,7 +69,7 @@ function HomepageHeader() {
       }} />
 
       <div className="container" style={{ position: 'relative', zIndex: 1 }}> {/* Контент поверх лінії */}
-        <div style={{display: 'flex', alignItems: 'center', gap: '2rem'}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap'}}>
           <img
             src="/img/os.jpg"
             alt="Oleh Shynkarenko"
@@ -83,7 +83,7 @@ function HomepageHeader() {
               backgroundColor: 'var(--ifm-hero-background-color)', // Додаємо фон, щоб лінія не просвічувала крізь прозорі зони (якщо є)
             }}
           />
-          <div style={{textAlign: 'left'}}>
+          <div style={{textAlign: 'left', flex: '1 1 300px', minWidth: '300px'}}>
             <Heading as="h2" style={{marginBottom: '0.5rem'}}>
               About Oleh Shynkarenko
             </Heading>
@@ -93,7 +93,7 @@ function HomepageHeader() {
               documentation. My work focuses on turning complex technical concepts into
               clear, scalable, and user-friendly content for developers and end users.
             </p>
-            <p style={{marginTop: '1rem', display: 'flex', gap: '1rem'}}>
+            <p style={{marginTop: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap'}}>
               <Link className="button" to="/docs/intro" style={{ backgroundColor: '#F68B1F', borderColor: '#F68B1F', color: '#fff' }}>
                 View Portfolio
               </Link>
