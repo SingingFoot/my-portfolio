@@ -93,10 +93,18 @@ function HomepageHeader() {
               documentation. My work focuses on turning complex technical concepts into
               clear, scalable, and user-friendly content for developers and end users.
             </p>
-            <p style={{marginTop: '1rem'}}>
+            <p style={{marginTop: '1rem', display: 'flex', gap: '1rem'}}>
               <Link className="button" to="/docs/intro" style={{ backgroundColor: '#F68B1F', borderColor: '#F68B1F', color: '#fff' }}>
                 View Portfolio
               </Link>
+              <a 
+                className="button" 
+                href="/CV Technical Writer Oleh Shynkarenko.pdf" 
+                download="CV_Oleh_Shynkarenko.pdf"
+                style={{ backgroundColor: '#F68B1F', borderColor: '#F68B1F', color: '#fff' }}
+              >
+                Download CV
+              </a>
             </p>
           </div>
         </div>
