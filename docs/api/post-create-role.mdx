@@ -1,0 +1,655 @@
+---
+sidebar_position: 4
+title: POST - Create Role
+hide_table_of_contents: true
+---
+
+import React, { useState } from 'react';
+
+export const ChevronDown = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ transition: 'transform 0.3s' }}
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
+
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
+
+export const SearchIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+);
+
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
+
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
+
+export const HighlightedCode = ({ code }) => {
+  const highlight = (text) => {
+    let highlighted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(\/\/.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/(#.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g, '<span style="color: #a5d6ff">$1</span>')
+      .replace(/\b(import|from|const|await|new|var|require|return|if|else|public|private|class|interface|package|use|namespace|def|func|true|false|null)\b/g, '<span style="color: #ff7b72">$1</span>')
+      .replace(/\b(TechWriter|TechWriterClient|RequestOptions|Role|RoleParams|context|ctx|options|client|tw|sc|service)\b/g, '<span style="color: #ffa657">$1</span>')
+      .replace(/\b([a-z_][a-z0-9_]*)(?=\s*\()/gi, '<span style="color: #d2a8ff">$1</span>')
+      .replace(/\b(\d+)\b/g, '<span style="color: #79c0ff">$1</span>');
+
+    return <code dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
+
+  return (
+    <pre style={{ margin: 0, background: 'transparent', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+      {highlight(code)}
+    </pre>
+  );
+};
+
+export const PostCreateRolePage = () => {
+  const [language, setLanguage] = useState('cURL');
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeStatus, setActiveStatus] = useState('201');
+  const [feedback, setFeedback] = useState(null);
+  const [copiedSnippets, setCopiedSnippets] = useState({});
+  const [privilegeQuery, setPrivilegeQuery] = useState('');
+
+  const languages = [
+    { id: 'curl', name: 'cURL' },
+    { id: 'node', name: 'Node.js' },
+    { id: 'python', name: 'Python' },
+    { id: 'ruby', name: 'Ruby' },
+    { id: 'php', name: 'PHP' },
+    { id: 'java', name: 'Java' },
+    { id: 'go', name: 'Go' },
+    { id: 'dotnet', name: '.NET' }
+  ];
+
+  const requestSnippets = {
+    'cURL': `curl -X POST "{{env_base_uri}}/api/public/roles" \\
+  -H "Authorization: Bearer {YOUR_BEARER_TOKEN}" \\
+  -H "Accept: */*" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "name": "Editorial Reviewer",
+    "privileges": [3, 11, 16]
+  }'`,
+    'Node.js': `import TechWriter from 'techwriter';
+const tw = new TechWriter('tw_test_51H59...');
+
+const role = await tw.roles.create({
+  name: 'Editorial Reviewer',
+  privileges: [3, 11, 16]
+});`,
+    'Python': `from techwriter import TechWriterClient
+client = TechWriterClient("tw_test_51H59...")
+
+role = client.v1.roles.create(
+  name="Editorial Reviewer",
+  privileges=[3, 11, 16]
+)`,
+    'Ruby': `require 'techwriter'
+client = TechWriter::Client.new("tw_test_51H59...")
+
+role = client.v1.roles.create(
+  name: 'Editorial Reviewer',
+  privileges: [3, 11, 16]
+)`,
+    'PHP': `$tw = new \\TechWriter\\Client("tw_test_51H59...");
+
+$role = $tw->roles->create([
+  'name' => 'Editorial Reviewer',
+  'privileges' => [3, 11, 16]
+]);`,
+    'Java': `TechWriterClient client = new TechWriterClient("tw_test_51H59...");
+
+RoleParams params = RoleParams.builder()
+  .setName("Editorial Reviewer")
+  .setPrivileges(List.of(3, 11, 16))
+  .build();
+
+Role role = client.v1().roles().create(params);`,
+    'Go': `twc := techwriter.NewClient("tw_test_51H59...")
+
+params := &techwriter.RoleParams{
+  Name: "Editorial Reviewer",
+  Privileges: []int{3, 11, 16},
+}
+role, err := twc.Roles.Create(ctx, params)`,
+    '.NET': `var client = new TechWriterClient("tw_test_51H59...");
+
+var options = new RoleCreateOptions {
+  Name = "Editorial Reviewer",
+  Privileges = new List<int> { 3, 11, 16 }
+};
+var role = client.V1.Roles.Create(options);`
+  };
+
+  const responseExamples = {
+    '201': {
+      label: '201 Created',
+      desc: 'Role was created successfully. The response includes the new role identifier.',
+      code: `{
+  "data": "8e1c2f6a-7b40-4e2d-91c4-2cf03b9aa17e",
+  "success": true
+}`
+    },
+    '400': {
+      label: '400 Bad Request',
+      desc: 'The payload is malformed: missing name, empty privileges, or non-numeric IDs.',
+      code: `{
+  "error": {
+    "code": "invalid_request",
+    "message": "The 'privileges' array must not be empty.",
+    "param": "privileges"
+  },
+  "success": false
+}`
+    },
+    '401': {
+      label: '401 Unauthorized',
+      desc: 'Authentication failed: missing, invalid, or expired bearer token.',
+      code: `{
+  "error": {
+    "code": "unauthorized",
+    "message": "Authentication credentials are missing or invalid."
+  },
+  "success": false
+}`
+    },
+    '403': {
+      label: '403 Forbidden',
+      desc: 'The token is valid but lacks the roles:write scope.',
+      code: `{
+  "error": {
+    "code": "forbidden",
+    "message": "Your API key does not have the 'roles:write' scope.",
+    "requiredScope": "roles:write"
+  },
+  "success": false
+}`
+    },
+    '409': {
+      label: '409 Conflict',
+      desc: 'A role with the same name already exists in the workspace.',
+      code: `{
+  "error": {
+    "code": "role_name_conflict",
+    "message": "A role named 'Editorial Reviewer' already exists.",
+    "param": "name"
+  },
+  "success": false
+}`
+    },
+    '422': {
+      label: '422 Unprocessable',
+      desc: 'One or more privilege IDs are not recognized by the platform.',
+      code: `{
+  "error": {
+    "code": "unprocessable_entity",
+    "message": "Privilege ID 99 is not a recognized value.",
+    "param": "privileges",
+    "invalidIds": [99]
+  },
+  "success": false
+}`
+    },
+    '429': {
+      label: '429 Too Many',
+      desc: 'You exceeded the rate limit. Retry after the specified delay.',
+      code: `{
+  "error": {
+    "code": "rate_limited",
+    "message": "Too many requests. Please retry after the cool-down period.",
+    "retryAfterSeconds": 30
+  },
+  "success": false
+}`
+    },
+    '500': {
+      label: '500 Server Error',
+      desc: 'An unexpected error occurred while creating the role.',
+      code: `{
+  "error": {
+    "code": "internal_error",
+    "message": "An unexpected error occurred. Our team has been notified.",
+    "requestId": "req_5b9f...d22"
+  },
+  "success": false
+}`
+    },
+    '503': {
+      label: '503 Unavailable',
+      desc: 'The service is temporarily down for maintenance or overloaded.',
+      code: `{
+  "error": {
+    "code": "service_unavailable",
+    "message": "The service is temporarily unavailable. Try again in a few moments.",
+    "retryAfterSeconds": 60
+  },
+  "success": false
+}`
+    }
+  };
+
+  const statusOrder = ['201', '400', '401', '403', '409', '422', '429', '500', '503'];
+
+  const statusAccent = (s) => {
+    if (s.startsWith('2')) return '#3fb950';
+    if (s.startsWith('4')) return '#F68B1F';
+    if (s.startsWith('5')) return '#f85149';
+    return '#88888f';
+  };
+
+  // Original privilege catalog rewritten for the TechWriter publishing platform.
+  const privileges = [
+    { cat: 'Common', name: 'Articles: Author Drafts', id: 0, desc: 'Create new articles, edit drafts, and submit them for review.' },
+    { cat: 'Common', name: 'Articles: Sign with Notary', id: 31, desc: 'Mark publications as notarized when the workspace has e-notarization enabled.' },
+    { cat: 'Visibility', name: 'Workspace: Read All Content', id: 1, desc: 'Workspace-wide read access. Cannot modify resources unless paired with another privilege.' },
+    { cat: 'Templates', name: 'Templates: Use', id: 2, desc: 'Start a new article from a published template.' },
+    { cat: 'Templates', name: 'Templates: Author', id: 3, desc: 'Create and edit reusable templates.' },
+    { cat: 'Templates', name: 'Templates: Remove', id: 4, desc: 'Delete templates from the library.' },
+    { cat: 'Templates', name: 'Templates: Share', id: 5, desc: 'Share templates with other groups in the workspace.' },
+    { cat: 'Templates', name: 'Folders: Author', id: 6, desc: 'Create and rename template folders.' },
+    { cat: 'Templates', name: 'Folders: Remove', id: 7, desc: 'Delete template folders.' },
+    { cat: 'Templates', name: 'Folders: Share', id: 8, desc: 'Share template folders with other groups.' },
+    { cat: 'Bulk Publishing', name: 'Bulk: View', id: 9, desc: 'View bulk publication runs and their progress.' },
+    { cat: 'Bulk Publishing', name: 'Bulk: Run', id: 10, desc: 'Start, edit, and download CSV exports for bulk publication runs.' },
+    { cat: 'Bulk Publishing', name: 'Bulk: Delete', id: 33, desc: 'Delete a bulk publication run.' },
+    { cat: 'Administration', name: 'Users: View', id: 11, desc: 'Open the Administration → Users page.' },
+    { cat: 'Administration', name: 'Users: Author', id: 12, desc: 'Invite new users and edit their profiles.' },
+    { cat: 'Administration', name: 'Users: Remove', id: 13, desc: 'Deactivate or delete user profiles.' },
+    { cat: 'Administration', name: 'Users: Assign Roles', id: 14, desc: 'Grant or revoke roles for users.' },
+    { cat: 'Administration', name: 'Users: Assign Groups', id: 15, desc: 'Add users to groups or remove them.' },
+    { cat: 'Administration', name: 'Roles: Manage', id: 16, desc: 'View, create, and edit workspace roles.' },
+    { cat: 'Administration', name: 'Groups: Manage', id: 17, desc: 'View, create, and edit user groups.' },
+    { cat: 'Administration', name: 'Branding: Manage', id: 18, desc: 'Edit workspace styles, logos, and theming.' },
+    { cat: 'Administration', name: 'Notifications: Manage', id: 19, desc: 'Open and edit notification templates.' },
+    { cat: 'Administration', name: 'Integrations: API Keys', id: 20, desc: 'Create, edit, and revoke external API integrations.' },
+    { cat: 'Administration', name: 'Integrations: Auth', id: 21, desc: 'Manage authorization templates for SSO and OAuth.' },
+    { cat: 'Administration', name: 'Integrations: Certificates', id: 22, desc: 'Manage client certificates used by integrations.' },
+    { cat: 'Administration', name: 'Settings: Manage', id: 32, desc: 'Edit workspace-wide settings.' },
+    { cat: 'Administration', name: 'Confirmation Pages: Manage', id: 34, desc: 'Manage post-publication thank-you and confirmation pages.' },
+    { cat: 'Articles', name: 'Article: Reinstate', id: 23, desc: 'Restore an article that was previously cancelled.' },
+    { cat: 'Articles', name: 'Article: Reassign to Self', id: 24, desc: 'Reassign an in-review article to yourself before approving it.' },
+    { cat: 'Articles', name: 'Article: Resend', id: 25, desc: 'Resend articles waiting for reviewer signature.' },
+    { cat: 'Articles', name: 'Article: Delegate', id: 26, desc: 'Delegate review of an in-flight article to another reviewer.' },
+    { cat: 'Articles', name: 'Article: Cancel', id: 27, desc: 'Cancel articles that are still in Draft or Out-of-Review.' },
+    { cat: 'Downloads', name: 'Download: Final Article', id: 28, desc: 'Download the final published article file.' },
+    { cat: 'Downloads', name: 'Download: Audit Trail', id: 29, desc: 'Download the audit trail for eligible articles.' },
+    { cat: 'Downloads', name: 'Download: Output Bundle', id: 30, desc: 'Download the advanced output bundle for an article.' },
+    { cat: 'Other', name: 'Article: Return to Draft', id: 35, desc: 'Send an article back to Draft state.' },
+    { cat: 'Other', name: 'Editor Delegation', id: 36, desc: 'Manage editor delegation rules across the workspace.' },
+    { cat: 'Other', name: 'Reviewer Groups: Manage', id: 37, desc: 'Create and edit reviewer groups.' },
+    { cat: 'Other', name: 'Articles: Export', id: 38, desc: 'Bulk export articles when the export module is enabled.' }
+  ];
+
+  const filteredPrivileges = privileges.filter((p) => {
+    if (!privilegeQuery.trim()) return true;
+    const q = privilegeQuery.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
+      p.cat.toLowerCase().includes(q) ||
+      String(p.id).includes(q) ||
+      p.desc.toLowerCase().includes(q)
+    );
+  });
+
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSnippets({ ...copiedSnippets, [id]: true });
+      setTimeout(() => setCopiedSnippets((prev) => ({ ...prev, [id]: false })), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
+
+  const renderCode = (snippet, id) => (
+    <div style={{ marginBottom: '0', position: 'relative' }}>
+      <div style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 10 }}>
+        <button
+          onClick={() => copyToClipboard(snippet, id)}
+          style={{
+            background: '#1a1a1c',
+            color: '#555',
+            padding: '8px',
+            borderRadius: '4px',
+            border: '1px solid #303033',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Copy code"
+        >
+          {copiedSnippets[id] ? <CheckIcon style={{ color: '#F68B1F' }} /> : <CopyIcon />}
+        </button>
+      </div>
+      <div style={{
+        padding: '32px',
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        backgroundColor: '#0d0d0f',
+        color: '#e3e3e8',
+        lineHeight: '1.6',
+        overflowX: 'auto',
+        border: '1px solid #303033',
+        borderRadius: '12px',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+      }}>
+        <HighlightedCode code={snippet} />
+      </div>
+    </div>
+  );
+
+  const headerRow = (name, example, desc) => (
+    <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '1.25rem', padding: '1rem 0', borderBottom: '1px solid #1e1e20' }}>
+      <div>
+        <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.5rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#F68B1F', fontSize: '13px', fontWeight: '600' }}>{name}</code>
+        <div style={{ fontSize: '12px', color: '#6b6b7b', marginTop: '0.5rem', fontFamily: 'monospace' }}>{example}</div>
+      </div>
+      <div style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.6' }}>{desc}</div>
+    </div>
+  );
+
+  const fieldRow = (name, type, required, desc) => (
+    <div style={{ display: 'grid', gridTemplateColumns: '220px 130px 90px 1fr', gap: '1rem', padding: '0.875rem 0', borderBottom: '1px solid #1e1e20', alignItems: 'baseline' }}>
+      <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>{name}</code>
+      <span style={{ fontFamily: 'monospace', color: '#F68B1F', fontSize: '12px', fontWeight: '600' }}>{type}</span>
+      <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: required ? '#f85149' : '#6b6b7b' }}>{required ? 'required' : 'optional'}</span>
+      <span style={{ fontSize: '13px', color: '#adadb8', lineHeight: '1.5' }}>{desc}</span>
+    </div>
+  );
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: '-2rem',
+      borderTop: '1px solid #1e1e20'
+    }}>
+
+      {/* Left Column: Primary Content */}
+      <div style={{
+        flex: '1 1 0%',
+        padding: '4rem',
+        color: 'var(--ifm-font-color-base)',
+        borderRight: '1px solid #1e1e20'
+      }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ backgroundColor: 'rgba(246, 139, 31, 0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246, 139, 31, 0.35)' }}>POST</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>/api/public/roles</code>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Create a role</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontSize: '15px', lineHeight: '1.75', marginBottom: '3rem' }}>
+            <p>
+              Defines a new role inside your <span style={{ color: '#F68B1F', fontWeight: '500' }}>TechWriter</span> workspace. Provide a display <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>name</code> and an array of numeric <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>privileges</code> describing what users assigned to this role can do — for example, edit templates, manage users, or download published articles.
+            </p>
+
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              The <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>privileges</code> array accepts integer IDs only. Use the mapping below to translate each capability into its corresponding numeric value.
+            </p>
+          </div>
+
+          {/* Request Headers */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Request headers</h2>
+          <div style={{ marginBottom: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {headerRow('Authorization', 'Bearer {YOUR_BEARER_TOKEN}', 'Access token used to authenticate the API request.')}
+            {headerRow('Accept', '*/*', 'Indicates the response formats the client can accept.')}
+            {headerRow('Content-Type', 'application/json', 'Body format for the create-role request.')}
+          </div>
+
+          {/* Request Body Fields */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Request body</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Send a JSON object containing the role definition.</p>
+          <div style={{ marginBottom: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {fieldRow('name', 'string', true, 'Display name shown across the Administration → Roles screen.')}
+            {fieldRow('privileges', 'number[]', true, 'List of privilege IDs assigned to the role. Must contain at least one value.')}
+          </div>
+
+          {/* Privilege Mapping */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Privilege ID reference</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Translate privilege names to the numeric IDs that the <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>privileges</code> array expects.</p>
+
+          {/* Search input */}
+          <div style={{ position: 'relative', marginBottom: '1rem' }}>
+            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#6b6b7b', display: 'flex' }}>
+              <SearchIcon size={14} />
+            </span>
+            <input
+              value={privilegeQuery}
+              onChange={(e) => setPrivilegeQuery(e.target.value)}
+              placeholder="Filter by category, name, or ID…"
+              style={{
+                width: '100%',
+                backgroundColor: '#1a1a1c',
+                border: '1px solid #303033',
+                borderRadius: '0.5rem',
+                color: '#e3e3e8',
+                padding: '0.625rem 0.75rem 0.625rem 2.25rem',
+                fontSize: '13px',
+                outline: 'none',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '3rem', border: '1px solid #1e1e20', borderRadius: '0.5rem', overflow: 'hidden', maxHeight: '480px', overflowY: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 60px 1.4fr', gap: '1rem', padding: '0.75rem 1rem', backgroundColor: '#1a1a1c', borderBottom: '1px solid #303033', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#88888f', position: 'sticky', top: 0 }}>
+              <span>Category</span>
+              <span>Privilege</span>
+              <span style={{ textAlign: 'right' }}>ID</span>
+              <span>Description</span>
+            </div>
+            {filteredPrivileges.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center', fontSize: '13px', color: '#88888f' }}>No privileges match your filter.</div>
+            ) : (
+              filteredPrivileges.map((p, idx) => (
+                <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 60px 1.4fr', gap: '1rem', padding: '0.75rem 1rem', borderBottom: idx === filteredPrivileges.length - 1 ? 'none' : '1px solid #1e1e20', alignItems: 'baseline', fontSize: '13px' }}>
+                  <span style={{ color: '#88888f', fontSize: '12px' }}>{p.cat}</span>
+                  <span style={{ color: '#e3e3e8' }}>{p.name}</span>
+                  <code style={{ textAlign: 'right', fontFamily: 'monospace', color: '#F68B1F', fontWeight: '700' }}>{p.id}</code>
+                  <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{p.desc}</span>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Response Codes */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Response codes</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>The API uses conventional HTTP status codes. <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>2xx</code> indicate success, <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>4xx</code> indicate client errors, and <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>5xx</code> indicate server-side issues.</p>
+          <div style={{ marginBottom: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {statusOrder.map((s) => (
+              <div key={s} style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '1rem', padding: '0.875rem 0', borderBottom: '1px solid #1e1e20', alignItems: 'baseline' }}>
+                <span style={{ fontFamily: 'monospace', color: statusAccent(s), fontSize: '13px', fontWeight: '700' }}>{responseExamples[s].label}</span>
+                <span style={{ fontSize: '13px', color: '#adadb8', lineHeight: '1.5' }}>{responseExamples[s].desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Feedback Section */}
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div style={{ animation: 'fadeIn 0.5s' }}>
+                {feedback === 'yes' ? (
+                  <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                    ✨ Thanks for your feedback! We're glad this helped.
+                  </p>
+                ) : (
+                  <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+                    <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+                    <textarea
+                      style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }}
+                      placeholder="Your feedback..."
+                      rows="4"
+                    ></textarea>
+                    <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ paddingBottom: '8rem' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Code and Responses */}
+      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem', borderLeft: '1px solid #1e1e20' }}>
+        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+          {/* Language Picker */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                backgroundColor: '#1a1a1c',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '0.5rem',
+                fontSize: '14px',
+                color: 'white',
+                border: '1px solid #303033',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ fontWeight: '600' }}>{language}</span>
+              <ChevronDown size={16} style={{ color: '#88888f', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+            </button>
+
+            {isOpen && (
+              <div style={{ position: 'absolute', width: '100%', marginTop: '0.5rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', zIndex: 50, padding: '0.5rem 0', overflow: 'hidden' }}>
+                {languages.map((lang) => (
+                  <button
+                    key={lang.id}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.625rem 1.25rem',
+                      fontSize: '13px',
+                      backgroundColor: language === lang.name ? '#F68B1F' : 'transparent',
+                      color: language === lang.name ? 'white' : '#adadb8',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setLanguage(lang.name);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {lang.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Request snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Example request</h3>
+            {renderCode(requestSnippets[language], 'request')}
+          </div>
+
+          {/* Response status switcher */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Example response</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+              {statusOrder.map((s) => {
+                const active = activeStatus === s;
+                return (
+                  <button
+                    key={s}
+                    onClick={() => setActiveStatus(s)}
+                    style={{
+                      backgroundColor: active ? statusAccent(s) : '#1a1a1c',
+                      color: active ? 'white' : '#adadb8',
+                      border: `1px solid ${active ? statusAccent(s) : '#303033'}`,
+                      padding: '0.4rem 0.75rem',
+                      borderRadius: '0.375rem',
+                      fontSize: '12px',
+                      fontFamily: 'monospace',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ marginBottom: '0.75rem', fontSize: '13px', color: '#adadb8', lineHeight: '1.5' }}>
+              <span style={{ color: statusAccent(activeStatus), fontFamily: 'monospace', fontWeight: '700', marginRight: '0.5rem' }}>{responseExamples[activeStatus].label}</span>
+              {responseExamples[activeStatus].desc}
+            </div>
+            {renderCode(responseExamples[activeStatus].code, `resp-${activeStatus}`)}
+          </div>
+
+          {/* Tip Card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Designing roles</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>
+              Start narrow. Grant only the privileges a role needs today and add more later — it's much safer than over-provisioning. Pair <code style={{ color: '#e3e3e8', fontFamily: 'monospace' }}>Workspace: Read All Content</code> with task-specific privileges to give read-only auditors a useful view.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<PostCreateRolePage />

@@ -1,20 +1,204 @@
 ---
 sidebar_position: 1
-title: About TechWriter APIs
+title: API Reference
+hide_table_of_contents: true
 ---
 
-# Using TechWriter APIs
+import React, { useState } from 'react';
 
-## Course Overview
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
 
-Welcome to the comprehensive guide for **TechWriter APIs**. This documentation provides all the necessary information to integrate our documentation and asset management services into your application.
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
 
-## Introduction to TechWriter APIs
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
 
-TechWriter APIs are built on REST principles, allowing you to manage documents, users, and workspaces programmatically. Our APIs are designed to be:
+export const HighlightedCode = ({ code }) => {
+  const highlight = (text) => {
+    let highlighted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(https?:\/\/[^\s]+)/g, '<span style="color: #a5d6ff">$1</span>');
 
-* **Scalable**: Handle everything from small projects to enterprise-level document flows.
-* **Secure**: Industry-standard encryption and authorization protocols.
-* **Developer-friendly**: Detailed error messages and clear resource structures.
+    return <code dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
 
-In this section, you will learn the core concepts of our architecture and how to make your first successful API request.
+  return (
+    <pre style={{ margin: 0, background: 'transparent', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+      {highlight(code)}
+    </pre>
+  );
+};
+
+export const AboutAPIPage = () => {
+  const [feedback, setFeedback] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyBaseUrl = async () => {
+    try {
+      await navigator.clipboard.writeText('https://api.techwriter.io');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
+
+  return (
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'row', 
+      minHeight: '100vh', 
+      backgroundColor: 'var(--ifm-background-color)', 
+      margin: '-2rem',
+      borderTop: '1px solid #1e1e20'
+    }}>
+      
+      {/* Left Column: Core Narrative */}
+      <div style={{ 
+        flex: '1 1 0%', 
+        padding: '4rem', 
+        color: 'var(--ifm-font-color-base)', 
+        borderRight: '1px solid #1e1e20' 
+      }}>
+        <div style={{ maxWidth: '640px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', fontSize: '15px', lineHeight: '1.75' }}>
+            <p>
+              The TechWriter API is organized around <span style={{ color: '#F68B1F', fontWeight: '500' }}>REST</span>. Our API features predictable resource-oriented URLs, accepts JSON-encoded request bodies, returns JSON-encoded responses, and leverages standard HTTP response codes, authentication methods, and verbs.
+            </p>
+
+            <p>
+              You can interact with the TechWriter API in a <span style={{ color: '#F68B1F', fontWeight: '500' }}>sandbox environment</span> to safely test your integrations without impacting your production workspace or live assets. The authentication token included in your request determines whether you are operating in live mode or within a test environment.
+            </p>
+
+            <p style={{ borderLeft: '2px solid #303033', paddingLeft: '1.5rem', fontStyle: 'italic' }}>
+              The TechWriter API focuses on individual resource manipulation to maintain high performance and data integrity. This ensures that every change to your documentation is handled with precision.
+            </p>
+
+            <p>
+              The API structure adapts as we release new versions and introduce specialized functionality. Access your developer dashboard to view documentation tailored to your specific account, complete with your unique API keys and live data previews.
+            </p>
+          </div>
+
+          {/* Feedback Section */}
+          <div style={{ marginTop: '6rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div style={{ animation: 'fadeIn 0.5s' }}>
+                <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                  {feedback === 'yes' ? "✨ Thanks! We're glad this helped." : "Thank you for your feedback. We'll work to improve this page."}
+                </p>
+              </div>
+            )}
+            <div style={{ paddingBottom: '16rem' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Key Details & Quick Links */}
+      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem' }}>
+        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+          
+          {/* Base URL Section */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', tracking: '0.1em', marginBottom: '1.5rem' }}>Base URL</h3>
+            <div style={{ position: 'relative' }}>
+              <div style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 10 }}>
+                <button 
+                  onClick={copyBaseUrl}
+                  style={{ background: '#1a1a1c', color: '#555', padding: '8px', borderRadius: '4px', border: '1px solid #303033', cursor: 'pointer' }}
+                >
+                  {copied ? <CheckIcon style={{ color: '#F68B1F' }} /> : <CopyIcon />}
+                </button>
+              </div>
+              <div style={{ 
+                padding: '2rem', 
+                fontFamily: 'monospace', 
+                fontSize: '14px', 
+                backgroundColor: '#0d0d0f', 
+                color: '#e3e3e8', 
+                border: '1px solid #303033', 
+                borderRadius: '12px',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                <HighlightedCode code="https://api.techwriter.io" />
+              </div>
+            </div>
+          </div>
+
+          {/* Quickstart Cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+             <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', transition: 'border-color 0.2s', cursor: 'pointer' }}>
+                <h4 style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem' }}>Just getting started?</h4>
+                <p style={{ fontSize: '13px', color: '#88888f', lineHeight: '1.5', marginBottom: '1rem' }}>Review our guide to learn how to retrieve your first set of resources.</p>
+                <a href="get-users" style={{ color: '#F68B1F', fontSize: '13px', fontWeight: '600', textDecoration: 'none' }}>View GET Users →</a>
+             </div>
+
+             <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', transition: 'border-color 0.2s', cursor: 'pointer' }}>
+                <h4 style={{ color: 'white', fontSize: '14px', fontWeight: 'bold', marginBottom: '0.5rem' }}>Need a custom integration?</h4>
+                <p style={{ fontSize: '13px', color: '#88888f', lineHeight: '1.5', marginBottom: '1rem' }}>Explore our OAuth implementation to build secure, third-party applications.</p>
+                <a href="oauth" style={{ color: '#F68B1F', fontSize: '13px', fontWeight: '600', textDecoration: 'none' }}>Explore OAuth →</a>
+             </div>
+          </div>
+
+          {/* API at a glance */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>API at a glance</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', fontSize: '12px' }}>
+              {[
+                ['Current version', 'v1'],
+                ['Format', 'JSON request & response'],
+                ['Authentication', 'HTTPS + Bearer token'],
+                ['Date format', 'ISO 8601 (UTC)'],
+                ['Rate limit', '60 req / min per workspace'],
+                ['Errors', 'Standard JSON envelope']
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', paddingBottom: '0.5rem', borderBottom: '1px dashed #303033' }}>
+                  <span style={{ color: '#88888f' }}>{label}</span>
+                  <span style={{ color: '#e3e3e8', fontFamily: label === 'Current version' || label === 'Rate limit' ? 'monospace' : 'inherit', textAlign: 'right' }}>{value}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: '11px', lineHeight: '1.5', color: '#6b6b7b', margin: 0, fontStyle: 'italic' }}>
+              Every endpoint follows the same conventions — read the OAuth and GET Users pages for live examples.
+            </p>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<AboutAPIPage />

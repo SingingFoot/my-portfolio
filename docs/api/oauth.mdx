@@ -1,62 +1,368 @@
 ---
 sidebar_position: 2
-title: Authorization Through OAuth 2.0
+title: Authentication
+hide_table_of_contents: true
 ---
 
-# Authorization Through OAuth 2.0
+import React, { useState } from 'react';
 
-All requests to the **TechWriter API** must be authorized. We use the OAuth 2.0 protocol to ensure secure access to your documentation assets.
+export const ChevronDown = ({ size = 16, className = "" }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    style={{ transition: 'transform 0.3s' }}
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
 
-## Getting Your Credentials
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
 
-To begin the authorization process, you need a `Client ID` and a `Client Secret`. You can generate these in the **Developer Settings** section of your TechWriter dashboard.
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
 
-## Authorization Flow
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
 
-TechWriter supports the **Client Credentials** grant type, which is ideal for server-to-server integrations.
+export const HighlightedCode = ({ code }) => {
+  const highlight = (text) => {
+    let highlighted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(\/\/.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/(#.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g, '<span style="color: #a5d6ff">$1</span>')
+      .replace(/\b(import|from|const|await|new|var|require|return|if|else|public|private|class|interface|package|use|namespace|def|func)\b/g, '<span style="color: #ff7b72">$1</span>')
+      .replace(/\b(TechWriter|TechWriterClient|RequestOptions|Group|GroupParams|context|ctx|options|client|tw|sc|service)\b/g, '<span style="color: #ffa657">$1</span>')
+      .replace(/\b([a-z_][a-z0-9_]*)(?=\s*\()/gi, '<span style="color: #d2a8ff">$1</span>')
+      .replace(/\b(\d+)\b/g, '<span style="color: #79c0ff">$1</span>');
 
-### 1. Request an Access Token
-Send a `POST` request to our authorization server:
+    return <code dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
 
-**Endpoint:** `https://auth.techwriter.io/oauth/token`
+  return (
+    <pre style={{ margin: 0, background: 'transparent', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+      {highlight(code)}
+    </pre>
+  );
+};
 
-```http
-POST /oauth/token HTTP/1.1
-Host: auth.techwriter.io
-Content-Type: application/json
+export const AuthenticationPage = () => {
+  const [language, setLanguage] = useState('Node.js');
+  const [isOpen, setIsOpen] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedSnippets, setCopiedSnippets] = useState({});
 
-{
-  "client_id": "YOUR_CLIENT_ID",
-  "client_secret": "YOUR_CLIENT_SECRET",
-  "grant_type": "client_credentials"
-}
-```
-### 2. Receive the Token
+  const languages = [
+    { id: 'curl', name: 'cURL' },
+    { id: 'node', name: 'Node.js' },
+    { id: 'python', name: 'Python' },
+    { id: 'ruby', name: 'Ruby' },
+    { id: 'php', name: 'PHP' },
+    { id: 'java', name: 'Java' },
+    { id: 'go', name: 'Go' },
+    { id: 'dotnet', name: '.NET' }
+  ];
 
-If successful, the server returns a JSON response containing your access token:
+  const codeSnippets = {
+    'cURL': {
+      init: `curl https://api.techwriter.io/v1/groups \\
+  -u tw_test_51H59ow...Dm2DtMWD :`,
+      note: `# The colon prevents curl from asking for a password.`
+    },
+    'Node.js': {
+      init: `import TechWriter from 'techwriter';\nconst tw = new TechWriter('tw_test_51H59...');`,
+      perRequest: `const group = await tw.groups.retrieve(\n  'grp_3LiiC52...', \n  { apiKey: 'tw_test_51H59...' }\n);`
+    },
+    'Python': {
+      init: `from techwriter import TechWriterClient\nclient = TechWriterClient("tw_test_51H59...")`,
+      perRequest: `group = client.v1.groups.retrieve(\n  "grp_3Ln3e92...",\n  options={"api_key": "tw_test_51H59..."}\n)`
+    },
+    'Ruby': {
+      init: `require 'techwriter'\nclient = TechWriter::Client.new("tw_test_51H59...")`,
+      perRequest: `group = client.v1.groups.retrieve(\n  'grp_3P5pVZA...',\n  {},\n  { api_key: 'tw_test_51H59...' }\n)`
+    },
+    'PHP': {
+      init: `$tw = new \\TechWriter\\Client("tw_test_51H59...");`,
+      perRequest: `$ch = $tw->groups->retrieve(\n  'grp_3Ln3fO...',\n  [],\n  ['api_key' => 'tw_test_51H59...']\n);`
+    },
+    'Java': {
+      init: `TechWriterClient client = new TechWriterClient("tw_test_51H59...");`,
+      perRequest: `RequestOptions options = RequestOptions.builder()\n  .setApiKey("tw_test_51H59...")\n  .build();\n\nGroup group = client.v1().groups().retrieve("grp_3Ln3ga...", options);`
+    },
+    'Go': {
+      init: `twc := techwriter.NewClient("tw_test_51H59...")`,
+      perRequest: `params := &techwriter.GroupParams{}\nparams.SetApiKey("tw_test_51H59...")\ngroup, err := twc.Groups.Get(ctx, "grp_3Ln3j0...", params)`
+    },
+    '.NET': {
+      init: `var client = new TechWriterClient("tw_test_51H59...");`,
+      perRequest: `var options = new RequestOptions {\n  ApiKey = "tw_test_51H59..."\n};\nvar group = client.V1.Groups.Get("grp_3Ln3kB...", null, options);`
+    }
+  };
 
-```JSON
-{
-  "access_token": "tw_tok_789abc...",
-  "token_type": "Bearer",
-  "expires_in": 3600
-}
-```
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (id === 'api-key') {
+        setCopiedKey(true);
+        setTimeout(() => setCopiedKey(false), 2000);
+      } else {
+        setCopiedSnippets({ ...copiedSnippets, [id]: true });
+        setTimeout(() => setCopiedSnippets({ ...copiedSnippets, [id]: false }), 2000);
+      }
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
 
-### 3. Using the Bearer Token
+  const renderCode = (snippet, id) => (
+    <div style={{ marginBottom: '32px', position: 'relative' }}>
+      <div style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 10 }}>
+        <button 
+          onClick={() => copyToClipboard(snippet, id)}
+          style={{ 
+            background: '#1a1a1c', 
+            color: '#555', 
+            padding: '8px', 
+            borderRadius: '4px', 
+            border: '1px solid #303033', 
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Copy code"
+        >
+          {copiedSnippets[id] ? <CheckIcon style={{ color: '#F68B1F' }} /> : <CopyIcon />}
+        </button>
+      </div>
+      <div style={{ 
+        padding: '32px', 
+        fontFamily: 'monospace', 
+        fontSize: '14px', 
+        backgroundColor: '#0d0d0f', 
+        color: '#e3e3e8', 
+        lineHeight: '1.6', 
+        overflowX: 'auto', 
+        border: '1px solid #303033', 
+        borderRadius: '12px',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+      }}>
+        <HighlightedCode code={snippet} />
+      </div>
+    </div>
+  );
 
-Once you have the access_token, include it in the Authorization header of your API requests:
+  return (
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'row', 
+      minHeight: '100vh', 
+      backgroundColor: 'var(--ifm-background-color)', 
+      margin: '-2rem',
+      borderTop: '1px solid #1e1e20'
+    }}>
+      
+      {/* Left Column: Primary Content */}
+      <div style={{ 
+        flex: '1 1 0%', 
+        padding: '4rem', 
+        color: 'var(--ifm-font-color-base)', 
+        borderRight: '1px solid #1e1e20' 
+      }}>
+        <div style={{ maxWidth: '640px' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', fontSize: '15px', lineHeight: '1.75' }}>
+            <p>
+              The TechWriter API uses <span style={{ color: '#F68B1F', fontWeight: '500', cursor: 'pointer' }}>API keys</span> to authenticate requests. You can view and manage your API keys in the <span style={{ color: '#F68B1F', fontWeight: '500', cursor: 'pointer' }}>TechWriter Dashboard</span>.
+            </p>
 
-```HTTP
-GET /api/public/groups HTTP/1.1
-Host: api.techwriter.io
-Authorization: Bearer tw_tok_789abc...
-```
+            <p>
+              Test secret keys have the prefix <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8' }}>tw_test_</code> and live mode secret keys have the prefix <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8' }}>tw_live_</code>. Alternatively, you can use <span style={{ color: '#F68B1F', fontWeight: '500', cursor: 'pointer' }}>restricted API keys</span> for granular permissions.
+            </p>
 
-:::tip 
+            <p style={{ borderLeft: '2px solid #303033', paddingLeft: '1.5rem', fontStyle: 'italic' }}>
+              Your API keys carry many privileges, so be sure to keep them secure! Do not share your secret API keys in publicly accessible areas such as GitHub, client-side code, and so forth.
+            </p>
 
-Note
+            <p>
+              Authentication to the API is performed via <span style={{ color: '#F68B1F', fontWeight: '500', cursor: 'pointer' }}>HTTP Basic Auth</span>. Provide your API key as the basic auth username value. You do not need to provide a password.
+            </p>
 
-Access tokens are valid for 1 hour. Your application should implement logic to refresh the token before it expires.
+            <p>
+              All API requests must be made over <span style={{ color: '#F68B1F', fontWeight: '500', cursor: 'pointer' }}>HTTPS</span>. Calls made over plain HTTP will fail. API requests without authentication will also fail.
+            </p>
+          </div>
 
-:::
+          {/* Feedback Section */}
+          <div style={{ marginTop: '6rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div style={{ animation: 'fadeIn 0.5s' }}>
+                {feedback === 'yes' ? (
+                  <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                    ✨ Thanks for your feedback! We're glad this helped.
+                  </p>
+                ) : (
+                  <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+                    <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+                    <textarea 
+                      style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }}
+                      placeholder="Your feedback..."
+                      rows="4"
+                    ></textarea>
+                    <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ paddingBottom: '16rem' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Code and Specifics */}
+      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem', borderLeft: '1px solid #1e1e20' }}>
+        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+          
+          {/* Language Picker */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setIsOpen(!isOpen)}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                width: '100%', 
+                backgroundColor: '#1a1a1c', 
+                padding: '0.75rem 1.25rem', 
+                borderRadius: '0.5rem', 
+                fontSize: '14px', 
+                color: 'white', 
+                border: '1px solid #303033', 
+                cursor: 'pointer' 
+              }}
+            >
+              <span style={{ fontWeight: '600' }}>{language}</span>
+              <ChevronDown size={16} style={{ color: '#88888f', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+            </button>
+
+            {isOpen && (
+              <div style={{ position: 'absolute', width: '100%', marginTop: '0.5rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', zIndex: 50, padding: '0.5rem 0', overflow: 'hidden' }}>
+                {languages.map((lang) => (
+                  <button
+                    key={lang.id}
+                    style={{ 
+                      width: '100%', 
+                      textAlign: 'left', 
+                      padding: '0.625rem 1.25rem', 
+                      fontSize: '13px', 
+                      backgroundColor: language === lang.name ? '#F68B1F' : 'transparent', 
+                      color: language === lang.name ? 'white' : '#adadb8', 
+                      border: 'none', 
+                      cursor: 'pointer' 
+                    }}
+                    onClick={() => {
+                      setLanguage(lang.name);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {lang.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Snippets and Specific Prose */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+            {language === 'cURL' ? (
+              <div>
+                <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '18px', fontWeight: 'bold', marginBottom: '1rem', letterSpacing: '-0.025em' }}>Terminal Request</h3>
+                {renderCode(codeSnippets['cURL'].init, 'init')}
+                <p style={{ fontSize: '13px', color: '#6b6b7b', marginTop: '1rem', fontStyle: 'italic', padding: '0.75rem 1rem', backgroundColor: '#1a1a1c', borderRadius: '0.5rem', border: '1px solid #303033', borderLeft: '4px solid #8b949e' }}>
+                  {codeSnippets['cURL'].note}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '18px', fontWeight: 'bold', marginBottom: '1rem', letterSpacing: '-0.025em' }}>Initialize TechWriterClient</h3>
+                  <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                    Use your API key by {language === 'Node.js' ? 'setting it in the initial configuration' : 'assigning it when creating the client'}. The {language} library will then automatically send this key in each request.
+                  </p>
+                  {renderCode(codeSnippets[language].init, 'init')}
+                </div>
+                
+                <div>
+                  <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '18px', fontWeight: 'bold', marginBottom: '1rem', letterSpacing: '-0.025em' }}>Per-Request API Key</h3>
+                  <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                    You can also set a per-request key with an option. This is often useful for applications that use multiple API keys during the lifetime of a process.
+                  </p>
+                  {renderCode(codeSnippets[language].perRequest, 'per')}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Key Info */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', marginTop: '3rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', tracking: '0.2em', color: '#88888f' }}>Your Test API Key</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <div 
+              onClick={() => copyToClipboard('tw_test_51H59ow...Dm2Dt', 'api-key')}
+              style={{ backgroundColor: '#0d0d0f', padding: '1rem', borderRadius: '0.5rem', border: '1px solid #303033', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', transition: 'border-color 0.2s' }}
+            >
+              <code style={{ color: '#e3e3e8', fontSize: '13px', fontFamily: 'monospace' }}>tw_test_51H59ow...Dm2Dt</code>
+              {copiedKey ? <CheckIcon size={18} style={{ color: '#F68B1F' }} /> : <CopyIcon size={18} style={{ color: '#555' }} />}
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.5', color: '#88888f' }}>
+              Replace with your <span style={{ color: '#F68B1F', fontWeight: '500', cursor: 'pointer' }}>live key</span> for production.
+            </p>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<AuthenticationPage />
