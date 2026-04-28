@@ -1,51 +1,658 @@
 ---
 sidebar_position: 2
 title: Authentication
+hide_table_of_contents: true
 ---
 
-# Authentication
+import React, { useState } from 'react';
 
-To interact with the TechWriter API, all requests must be authenticated using a Bearer Token or an API Key. This ensures that your documentation assets remain secure.
+export const ChevronDown = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ transition: 'transform 0.3s' }}
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
 
-## API Keys
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
 
-You can generate API keys in your Developer Dashboard. API keys do not expire unless revoked.
+export const ArrowRight = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+);
 
-### Using API Key in Headers
+export const ShieldIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+);
 
-Include the `X-API-KEY` in your HTTP request header:
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
 
-```http
-GET /v1/projects HTTP/1.1
-Host: api.techwriter.io
-X-API-KEY: your_api_key_here
-```
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
 
-### OAuth2 (Bearer Token)
+export const HighlightedCode = ({ code }) => {
+  const highlight = (text) => {
+    let highlighted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(\/\/.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/(#.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g, '<span style="color: #a5d6ff">$1</span>')
+      .replace(/\b(import|from|const|let|await|async|new|var|require|return|if|else|public|private|class|interface|package|use|namespace|def|func|true|false|null|try|catch|throw)\b/g, '<span style="color: #ff7b72">$1</span>')
+      .replace(/\b(TechWriter|TechWriterClient|TokenManager|RequestOptions|context|ctx|options|client|tw|sc|service)\b/g, '<span style="color: #ffa657">$1</span>')
+      .replace(/\b([a-z_][a-z0-9_]*)(?=\s*\()/gi, '<span style="color: #d2a8ff">$1</span>')
+      .replace(/\b(\d+)\b/g, '<span style="color: #79c0ff">$1</span>');
 
-For applications requiring user-level permissions, we support OAuth2. First, exchange your credentials for an access token.
+    return <code dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
 
-```js
-const response = await fetch('[https://api.techwriter.io/oauth/token](https://api.techwriter.io/oauth/token)', {
-  method: 'POST',
-  body: JSON.stringify({
-    client_id: 'YOUR_CLIENT_ID',
-    client_secret: 'YOUR_CLIENT_SECRET',
-    grant_type: 'client_credentials'
-  })
+  return (
+    <pre style={{ margin: 0, background: 'transparent', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+      {highlight(code)}
+    </pre>
+  );
+};
+
+export const SdkAuthenticationPage = () => {
+  const [language, setLanguage] = useState('Node.js');
+  const [isOpen, setIsOpen] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [copiedSnippets, setCopiedSnippets] = useState({});
+
+  const languages = [
+    { id: 'curl', name: 'cURL' },
+    { id: 'node', name: 'Node.js' },
+    { id: 'python', name: 'Python' },
+    { id: 'ruby', name: 'Ruby' },
+    { id: 'php', name: 'PHP' },
+    { id: 'java', name: 'Java' },
+    { id: 'go', name: 'Go' },
+    { id: 'dotnet', name: '.NET' }
+  ];
+
+  const apiKeySnippets = {
+    'cURL':    `curl https://api.techwriter.io/v1/articles \\
+  -H "Authorization: Bearer tw_live_51H59ow...Dm2DtMWD"`,
+    'Node.js': `import { TechWriterClient } from '@techwriter/sdk-core';
+
+// Read the key from the environment — never hard-code it.
+const tw = new TechWriterClient({
+  apiKey: process.env.TECHWRITER_API_KEY
 });
 
-const data = await response.json();
-console.log(data.access_token);
-```
+const articles = await tw.articles.list();`,
+    'Python':  `import os
+from techwriter import TechWriterClient
 
-### Security Best Practices
+client = TechWriterClient(api_key=os.environ["TECHWRITER_API_KEY"])
+articles = client.articles.list()`,
+    'Ruby':    `require 'techwriter'
 
-- Never hardcode tokens in your source code.
+client = TechWriter::Client.new(api_key: ENV['TECHWRITER_API_KEY'])
+articles = client.articles.list`,
+    'PHP':     `$tw = new \\TechWriter\\Client([
+  'api_key' => getenv('TECHWRITER_API_KEY'),
+]);
+$articles = $tw->articles->list();`,
+    'Java':    `TechWriterClient client = TechWriterClient.builder()
+  .apiKey(System.getenv("TECHWRITER_API_KEY"))
+  .build();
 
-- Use Environment Variables (e.g., .env files) to store credentials.
+ArticlePage articles = client.articles().list();`,
+    'Go':      `client := techwriter.NewClient(techwriter.Config{
+  ApiKey: os.Getenv("TECHWRITER_API_KEY"),
+})
+articles, err := client.Articles.List(ctx, nil)`,
+    '.NET':    `var client = new TechWriterClient(new TechWriterOptions {
+  ApiKey = Environment.GetEnvironmentVariable("TECHWRITER_API_KEY")
+});
 
-- Rotate your API keys every 90 days to maintain security.
+var articles = await client.Articles.ListAsync();`
+  };
 
-### Error Codes
-If your authentication fails, the API will return a 401 Unauthorized status code. Check if your token has expired or if the header name is spelled correctly.
+  const oauthSnippets = {
+    'cURL':    `curl -X POST https://api.techwriter.io/oauth/token \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "grant_type": "client_credentials",
+    "client_id": "$TW_CLIENT_ID",
+    "client_secret": "$TW_CLIENT_SECRET",
+    "scope": "articles:read articles:write"
+  }'`,
+    'Node.js': `import { TokenManager } from '@techwriter/sdk-core';
+
+const tokens = new TokenManager({
+  clientId: process.env.TW_CLIENT_ID,
+  clientSecret: process.env.TW_CLIENT_SECRET,
+  scope: ['articles:read', 'articles:write']
+});
+
+// TokenManager caches and refreshes the token automatically.
+const accessToken = await tokens.getAccessToken();`,
+    'Python':  `from techwriter.auth import TokenManager
+
+tokens = TokenManager(
+  client_id=os.environ["TW_CLIENT_ID"],
+  client_secret=os.environ["TW_CLIENT_SECRET"],
+  scope=["articles:read", "articles:write"],
+)
+access_token = tokens.get_access_token()  # cached & auto-refreshed`,
+    'Ruby':    `tokens = TechWriter::TokenManager.new(
+  client_id: ENV['TW_CLIENT_ID'],
+  client_secret: ENV['TW_CLIENT_SECRET'],
+  scope: %w[articles:read articles:write]
+)
+access_token = tokens.access_token`,
+    'PHP':     `$tokens = new \\TechWriter\\TokenManager([
+  'client_id' => getenv('TW_CLIENT_ID'),
+  'client_secret' => getenv('TW_CLIENT_SECRET'),
+  'scope' => ['articles:read', 'articles:write']
+]);
+$accessToken = $tokens->getAccessToken();`,
+    'Java':    `TokenManager tokens = TokenManager.builder()
+  .clientId(System.getenv("TW_CLIENT_ID"))
+  .clientSecret(System.getenv("TW_CLIENT_SECRET"))
+  .scopes("articles:read", "articles:write")
+  .build();
+
+String accessToken = tokens.getAccessToken();`,
+    'Go':      `tm := techwriter.NewTokenManager(techwriter.TokenConfig{
+  ClientId:     os.Getenv("TW_CLIENT_ID"),
+  ClientSecret: os.Getenv("TW_CLIENT_SECRET"),
+  Scope:        []string{"articles:read", "articles:write"},
+})
+accessToken, err := tm.AccessToken(ctx)`,
+    '.NET':    `var tokens = new TokenManager(new TokenManagerOptions {
+  ClientId = Environment.GetEnvironmentVariable("TW_CLIENT_ID"),
+  ClientSecret = Environment.GetEnvironmentVariable("TW_CLIENT_SECRET"),
+  Scope = new[] { "articles:read", "articles:write" }
+});
+var accessToken = await tokens.GetAccessTokenAsync();`
+  };
+
+  const refreshSnippets = {
+    'cURL':    `# Refresh tokens explicitly when caching across processes
+curl -X POST https://api.techwriter.io/oauth/token \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "grant_type": "refresh_token",
+    "refresh_token": "$TW_REFRESH_TOKEN",
+    "client_id": "$TW_CLIENT_ID",
+    "client_secret": "$TW_CLIENT_SECRET"
+  }'`,
+    'Node.js': `// The SDK auto-refreshes 60 seconds before expiry.
+// You can also force a refresh manually:
+const fresh = await tokens.refresh();
+console.log('New token expires at:', fresh.expiresAt);`,
+    'Python':  `# Auto-refresh happens transparently. Force a refresh with:
+fresh = tokens.refresh()
+print("New token expires at:", fresh.expires_at)`,
+    'Ruby':    `# Force a refresh; otherwise auto-refresh is transparent.
+fresh = tokens.refresh!
+puts "New token expires at: #{fresh.expires_at}"`,
+    'PHP':     `$fresh = $tokens->refresh();
+echo "New token expires at: " . $fresh->expiresAt;`,
+    'Java':    `Token fresh = tokens.refresh();
+System.out.println("New token expires at: " + fresh.expiresAt());`,
+    'Go':      `fresh, err := tm.Refresh(ctx)
+if err == nil {
+  fmt.Println("New token expires at:", fresh.ExpiresAt)
+}`,
+    '.NET':    `var fresh = await tokens.RefreshAsync();
+Console.WriteLine($"New token expires at: {fresh.ExpiresAt}");`
+  };
+
+  const cardTableStyle = { marginBottom: '3rem', border: '1px solid #1e1e20', borderRadius: '0.5rem', overflow: 'hidden' };
+  const headerCellsStyle = (cols) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.75rem 1rem',
+    backgroundColor: '#1a1a1c',
+    borderBottom: '1px solid #303033',
+    fontSize: '11px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: '#88888f'
+  });
+  const bodyRowStyle = (cols, isLast) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.875rem 1rem',
+    borderBottom: isLast ? 'none' : '1px solid #1e1e20',
+    alignItems: 'baseline',
+    fontSize: '13px'
+  });
+
+  const methodRows = [
+    { method: 'API Key (Bearer)', use: 'Server-to-server scripts, internal tooling, scheduled jobs.', lifetime: 'Until revoked', refresh: 'No', risk: 'Lowest setup, highest blast radius if leaked.' },
+    { method: 'OAuth 2.0 Client Credentials', use: 'Backend services that act on their own behalf.', lifetime: '60 minutes', refresh: 'Auto-refresh built in', risk: 'Short-lived tokens limit exposure on leak.' },
+    { method: 'OAuth 2.0 Authorization Code', use: 'Apps that act on behalf of an end user (consent flow).', lifetime: '60 minutes (refresh token: 30 days)', refresh: 'Refresh token grant', risk: 'Most secure for user-facing integrations.' },
+    { method: 'JWT Bearer', use: 'Federated SSO and machine identities signed by your IdP.', lifetime: 'You set the exp claim', refresh: 'Mint a new JWT', risk: 'Strong if your signing keys are protected.' }
+  ];
+
+  const keyTypeRows = [
+    { type: 'tw_test_…', purpose: 'Test mode', desc: 'Targets the sandbox database. No real publishing happens, no rate-limit charges. Safe to commit to local fixtures.' },
+    { type: 'tw_live_…', purpose: 'Live mode', desc: 'Targets production. Treat these like production database credentials — never commit, never ship in client code.' },
+    { type: 'tw_restricted_…', purpose: 'Restricted', desc: 'Live key with a custom subset of scopes. Use these to give read-only dashboards or scoped automation just enough access.' }
+  ];
+
+  const scopeRows = [
+    { scope: 'articles:read', what: 'List, retrieve, and search articles. No write access.' },
+    { scope: 'articles:write', what: 'Create, update, publish, and archive articles.' },
+    { scope: 'templates:read', what: 'Browse the template library and folder hierarchy.' },
+    { scope: 'templates:write', what: 'Create, edit, and delete templates and folders.' },
+    { scope: 'users:read', what: 'List users, groups, and role assignments.' },
+    { scope: 'users:write', what: 'Invite users, edit profiles, assign roles and groups.' },
+    { scope: 'webhooks:manage', what: 'Subscribe, verify, and rotate signing secrets for webhooks.' },
+    { scope: 'audit:read', what: 'Read the immutable audit log for compliance reporting.' }
+  ];
+
+  const lifecycleRows = [
+    { event: 'Token issued', when: 'On login, OAuth exchange, or API key creation.', action: 'Cache securely. Never log the raw value.' },
+    { event: 'Token used', when: 'Every authenticated request.', action: 'Send via Authorization: Bearer header. Always over HTTPS.' },
+    { event: 'Token near expiry', when: '60 seconds before exp claim.', action: 'SDK auto-refreshes silently. Manual refresh available.' },
+    { event: 'Token expired', when: 'After lifetime elapses.', action: 'Server returns 401 with code token_expired. Refresh and retry once.' },
+    { event: 'Token revoked', when: 'Manually rotated or compromised.', action: 'Server returns 401 with code token_revoked. Re-authenticate.' }
+  ];
+
+  const errorRows = [
+    { code: '401', err: 'unauthorized', cause: 'Header missing, malformed, or token not recognized.', fix: 'Confirm Authorization: Bearer <token> is set and the key has not been revoked.' },
+    { code: '401', err: 'token_expired', cause: 'Access token is past its exp time.', fix: 'Refresh the token and retry the request once.' },
+    { code: '401', err: 'token_revoked', cause: 'Key was rotated or revoked in the dashboard.', fix: 'Re-authenticate with the new credentials.' },
+    { code: '403', err: 'forbidden', cause: 'Token is valid but the scope does not cover this endpoint.', fix: 'Check the requiredScope field in the error body and grant it on the key.' },
+    { code: '403', err: 'ip_restricted', cause: 'Request came from an IP outside the key’s allowlist.', fix: 'Update the key’s IP allowlist or call from an approved range.' },
+    { code: '419', err: 'authentication_timeout', cause: 'The session reached the idle timeout for interactive flows.', fix: 'Restart the OAuth flow to obtain new tokens.' },
+    { code: '429', err: 'rate_limited', cause: 'Too many auth attempts in a short window.', fix: 'Honor the Retry-After header. The SDK does this automatically.' }
+  ];
+
+  const practiceRows = [
+    { rule: 'Read keys from environment variables', why: 'Hard-coding leaks them via repos, screenshots, and stack traces. .env files belong in .gitignore.' },
+    { rule: 'Rotate keys every 90 days', why: 'Periodic rotation limits the window an exfiltrated key remains useful. The dashboard supports zero-downtime rotation with a grace period.' },
+    { rule: 'Use the smallest possible scope', why: 'A leaked articles:read key cannot delete content. Build separate keys for separate jobs.' },
+    { rule: 'Pin keys to IP allowlists where possible', why: 'Restricts a stolen key to your own infrastructure even if exfiltrated to an attacker’s laptop.' },
+    { rule: 'Never log raw tokens', why: 'Logs end up in many systems. Scrub Authorization headers before they reach log aggregators.' },
+    { rule: 'Verify webhook signatures', why: 'Webhook payloads are signed with a separate secret. Reject requests whose HMAC does not match.' },
+    { rule: 'Set short timeouts on token caches', why: 'Caching a token for hours when the API issued it for an hour creates a window of stale auth failures. Cache to expiry, not forever.' },
+    { rule: 'Use sandbox keys for CI', why: 'Continuous integration runs the same code many times — sandbox traffic is free, recoverable, and isolated.' }
+  ];
+
+  const nextSteps = [
+    { href: 'getting-started', title: 'Getting Started', desc: 'SDK installation, configuration options, and quickstart steps.' },
+    { href: 'api-endpoints', title: 'API endpoints', desc: 'Reference of every method available through the authenticated client.' },
+    { href: 'error-handling', title: 'Error handling', desc: 'Error envelope, retry semantics, and idempotency keys.' },
+    { href: 'webhooks', title: 'Webhooks', desc: 'Inbound events from TechWriter and how to verify their signatures.' },
+    { href: 'best-practices', title: 'Best practices', desc: 'Production patterns for concurrency, caching, and consistency.' }
+  ];
+
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSnippets({ ...copiedSnippets, [id]: true });
+      setTimeout(() => setCopiedSnippets((prev) => ({ ...prev, [id]: false })), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
+
+  const renderCode = (snippet, id) => (
+    <div style={{ marginBottom: '0', position: 'relative' }}>
+      <div style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 10 }}>
+        <button
+          onClick={() => copyToClipboard(snippet, id)}
+          style={{
+            background: '#1a1a1c',
+            color: '#555',
+            padding: '8px',
+            borderRadius: '4px',
+            border: '1px solid #303033',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Copy code"
+        >
+          {copiedSnippets[id] ? <CheckIcon style={{ color: '#F68B1F' }} /> : <CopyIcon />}
+        </button>
+      </div>
+      <div style={{
+        padding: '32px',
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        backgroundColor: '#0d0d0f',
+        color: '#e3e3e8',
+        lineHeight: '1.6',
+        overflowX: 'auto',
+        border: '1px solid #303033',
+        borderRadius: '12px',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+      }}>
+        <HighlightedCode code={snippet} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: '-2rem',
+      borderTop: '1px solid #1e1e20'
+    }}>
+
+      {/* Left Column: Primary Content */}
+      <div style={{
+        flex: '1 1 0%',
+        padding: '4rem',
+        color: 'var(--ifm-font-color-base)',
+        borderRight: '1px solid #1e1e20'
+      }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <span style={{ backgroundColor: 'rgba(246, 139, 31, 0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246, 139, 31, 0.35)' }}>SDK</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>@techwriter/sdk-core</code>
+            <span style={{ fontSize: '11px', color: '#88888f', display: 'flex', alignItems: 'center', gap: '0.25rem', backgroundColor: '#1e1e20', padding: '0.125rem 0.5rem', borderRadius: '0.25rem' }}>
+              <ShieldIcon size={11} /> Auth
+            </span>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Authentication</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontSize: '15px', lineHeight: '1.75', marginBottom: '3rem' }}>
+            <p>
+              Every TechWriter API call must be authenticated. The platform supports four mechanisms — <span style={{ color: '#F68B1F', fontWeight: '500' }}>API keys</span>, <span style={{ color: '#F68B1F', fontWeight: '500' }}>OAuth 2.0 Client Credentials</span>, <span style={{ color: '#F68B1F', fontWeight: '500' }}>OAuth 2.0 Authorization Code</span>, and signed <span style={{ color: '#F68B1F', fontWeight: '500' }}>JWT Bearer</span> tokens — and the SDK speaks all four with a consistent surface.
+            </p>
+
+            <p>
+              For most server-side workloads an API key is enough. If you act on behalf of users, ship a public app, or need short-lived credentials with audit trails, use OAuth 2.0. Whatever you pick, send the credential in the <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>Authorization: Bearer …</code> header — the legacy <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>X-API-KEY</code> header is still accepted for compatibility but is no longer recommended.
+            </p>
+
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              All authenticated requests must travel over HTTPS. Plain HTTP and self-signed certificates are rejected at the edge — there are no exceptions, including for sandbox traffic.
+            </p>
+          </div>
+
+          {/* Authentication methods */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Authentication methods</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Pick the mechanism that matches who is making the call and how long you can hold a credential.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('220px 1.4fr 180px 1fr')}>
+              <span>Method</span>
+              <span>Best for</span>
+              <span>Lifetime</span>
+              <span>Notes</span>
+            </div>
+            {methodRows.map((m, idx) => (
+              <div key={m.method} style={bodyRowStyle('220px 1.4fr 180px 1fr', idx === methodRows.length - 1)}>
+                <span style={{ color: '#F68B1F', fontWeight: '600' }}>{m.method}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{m.use}</span>
+                <span style={{ color: '#e3e3e8', fontFamily: 'monospace', fontSize: '12px' }}>{m.lifetime}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{m.risk}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Key types */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>API key types</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>The prefix tells you which environment a key targets. The SDK never mixes traffic across modes.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('200px 130px 1fr')}>
+              <span>Prefix</span>
+              <span>Mode</span>
+              <span>What it does</span>
+            </div>
+            {keyTypeRows.map((k, idx) => (
+              <div key={k.type} style={bodyRowStyle('200px 130px 1fr', idx === keyTypeRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '13px' }}>{k.type}</code>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{k.purpose}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{k.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Scopes */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Available scopes</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Restricted keys and OAuth tokens carry one or more scopes. Keep them as narrow as possible — leak blast radius scales with what a credential can do.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('220px 1fr')}>
+              <span>Scope</span>
+              <span>Grants</span>
+            </div>
+            {scopeRows.map((s, idx) => (
+              <div key={s.scope} style={bodyRowStyle('220px 1fr', idx === scopeRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '13px' }}>{s.scope}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{s.what}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Token lifecycle */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Token lifecycle</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>The SDK handles caching, refresh, and retries automatically. The table below describes what happens at each stage so you can reason about edge cases.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('190px 1fr 1.2fr')}>
+              <span>Event</span>
+              <span>When it happens</span>
+              <span>What to do</span>
+            </div>
+            {lifecycleRows.map((l, idx) => (
+              <div key={l.event} style={bodyRowStyle('190px 1fr 1.2fr', idx === lifecycleRows.length - 1)}>
+                <span style={{ color: '#F68B1F', fontWeight: '600' }}>{l.event}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{l.when}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{l.action}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Authentication errors */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Authentication errors</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Auth failures always include a stable <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>error.code</code> in the body — branch on the code, not the message.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('70px 200px 1.2fr 1.4fr')}>
+              <span>Status</span>
+              <span>error.code</span>
+              <span>Likely cause</span>
+              <span>How to fix</span>
+            </div>
+            {errorRows.map((e, idx) => (
+              <div key={`${e.code}-${e.err}`} style={bodyRowStyle('70px 200px 1.2fr 1.4fr', idx === errorRows.length - 1)}>
+                <span style={{ fontFamily: 'monospace', color: e.code.startsWith('4') ? '#F68B1F' : '#f85149', fontWeight: '700' }}>{e.code}</span>
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{e.err}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{e.cause}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{e.fix}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Best practices */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Security best practices</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>The single biggest source of API key incidents is accidental commits. The rules below cost a few minutes each and prevent the painful ones.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('290px 1fr')}>
+              <span>Rule</span>
+              <span>Why it matters</span>
+            </div>
+            {practiceRows.map((p, idx) => (
+              <div key={p.rule} style={bodyRowStyle('290px 1fr', idx === practiceRows.length - 1)}>
+                <span style={{ color: '#e3e3e8', fontWeight: '600', display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                  <span style={{ color: '#F68B1F' }}>•</span>
+                  {p.rule}
+                </span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{p.why}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Next Steps */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Where to go next</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+            {nextSteps.map((n) => (
+              <a key={n.href} href={n.href} style={{ textDecoration: 'none', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.15s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--ifm-font-color-base)', fontSize: '14px', fontWeight: '700' }}>{n.title}</span>
+                  <span style={{ color: '#F68B1F', display: 'flex' }}><ArrowRight size={14} /></span>
+                </div>
+                <span style={{ color: '#88888f', fontSize: '12px', lineHeight: '1.5' }}>{n.desc}</span>
+              </a>
+            ))}
+          </div>
+
+          {/* Feedback Section */}
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div style={{ animation: 'fadeIn 0.5s' }}>
+                {feedback === 'yes' ? (
+                  <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                    ✨ Thanks for your feedback! We're glad this helped.
+                  </p>
+                ) : (
+                  <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+                    <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+                    <textarea
+                      style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }}
+                      placeholder="Your feedback..."
+                      rows="4"
+                    ></textarea>
+                    <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ paddingBottom: '8rem' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Code */}
+      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem', borderLeft: '1px solid #1e1e20' }}>
+        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+          {/* Language Picker */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                backgroundColor: '#1a1a1c',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '0.5rem',
+                fontSize: '14px',
+                color: 'white',
+                border: '1px solid #303033',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ fontWeight: '600' }}>{language}</span>
+              <ChevronDown size={16} style={{ color: '#88888f', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+            </button>
+
+            {isOpen && (
+              <div style={{ position: 'absolute', width: '100%', marginTop: '0.5rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', zIndex: 50, padding: '0.5rem 0', overflow: 'hidden' }}>
+                {languages.map((lang) => (
+                  <button
+                    key={lang.id}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.625rem 1.25rem',
+                      fontSize: '13px',
+                      backgroundColor: language === lang.name ? '#F68B1F' : 'transparent',
+                      color: language === lang.name ? 'white' : '#adadb8',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setLanguage(lang.name);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {lang.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* API key snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>1. Authenticate with an API key</h3>
+            {renderCode(apiKeySnippets[language], 'apikey')}
+          </div>
+
+          {/* OAuth snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>2. OAuth 2.0 client credentials</h3>
+            {renderCode(oauthSnippets[language], 'oauth')}
+          </div>
+
+          {/* Refresh snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>3. Refresh tokens</h3>
+            {renderCode(refreshSnippets[language], 'refresh')}
+          </div>
+
+          {/* Tip Card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Rotation pattern</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>
+              Generate the new key first, deploy it alongside the old one, then revoke the old key. The dashboard supports a 24-hour grace period where both keys are valid — long enough to roll a fleet without downtime.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<SdkAuthenticationPage />

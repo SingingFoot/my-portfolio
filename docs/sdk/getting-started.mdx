@@ -1,85 +1,662 @@
 ---
 sidebar_position: 1
 title: Getting Started
+hide_table_of_contents: true
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
-# Getting Started with TechWriter SDK
+import React, { useState } from 'react';
 
-The **TechWriter SDK** is a powerful library designed for developers to programmatically manage documentation assets.
+export const ChevronDown = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ transition: 'transform 0.3s' }}
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
 
-## Installation
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
 
-To add the SDK to your project, use your preferred package manager:
+export const ArrowRight = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+);
 
-<Tabs>
-  <TabItem value="npm" label="npm">
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
 
-```bash
-npm install @techwriter/sdk-core
-```
-  </TabItem>
-    <TabItem value="yarn" label="yarn">
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
 
-```bash
-yarn add @techwriter/sdk-core
-```
-  </TabItem>
-</Tabs>
+export const HighlightedCode = ({ code }) => {
+  const highlight = (text) => {
+    let highlighted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(\/\/.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/(#.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g, '<span style="color: #a5d6ff">$1</span>')
+      .replace(/\b(import|from|const|let|await|async|new|var|require|return|if|else|public|private|class|interface|package|use|namespace|def|func|true|false|null|try|catch)\b/g, '<span style="color: #ff7b72">$1</span>')
+      .replace(/\b(TechWriter|TechWriterClient|RequestOptions|Article|ArticleParams|context|ctx|options|client|tw|sc|service)\b/g, '<span style="color: #ffa657">$1</span>')
+      .replace(/\b([a-z_][a-z0-9_]*)(?=\s*\()/gi, '<span style="color: #d2a8ff">$1</span>')
+      .replace(/\b(\d+)\b/g, '<span style="color: #79c0ff">$1</span>');
 
+    return <code dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
 
-### Initial Configuration
+  return (
+    <pre style={{ margin: 0, background: 'transparent', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+      {highlight(code)}
+    </pre>
+  );
+};
 
-Once the package is installed, you need to initialize the client. The client acts as the central hub for all API interactions.
+export const SdkGettingStartedPage = () => {
+  const [pm, setPm] = useState('npm');
+  const [pmOpen, setPmOpen] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [copiedSnippets, setCopiedSnippets] = useState({});
 
-```js
-const { TechWriterClient } = require('@techwriter/sdk-core');
+  const packageManagers = [
+    { id: 'npm', name: 'npm', lang: 'Node.js' },
+    { id: 'yarn', name: 'yarn', lang: 'Node.js' },
+    { id: 'pnpm', name: 'pnpm', lang: 'Node.js' },
+    { id: 'pip', name: 'pip', lang: 'Python' },
+    { id: 'gem', name: 'gem (Ruby)', lang: 'Ruby' },
+    { id: 'composer', name: 'composer (PHP)', lang: 'PHP' },
+    { id: 'maven', name: 'Maven (Java)', lang: 'Java' },
+    { id: 'go', name: 'go get', lang: 'Go' },
+    { id: 'dotnet', name: 'dotnet add', lang: '.NET' }
+  ];
 
-// Initialize with minimal configuration
+  const installSnippets = {
+    npm:      `npm install @techwriter/sdk-core`,
+    yarn:     `yarn add @techwriter/sdk-core`,
+    pnpm:     `pnpm add @techwriter/sdk-core`,
+    pip:      `pip install techwriter-sdk`,
+    gem:      `gem install techwriter`,
+    composer: `composer require techwriter/sdk`,
+    maven:    `<dependency>
+  <groupId>io.techwriter</groupId>
+  <artifactId>techwriter-sdk</artifactId>
+  <version>3.2.0</version>
+</dependency>`,
+    go:       `go get github.com/techwriter/techwriter-go`,
+    dotnet:   `dotnet add package TechWriter.Sdk`
+  };
+
+  const initSnippets = {
+    npm:      `import { TechWriterClient } from '@techwriter/sdk-core';
+
 const client = new TechWriterClient({
   apiKey: process.env.TECHWRITER_API_KEY,
-  region: 'eu-central-1', // Choose your data residency
-  timeout: 5000           // Request timeout in milliseconds
-});
-```
+  region: 'eu-central-1',  // Choose your data residency
+  timeout: 5000,           // Request timeout in milliseconds
+  retries: 3               // Auto-retry transient failures
+});`,
+    yarn:     `import { TechWriterClient } from '@techwriter/sdk-core';
 
-### Core Concepts
+const client = new TechWriterClient({
+  apiKey: process.env.TECHWRITER_API_KEY,
+  region: 'eu-central-1',
+  timeout: 5000,
+  retries: 3
+});`,
+    pnpm:     `import { TechWriterClient } from '@techwriter/sdk-core';
 
-To make the most of the SDK, it is important to understand the three main pillars of our architecture:
+const client = new TechWriterClient({
+  apiKey: process.env.TECHWRITER_API_KEY,
+  region: 'eu-central-1',
+  timeout: 5000,
+  retries: 3
+});`,
+    pip:      `from techwriter import TechWriterClient
+import os
 
-- Workspaces: Logical containers for your documentation projects.
-- Assets: Individual files, images, or Markdown documents.
-- Deployments: Actions that push your local changes to the live documentation portal.
+client = TechWriterClient(
+    api_key=os.environ["TECHWRITER_API_KEY"],
+    region="eu-central-1",
+    timeout=5,
+    retries=3,
+)`,
+    gem:      `require 'techwriter'
 
-### Basic Usage Example
+client = TechWriter::Client.new(
+  api_key: ENV['TECHWRITER_API_KEY'],
+  region: 'eu-central-1',
+  timeout: 5,
+  retries: 3
+)`,
+    composer: `use TechWriter\\Client;
 
-Here is a quick example of how to fetch all active projects in your workspace:
+$client = new Client([
+  'api_key' => getenv('TECHWRITER_API_KEY'),
+  'region'  => 'eu-central-1',
+  'timeout' => 5,
+  'retries' => 3,
+]);`,
+    maven:    `import io.techwriter.TechWriterClient;
 
-```js
-async function listProjects() {
+TechWriterClient client = TechWriterClient.builder()
+  .apiKey(System.getenv("TECHWRITER_API_KEY"))
+  .region("eu-central-1")
+  .timeout(Duration.ofSeconds(5))
+  .retries(3)
+  .build();`,
+    go:       `import "github.com/techwriter/techwriter-go"
+
+cfg := techwriter.Config{
+  ApiKey:  os.Getenv("TECHWRITER_API_KEY"),
+  Region:  "eu-central-1",
+  Timeout: 5 * time.Second,
+  Retries: 3,
+}
+client := techwriter.NewClient(cfg)`,
+    dotnet:   `using TechWriter.Sdk;
+
+var client = new TechWriterClient(new TechWriterOptions {
+  ApiKey  = Environment.GetEnvironmentVariable("TECHWRITER_API_KEY"),
+  Region  = "eu-central-1",
+  Timeout = TimeSpan.FromSeconds(5),
+  Retries = 3
+});`
+  };
+
+  const exampleSnippets = {
+    npm:      `// List the first page of articles in your workspace
+async function listArticles() {
   try {
-    const projects = await client.projects.list();
-    console.log(`Found ${projects.length} projects.`);
-    projects.forEach((p) => console.log(`- ${p.name} (ID: ${p.id})`));
-  } catch (error) {
-    console.error('Failed to retrieve projects:', error.message);
+    const page = await client.articles.list({ top: 20 });
+    console.log(\`Found \${page.totalCount} articles.\`);
+    page.items.forEach((a) =>
+      console.log(\`- \${a.title} (\${a.id})\`)
+    );
+  } catch (err) {
+    console.error('Request failed:', err.code, err.message);
   }
 }
 
-listProjects();
-```
+listArticles();`,
+    yarn:     `async function listArticles() {
+  const page = await client.articles.list({ top: 20 });
+  console.log(\`Found \${page.totalCount} articles.\`);
+  page.items.forEach((a) =>
+    console.log(\`- \${a.title} (\${a.id})\`)
+  );
+}
+listArticles();`,
+    pnpm:     `async function listArticles() {
+  const page = await client.articles.list({ top: 20 });
+  console.log(\`Found \${page.totalCount} articles.\`);
+  page.items.forEach((a) =>
+    console.log(\`- \${a.title} (\${a.id})\`)
+  );
+}
+listArticles();`,
+    pip:      `# List the first page of articles in your workspace
+page = client.articles.list(top=20)
+print(f"Found {page.total_count} articles.")
+for a in page.items:
+    print(f"- {a.title} ({a.id})")`,
+    gem:      `page = client.articles.list(top: 20)
+puts "Found #{page.total_count} articles."
+page.items.each do |a|
+  puts "- #{a.title} (#{a.id})"
+end`,
+    composer: `$page = $client->articles->list(['top' => 20]);
+echo "Found {$page->totalCount} articles.\\n";
+foreach ($page->items as $a) {
+  echo "- {$a->title} ({$a->id})\\n";
+}`,
+    maven:    `ArticlePage page = client.articles().list(
+  ArticleListParams.builder().top(20).build()
+);
+System.out.printf("Found %d articles.%n", page.totalCount());
+page.items().forEach(a ->
+  System.out.printf("- %s (%s)%n", a.title(), a.id())
+);`,
+    go:       `page, err := client.Articles.List(ctx, &techwriter.ArticleListParams{
+  Top: 20,
+})
+if err != nil { log.Fatal(err) }
+fmt.Printf("Found %d articles.\\n", page.TotalCount)
+for _, a := range page.Items {
+  fmt.Printf("- %s (%s)\\n", a.Title, a.Id)
+}`,
+    dotnet:   `var page = await client.Articles.ListAsync(new ArticleListOptions { Top = 20 });
+Console.WriteLine($"Found {page.TotalCount} articles.");
+foreach (var a in page.Items) {
+  Console.WriteLine($"- {a.Title} ({a.Id})");
+}`
+  };
 
-### Next Steps
+  const cardTableStyle = { marginBottom: '3rem', border: '1px solid #1e1e20', borderRadius: '0.5rem', overflow: 'hidden' };
+  const headerCellsStyle = (cols) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.75rem 1rem',
+    backgroundColor: '#1a1a1c',
+    borderBottom: '1px solid #303033',
+    fontSize: '11px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: '#88888f'
+  });
+  const bodyRowStyle = (cols, isLast) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.875rem 1rem',
+    borderBottom: isLast ? 'none' : '1px solid #1e1e20',
+    alignItems: 'baseline',
+    fontSize: '13px'
+  });
 
-Now that you have initialized the SDK, you can explore the following topics:
+  const requirementRows = [
+    { runtime: 'Node.js', min: '18.0', notes: 'ES modules and CommonJS both supported. Bundled TypeScript types.' },
+    { runtime: 'Python', min: '3.9', notes: 'Sync and async clients ship in the same package.' },
+    { runtime: 'Ruby', min: '3.0', notes: 'Frozen-string-literal compatible. Thread-safe by default.' },
+    { runtime: 'PHP', min: '8.1', notes: 'PSR-7 / PSR-18 HTTP client adapters supported.' },
+    { runtime: 'Java', min: '11', notes: 'Reactor and CompletableFuture variants available.' },
+    { runtime: 'Go', min: '1.21', notes: 'Context-aware. No external dependencies beyond the standard library.' },
+    { runtime: '.NET', min: '6.0', notes: 'Targets net6.0 and net8.0. NuGet package signed.' }
+  ];
 
-- [Authentication:](./authentication) Learn how to manage scopes and token rotation.
+  const configRows = [
+    { opt: 'apiKey', type: 'string', required: true, desc: 'Workspace API key from Settings → Integrations. Always read this from an environment variable.' },
+    { opt: 'region', type: 'string', required: false, desc: 'Data residency region: us-east-1, eu-central-1, or ap-southeast-2. Defaults to us-east-1.' },
+    { opt: 'baseURL', type: 'string', required: false, desc: 'Override the API host. Useful for self-hosted deployments and integration tests.' },
+    { opt: 'timeout', type: 'number', required: false, desc: 'Per-request timeout in milliseconds. Default 30 000.' },
+    { opt: 'retries', type: 'number', required: false, desc: 'How many times to retry transient errors (5xx, 429, network) with exponential backoff. Default 3.' },
+    { opt: 'logger', type: 'function', required: false, desc: 'Plug in a structured logger to capture request IDs, latency, and retry counts.' },
+    { opt: 'fetch', type: 'function', required: false, desc: 'Inject a custom fetch implementation for proxies, mocking, or edge runtimes.' }
+  ];
 
-- [API Endpoints:](./api-endpoints) Detailed reference of all available methods.
+  const conceptRows = [
+    { c: 'Workspace', d: 'A logical container that scopes API keys, users, roles, and content. One SDK client always operates inside a single workspace.' },
+    { c: 'Article', d: 'A versioned piece of documentation. Articles move through Draft → In Review → Published with full audit history.' },
+    { c: 'Template', d: 'A reusable starting point for new articles. Templates live in Template Folders and can be shared with groups.' },
+    { c: 'Asset', d: 'Binary attachments — images, PDFs, code samples — uploaded once and referenced from articles by stable URL.' },
+    { c: 'Group & Role', d: 'Groups bundle users; roles bundle privileges. Combine the two to grant scoped access without per-user setup.' },
+    { c: 'Deployment', d: 'A snapshot of one or more articles published to a portal. Every deployment is immutable and rollback-capable.' }
+  ];
 
-- [Error Handling:](./error-handling) How to interpret status codes and implement retries.
+  const featureRows = [
+    { f: 'Automatic retries', d: 'Built-in exponential backoff on 5xx, 429, and network errors. Honors the Retry-After header automatically.' },
+    { f: 'Cursor pagination helpers', d: 'Iterate full result sets with for-await loops or async iterators — no manual page-token bookkeeping.' },
+    { f: 'Typed request & response models', d: 'TypeScript definitions, Python dataclasses, Java POJOs, .NET records — all generated from the same OpenAPI spec.' },
+    { f: 'Webhook signature verification', d: 'Constant-time HMAC-SHA256 verification helper. Rejects replays older than five minutes by default.' },
+    { f: 'Request batching', d: 'Group up to 25 article writes into a single transactional request to reduce round trips.' },
+    { f: 'Streaming uploads', d: 'Upload large assets directly from a stream. The SDK handles multipart, chunking, and resume on retry.' },
+    { f: 'Idempotency keys', d: 'Pass an Idempotency-Key on any write to safely retry without creating duplicates.' },
+    { f: 'Sandbox mode', d: 'Switch between live and test data with a single flag. Sandbox usage never counts against your rate limit or billing.' }
+  ];
 
-- [Webhooks:](./webhooks) Real-time event notifications and secure payload verification.
+  const stepRows = [
+    { n: '1', t: 'Install the package', d: 'Pick your language on the right and run the install command.' },
+    { n: '2', t: 'Set the API key', d: 'Add TECHWRITER_API_KEY to your environment. Never commit keys to source control.' },
+    { n: '3', t: 'Initialize the client', d: 'Create one client per process and reuse it — the SDK pools connections internally.' },
+    { n: '4', t: 'Make your first request', d: 'List articles, fetch a template, or create an article — see the quick example to the right.' },
+    { n: '5', t: 'Wire up errors and retries', d: 'Wrap calls in try / catch. Inspect err.code for actionable error types like rate_limited or unauthorized.' }
+  ];
 
-- [Best Practices:](./best-practices) Optimization tips for high-concurrency environments and data consistency.
+  const nextSteps = [
+    { href: 'authentication', title: 'Authentication', desc: 'API keys, OAuth 2.0, scopes, and key rotation patterns.' },
+    { href: 'api-endpoints', title: 'API endpoints', desc: 'Full reference of resources, methods, and request shapes.' },
+    { href: 'error-handling', title: 'Error handling', desc: 'Error envelope, status codes, and retry-friendly patterns.' },
+    { href: 'webhooks', title: 'Webhooks', desc: 'Subscribe to events and verify payload signatures securely.' },
+    { href: 'best-practices', title: 'Best practices', desc: 'Performance tips, concurrency limits, and consistency guarantees.' }
+  ];
+
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSnippets({ ...copiedSnippets, [id]: true });
+      setTimeout(() => setCopiedSnippets((prev) => ({ ...prev, [id]: false })), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
+
+  const renderCode = (snippet, id) => (
+    <div style={{ marginBottom: '0', position: 'relative' }}>
+      <div style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 10 }}>
+        <button
+          onClick={() => copyToClipboard(snippet, id)}
+          style={{
+            background: '#1a1a1c',
+            color: '#555',
+            padding: '8px',
+            borderRadius: '4px',
+            border: '1px solid #303033',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Copy code"
+        >
+          {copiedSnippets[id] ? <CheckIcon style={{ color: '#F68B1F' }} /> : <CopyIcon />}
+        </button>
+      </div>
+      <div style={{
+        padding: '32px',
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        backgroundColor: '#0d0d0f',
+        color: '#e3e3e8',
+        lineHeight: '1.6',
+        overflowX: 'auto',
+        border: '1px solid #303033',
+        borderRadius: '12px',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+      }}>
+        <HighlightedCode code={snippet} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: '-2rem',
+      borderTop: '1px solid #1e1e20'
+    }}>
+
+      {/* Left Column: Primary Content */}
+      <div style={{
+        flex: '1 1 0%',
+        padding: '4rem',
+        color: 'var(--ifm-font-color-base)',
+        borderRight: '1px solid #1e1e20'
+      }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <span style={{ backgroundColor: 'rgba(246, 139, 31, 0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246, 139, 31, 0.35)' }}>SDK</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>@techwriter/sdk-core</code>
+            <span style={{ fontSize: '11px', color: '#6b6b7b', fontFamily: 'monospace', backgroundColor: '#1e1e20', padding: '0.125rem 0.5rem', borderRadius: '0.25rem' }}>v3.2.0</span>
+            <span style={{ fontSize: '11px', color: '#3fb950', fontFamily: 'monospace', backgroundColor: 'rgba(63,185,80,0.1)', padding: '0.125rem 0.5rem', borderRadius: '0.25rem', border: '1px solid rgba(63,185,80,0.3)' }}>STABLE</span>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Getting started with the SDK</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontSize: '15px', lineHeight: '1.75', marginBottom: '3rem' }}>
+            <p>
+              The <span style={{ color: '#F68B1F', fontWeight: '500' }}>TechWriter SDK</span> is a typed, batteries-included client for managing documentation programmatically. It wraps the public REST API with idiomatic helpers in nine languages, retries and pagination handled for you, and a single configuration surface across runtimes.
+            </p>
+
+            <p>
+              In production it powers content pipelines that publish thousands of articles a day — but the same library is just as comfortable in a tiny script that exports your knowledge base for backup. This page walks you through installation, configuration, the core domain model, and your first successful request.
+            </p>
+
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              Pick your language in the panel on the right. Every code block on this page rerenders for the package manager you choose, so the install command, the client initialization, and the first call always match your stack.
+            </p>
+          </div>
+
+          {/* Requirements */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Requirements</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>The SDK supports nine runtimes. Older versions may work but are not officially tested.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('150px 110px 1fr')}>
+              <span>Runtime</span>
+              <span>Min version</span>
+              <span>Notes</span>
+            </div>
+            {requirementRows.map((r, idx) => (
+              <div key={r.runtime} style={bodyRowStyle('150px 110px 1fr', idx === requirementRows.length - 1)}>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{r.runtime}</span>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600' }}>{r.min}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.notes}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Quickstart steps */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Quickstart</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Five steps from a clean checkout to your first authenticated call.</p>
+          <div style={{ ...cardTableStyle, marginBottom: '3rem' }}>
+            <div style={headerCellsStyle('60px 220px 1fr')}>
+              <span style={{ textAlign: 'center' }}>#</span>
+              <span>Step</span>
+              <span>What to do</span>
+            </div>
+            {stepRows.map((s, idx) => (
+              <div key={s.n} style={bodyRowStyle('60px 220px 1fr', idx === stepRows.length - 1)}>
+                <span style={{ textAlign: 'center', fontFamily: 'monospace', color: '#F68B1F', fontWeight: '700', fontSize: '14px' }}>{s.n}</span>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{s.t}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{s.d}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Configuration options */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Client configuration</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Every option below is named consistently across languages. Optional values fall back to safe production defaults.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('150px 110px 90px 1fr')}>
+              <span>Option</span>
+              <span>Type</span>
+              <span>Required</span>
+              <span>Description</span>
+            </div>
+            {configRows.map((c, idx) => (
+              <div key={c.opt} style={bodyRowStyle('150px 110px 90px 1fr', idx === configRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '13px' }}>{c.opt}</code>
+                <span style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{c.type}</span>
+                <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: c.required ? '#f85149' : '#6b6b7b' }}>{c.required ? 'required' : 'optional'}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{c.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Core concepts */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Core concepts</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>A short tour of the domain model. Every SDK call maps onto one of these resources.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('170px 1fr')}>
+              <span>Concept</span>
+              <span>Description</span>
+            </div>
+            {conceptRows.map((c, idx) => (
+              <div key={c.c} style={bodyRowStyle('170px 1fr', idx === conceptRows.length - 1)}>
+                <span style={{ color: '#F68B1F', fontWeight: '600' }}>{c.c}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{c.d}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Features */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>What ships in the box</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>You don't have to glue these features together yourself — they're built into every language binding.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('230px 1fr')}>
+              <span>Feature</span>
+              <span>What it does</span>
+            </div>
+            {featureRows.map((f, idx) => (
+              <div key={f.f} style={bodyRowStyle('230px 1fr', idx === featureRows.length - 1)}>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{f.f}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{f.d}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Next Steps */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Where to go next</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+            {nextSteps.map((n) => (
+              <a key={n.href} href={n.href} style={{ textDecoration: 'none', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.15s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--ifm-font-color-base)', fontSize: '14px', fontWeight: '700' }}>{n.title}</span>
+                  <span style={{ color: '#F68B1F', display: 'flex' }}><ArrowRight size={14} /></span>
+                </div>
+                <span style={{ color: '#88888f', fontSize: '12px', lineHeight: '1.5' }}>{n.desc}</span>
+              </a>
+            ))}
+          </div>
+
+          {/* Feedback Section */}
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div style={{ animation: 'fadeIn 0.5s' }}>
+                {feedback === 'yes' ? (
+                  <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                    ✨ Thanks for your feedback! We're glad this helped.
+                  </p>
+                ) : (
+                  <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+                    <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+                    <textarea
+                      style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }}
+                      placeholder="Your feedback..."
+                      rows="4"
+                    ></textarea>
+                    <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ paddingBottom: '8rem' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Install + Initialize + Example */}
+      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem', borderLeft: '1px solid #1e1e20' }}>
+        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+          {/* Package Manager Picker */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setPmOpen(!pmOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                backgroundColor: '#1a1a1c',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '0.5rem',
+                fontSize: '14px',
+                color: 'white',
+                border: '1px solid #303033',
+                cursor: 'pointer'
+              }}
+            >
+              <span>
+                <span style={{ fontWeight: '600' }}>{packageManagers.find((p) => p.id === pm).name}</span>
+                <span style={{ color: '#88888f', marginLeft: '0.5rem', fontSize: '12px' }}>· {packageManagers.find((p) => p.id === pm).lang}</span>
+              </span>
+              <ChevronDown size={16} style={{ color: '#88888f', transform: pmOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+            </button>
+
+            {pmOpen && (
+              <div style={{ position: 'absolute', width: '100%', marginTop: '0.5rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', zIndex: 50, padding: '0.5rem 0', overflow: 'hidden' }}>
+                {packageManagers.map((p) => (
+                  <button
+                    key={p.id}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.625rem 1.25rem',
+                      fontSize: '13px',
+                      backgroundColor: pm === p.id ? '#F68B1F' : 'transparent',
+                      color: pm === p.id ? 'white' : '#adadb8',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                    onClick={() => {
+                      setPm(p.id);
+                      setPmOpen(false);
+                    }}
+                  >
+                    <span>{p.name}</span>
+                    <span style={{ color: pm === p.id ? 'rgba(255,255,255,0.7)' : '#6b6b7b', fontSize: '11px' }}>{p.lang}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Install snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>1. Install</h3>
+            {renderCode(installSnippets[pm], 'install')}
+          </div>
+
+          {/* Init snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>2. Initialize the client</h3>
+            {renderCode(initSnippets[pm], 'init')}
+          </div>
+
+          {/* Example snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>3. Make your first call</h3>
+            {renderCode(exampleSnippets[pm], 'example')}
+          </div>
+
+          {/* Tip Card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Pro tip</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>
+              Read your API key from an environment variable and load it once at startup. Hard-coding the key — even in dev — is the most common cause of accidental exposure on public repos.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<SdkGettingStartedPage />
