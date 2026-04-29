@@ -22,8 +22,7 @@ import Link from '@docusaurus/Link';
       position: 'absolute',
       top: '50%',
       left: 0,
-      right: 0,
-      height: '1px',
+      right: 0,      height: '1px',
       backgroundColor: '#F68B1F',
       transform: 'translateY(-50%)',
       zIndex: 0,
@@ -35,7 +34,7 @@ import Link from '@docusaurus/Link';
       zIndex: 1,
       display: 'flex',
       alignItems: 'center',
-      gap: '2rem',
+      gap: '1.25rem',
       flexWrap: 'wrap',
     }}
   >
@@ -43,22 +42,24 @@ import Link from '@docusaurus/Link';
       src="/img/os.jpg"
       alt="Oleh Shynkarenko"
       style={{
-        width: '120px',
-        height: '120px',
+        width: '110px',
+        height: '110px',
         borderRadius: '50%',
         objectFit: 'cover',
         outline: '2px solid #F68B1F',
         outlineOffset: '5px',
         backgroundColor: 'var(--ifm-hero-bg)',
+        flexShrink: 0,
       }}
     />
-<div style={{ flex: '1 1 320px', minWidth: '260px' }}>
+<div style={{ flex: '1 1 220px', minWidth: '200px' }}>
   <h1
     style={{
       margin: 0,
-      fontSize: '2rem',
+      fontSize: 'clamp(1.5rem, 5vw, 2rem)',
       lineHeight: 1.15,
       color: 'var(--ifm-hero-text)',
+      overflowWrap: 'break-word',
     }}
   >
     Oleh Shynkarenko
@@ -68,6 +69,8 @@ import Link from '@docusaurus/Link';
   <div style={{ paddingTop: '15px' }}> 
     <p
       style={{
+        position: 'relative',
+        top: '5px',
         margin: '0.4rem 0 1rem',
         fontSize: '1rem',
         fontWeight: 600,
@@ -86,13 +89,16 @@ import Link from '@docusaurus/Link';
           backgroundColor: '#F68B1F',
           borderColor: '#F68B1F',
           color: '#fff',
-          height: '1.5rem',
-          padding: '0 1.25rem',
+          padding: '0.5rem 1.25rem',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: 'auto',
+          minHeight: '2.75rem',
           lineHeight: '1',
+          borderRadius: '6px',
+          fontSize: '0.9rem',
+          fontWeight: 600,
+          textDecoration: 'none',
         }}
       >Download CV</a>
     </div>

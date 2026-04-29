@@ -335,22 +335,31 @@ client.on('response', (ctx) => {
 
   const selected = scenarios.find((s) => s.id === scenarioId);
 
+  const [isMobileView, setIsMobileView] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  React.useEffect(() => {
+    const handler = () => setIsMobileView(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
   return (
     <div style={{
       display: 'flex',
-      flexDirection: 'row',
+      flexDirection: isMobileView ? 'column' : 'row',
       minHeight: '100vh',
       backgroundColor: 'var(--ifm-background-color)',
-      margin: '-2rem',
+      margin: isMobileView ? '0' : '-2rem',
       borderTop: '1px solid #1e1e20'
     }}>
 
       {/* Left Column: Primary Content */}
       <div style={{
         flex: '1 1 0%',
-        padding: '4rem',
+        padding: isMobileView ? '1.5rem 1rem' : '4rem',
         color: 'var(--ifm-font-color-base)',
-        borderRight: '1px solid #1e1e20'
+        borderRight: isMobileView ? 'none' : '1px solid #1e1e20'
       }}>
         <div style={{ maxWidth: '760px' }}>
 
@@ -478,8 +487,8 @@ client.on('response', (ctx) => {
       </div>
 
       {/* Right Column: Scenario picker + code */}
-      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem', borderLeft: '1px solid #1e1e20' }}>
-        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{ width: isMobileView ? '100%' : '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: isMobileView ? '1.5rem 1rem' : '3rem', borderLeft: isMobileView ? 'none' : '1px solid #1e1e20', borderTop: isMobileView ? '1px solid #1e1e20' : 'none' }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: isMobileView ? 'auto' : '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
 
           {/* Scenario Picker */}
           <div style={{ position: 'relative' }}>
