@@ -234,7 +234,12 @@ if err == nil {
 Console.WriteLine($"New token expires at: {fresh.ExpiresAt}");`
   };
 
-  const cardTableStyle = { marginBottom: '3rem', border: '1px solid #1e1e20', borderRadius: '0.5rem', overflow: 'hidden' };
+  const getTableMinWidth = (cols) => {
+    const px = (cols.match(/(\d+)px/g) || []).reduce((s, m) => s + parseInt(m), 0);
+    const fr = (cols.match(/\d*\.?\d+fr/g) || []).length;
+    return `${px + fr * 140}px`;
+  };
+  const cardTableStyle = { marginBottom: '3rem', border: '1px solid #1e1e20', borderRadius: '0.5rem', overflowX: 'auto', WebkitOverflowScrolling: 'touch' };
   const headerCellsStyle = (cols) => ({
     display: 'grid',
     gridTemplateColumns: cols,
@@ -246,7 +251,8 @@ Console.WriteLine($"New token expires at: {fresh.ExpiresAt}");`
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
-    color: '#88888f'
+    color: '#88888f',
+    minWidth: getTableMinWidth(cols)
   });
   const bodyRowStyle = (cols, isLast) => ({
     display: 'grid',
@@ -255,7 +261,8 @@ Console.WriteLine($"New token expires at: {fresh.ExpiresAt}");`
     padding: '0.875rem 1rem',
     borderBottom: isLast ? 'none' : '1px solid #1e1e20',
     alignItems: 'baseline',
-    fontSize: '13px'
+    fontSize: '13px',
+    minWidth: getTableMinWidth(cols)
   });
 
   const methodRows = [
@@ -351,7 +358,7 @@ Console.WriteLine($"New token expires at: {fresh.ExpiresAt}");`
         </button>
       </div>
       <div style={{
-        padding: '32px',
+        padding: isMobileView ? '1rem' : '2rem',
         fontFamily: 'monospace',
         fontSize: '13px',
         backgroundColor: '#0d0d0f',
