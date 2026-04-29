@@ -1,12 +1,563 @@
 ---
 sidebar_position: 6
 title: Best Practices
+hide_table_of_contents: true
 ---
 
-# Best Practices
+import React, { useState } from 'react';
 
-Optimize your integration with these production-ready tips.
+export const ChevronDown = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ transition: 'transform 0.3s' }}
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
 
-* **Caching**: Cache API responses for at least 5 minutes to stay within rate limits.
-* **Retries**: Implement exponential backoff for `5xx` errors.
-* **Validation**: Always validate project IDs on the client side before sending requests.
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
+
+export const ArrowRight = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+);
+
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
+
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
+
+export const HighlightedCode = ({ code }) => {
+  const highlight = (text) => {
+    let highlighted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(\/\/.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/(#.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g, '<span style="color: #a5d6ff">$1</span>')
+      .replace(/\b(import|from|const|let|await|async|new|var|require|return|if|else|public|private|class|interface|package|use|namespace|def|func|true|false|null|try|catch|throw|while|for|switch|case|break|continue|in|of)\b/g, '<span style="color: #ff7b72">$1</span>')
+      .replace(/\b(TechWriter|TechWriterClient|TechWriterError|RateLimitError|RequestOptions|Article|ArticleParams|context|ctx|options|client|tw|sc|service|err|error|Error|randomUUID)\b/g, '<span style="color: #ffa657">$1</span>')
+      .replace(/\b([a-z_][a-z0-9_]*)(?=\s*\()/gi, '<span style="color: #d2a8ff">$1</span>')
+      .replace(/\b(\d+)\b/g, '<span style="color: #79c0ff">$1</span>');
+
+    return <code dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
+
+  return (
+    <pre style={{ margin: 0, background: 'transparent', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+      {highlight(code)}
+    </pre>
+  );
+};
+
+export const SdkBestPracticesPage = () => {
+  const [scenarioId, setScenarioId] = useState('idempotency');
+  const [scenarioOpen, setScenarioOpen] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [copiedSnippets, setCopiedSnippets] = useState({});
+
+  const scenarios = [
+    { id: 'idempotency',   name: 'Safe Retries',           desc: 'Idempotency keys' },
+    { id: 'concurrency',   name: 'Race Conditions',        desc: 'Optimistic concurrency' },
+    { id: 'caching',       name: 'Efficient Retrieval',    desc: 'ETags & Conditional GET' },
+    { id: 'bulk',          name: 'Bulk Operations',        desc: 'Transactional batches' },
+    { id: 'pagination',    name: 'Large Result Sets',      desc: 'Cursor-based iteration' },
+    { id: 'selective',     name: 'Payload Optimization',   desc: 'Partial responses' },
+    { id: 'webhooks',      name: 'Reliable Events',        desc: 'Signature verification' },
+    { id: 'logging',       name: 'Observability',          desc: 'Tracing & Request IDs' }
+  ];
+
+  const codeSnippets = {
+    idempotency: `import { randomUUID } from 'node:crypto';
+
+// Generate a key once for this logical operation.
+// Persist it if you need to retry across process restarts.
+const idempotencyKey = randomUUID();
+
+try {
+  const article = await client.articles.create({
+    title: 'Production Guide',
+    content: '...',
+  }, { idempotencyKey });
+  
+  return article;
+} catch (err) {
+  if (err.retryable) {
+    // Retrying with the same key is safe. 
+    // The API will return the original success response 
+    // if the first call actually succeeded.
+    return retryCreate(payload, idempotencyKey);
+  }
+  throw err;
+}`,
+    concurrency: `// Use versioning to prevent overwriting concurrent changes.
+async function updateSafely(articleId, newContent) {
+  const article = await client.articles.get(articleId);
+  
+  try {
+    return await client.articles.update(articleId, {
+      content: newContent,
+      // Pass the version we just read.
+      // If someone else updated it in the meantime, 
+      // the API returns a 409 Conflict.
+      lastSeenVersion: article.version 
+    });
+  } catch (err) {
+    if (err.code === 'conflict') {
+      // Re-read, merge changes, and try again.
+      return updateSafely(articleId, newContent);
+    }
+    throw err;
+  }
+}`,
+    caching: `// Use ETags to save bandwidth and stay within rate limits.
+const articleId = 'art_01H2...';
+const cached = await db.articles.find(articleId);
+
+const article = await client.articles.get(articleId, {
+  headers: {
+    'If-None-Match': cached.etag
+  }
+});
+
+// If the resource hasn't changed, the API returns 304 Not Modified.
+// The SDK helper will return the cached object if provided.
+if (article.status === 304) {
+  return cached.data;
+}`,
+    bulk: `// Group multiple operations to reduce round trips.
+const batch = client.batches.create();
+
+for (const doc of pendingDocs) {
+  batch.articles.create({
+    title: doc.title,
+    content: doc.content
+  });
+}
+
+// Transactional: all succeed or all fail.
+const results = await batch.commit();
+console.log(\`Successfully processed \${results.length} items.\`);`,
+    pagination: `// Use the built-in iterator for large lists.
+// It handles cursor bookkeeping automatically.
+const articles = client.articles.list({ 
+  status: 'published',
+  limit: 100 
+});
+
+for await (const article of articles) {
+  console.log(\`Processing \${article.title}...\`);
+  await archiveSystem.store(article);
+}
+
+// Low memory footprint regardless of total result size.`,
+    selective: `// Request only the fields you actually need.
+// Reduces latency and memory usage on both ends.
+const article = await client.articles.get('art_01H2...', {
+  fields: ['id', 'title', 'slug', 'publishedAt']
+});
+
+// Payload won't include large 'content' or 'metadata' blocks.
+console.log(article.title);`,
+    webhooks: `import { Webhooks } from '@techwriter/sdk-core';
+
+// verifySignature prevents spoofing and replay attacks.
+export async function POST(req) {
+  const payload = await req.text();
+  const signature = req.headers.get('x-techwriter-signature');
+
+  try {
+    const event = Webhooks.verifySignature(
+      payload, 
+      signature, 
+      process.env.WEBHOOK_SECRET
+    );
+    
+    // Process the typed event
+    if (event.type === 'article.published') {
+      await indexer.sync(event.data);
+    }
+    
+    return new Response('ok', { status: 200 });
+  } catch (err) {
+    return new Response('Invalid signature', { status: 401 });
+  }
+}`,
+    logging: `// Plug in your existing logger to capture SDK telemetry.
+client.on('request', (ctx) => {
+  logger.info({
+    method: ctx.method,
+    path: ctx.path,
+    requestId: ctx.headers['x-request-id']
+  }, 'SDK Request Started');
+});
+
+client.on('response', (ctx) => {
+  logger.info({
+    status: ctx.status,
+    duration: ctx.durationMs,
+    requestId: ctx.requestId
+  }, 'SDK Request Finished');
+});`
+  };
+
+  const cardTableStyle = { marginBottom: '3rem', border: '1px solid #1e1e20', borderRadius: '0.5rem', overflow: 'hidden' };
+  const headerCellsStyle = (cols) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.75rem 1rem',
+    backgroundColor: '#1a1a1c',
+    borderBottom: '1px solid #303033',
+    fontSize: '11px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: '#88888f'
+  });
+  const bodyRowStyle = (cols, isLast) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.875rem 1rem',
+    borderBottom: isLast ? 'none' : '1px solid #1e1e20',
+    alignItems: 'baseline',
+    fontSize: '13px'
+  });
+
+  const performanceRows = [
+    { practice: 'Selective Retrieval', benefit: 'Low Latency', desc: 'Use the ?fields parameter to exclude large content blocks you don\'t need.' },
+    { practice: 'ETag Caching', benefit: 'Stay in Quota', desc: 'Pass If-None-Match headers to skip downloading data that hasn\'t changed.' },
+    { practice: 'Bulk Writes', benefit: 'Throughput', desc: 'Batch up to 50 operations in one call to reduce TCP handshake overhead.' },
+    { practice: 'Connection Pooling', benefit: 'Efficiency', desc: 'Initialize the client once and reuse it across your application lifecycle.' }
+  ];
+
+  const reliabilityRows = [
+    { practice: 'Idempotency Keys', benefit: 'Safe Retries', desc: 'Assign UUIDs to writes to prevent duplicates when retrying network timeouts.' },
+    { practice: 'Optimistic Concurrency', benefit: 'Data Integrity', desc: 'Use lastSeenVersion to ensure you don\'t overwrite mid-air changes.' },
+    { practice: 'Exponential Backoff', benefit: 'Stability', desc: 'Default SDK retries doubling wait times to let the API recover from spikes.' },
+    { practice: 'Circuit Breaker', benefit: 'Fault Tolerance', desc: 'Fail fast when a dependency is down to prevent resource exhaustion.' }
+  ];
+
+  const debugSteps = [
+    { n: '1', t: 'X-Request-Id', d: 'Every response carries this header. Log it! Support cannot help you without a Request ID.' },
+    { n: '2', t: 'Structured Logs', d: 'Connect the SDK to your logger to trace article IDs across system boundaries.' },
+    { n: '3', t: 'Audit Logs', d: 'Every write via SDK is recorded in the Workspace Audit Log with the API Key name.' },
+    { n: '4', t: 'Sandbox Mode', d: 'Test your logic against the sandbox environment first. It is free and isolated.' }
+  ];
+
+  const nextSteps = [
+    { href: 'getting-started', title: 'Getting started', desc: 'Install, configure, and make your first SDK call.' },
+    { href: 'authentication', title: 'Authentication',   desc: 'Rotate keys, refresh tokens, and scope OAuth flows.' },
+    { href: 'api-endpoints', title: 'API endpoints',     desc: 'Status codes, headers, and the full endpoint reference.' },
+    { href: 'error-handling', title: 'Error handling',   desc: 'Catch exceptions, retryable hints, and validation mapping.' },
+    { href: 'webhooks', title: 'Webhooks',               desc: 'Retry semantics for inbound events and signature checks.' }
+  ];
+
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSnippets({ ...copiedSnippets, [id]: true });
+      setTimeout(() => setCopiedSnippets((prev) => ({ ...prev, [id]: false })), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
+
+  const renderCode = (snippet, id) => (
+    <div style={{ marginBottom: '0', position: 'relative' }}>
+      <div style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 10 }}>
+        <button
+          onClick={() => copyToClipboard(snippet, id)}
+          style={{
+            background: '#1a1a1c',
+            color: '#555',
+            padding: '8px',
+            borderRadius: '4px',
+            border: '1px solid #303033',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Copy code"
+        >
+          {copiedSnippets[id] ? <CheckIcon style={{ color: '#F68B1F' }} /> : <CopyIcon />}
+        </button>
+      </div>
+      <div style={{
+        padding: '32px',
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        backgroundColor: '#0d0d0f',
+        color: '#e3e3e8',
+        lineHeight: '1.6',
+        overflowX: 'auto',
+        border: '1px solid #303033',
+        borderRadius: '12px',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+      }}>
+        <HighlightedCode code={snippet} />
+      </div>
+    </div>
+  );
+
+  const selected = scenarios.find((s) => s.id === scenarioId);
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: '-2rem',
+      borderTop: '1px solid #1e1e20'
+    }}>
+
+      {/* Left Column: Primary Content */}
+      <div style={{
+        flex: '1 1 0%',
+        padding: '4rem',
+        color: 'var(--ifm-font-color-base)',
+        borderRight: '1px solid #1e1e20'
+      }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <span style={{ backgroundColor: 'rgba(246, 139, 31, 0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246, 139, 31, 0.35)' }}>PRODUCTION</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>sdk_best_practices</code>
+            <span style={{ fontSize: '11px', color: '#6b6b7b', fontFamily: 'monospace', backgroundColor: '#1e1e20', padding: '0.125rem 0.5rem', borderRadius: '0.25rem' }}>v3.2.0</span>
+            <span style={{ fontSize: '11px', color: '#3fb950', fontFamily: 'monospace', backgroundColor: 'rgba(63,185,80,0.1)', padding: '0.125rem 0.5rem', borderRadius: '0.25rem', border: '1px solid rgba(63,185,80,0.3)' }}>STABLE</span>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Best Practices</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontSize: '15px', lineHeight: '1.75', marginBottom: '3rem' }}>
+            <p>
+              Building a production-grade integration means thinking about more than just successful API calls. You need to handle <span style={{ color: '#F68B1F', fontWeight: '500' }}>distributed state</span>, optimize for <span style={{ color: '#F68B1F', fontWeight: '500' }}>network latency</span>, and ensure your system is <span style={{ color: '#F68B1F', fontWeight: '500' }}>observable</span> when things go wrong.
+            </p>
+
+            <p>
+              This guide covers the patterns we've seen work best for scaling documentation pipelines — from ensuring "exactly-once" delivery with idempotency keys to avoiding the "lost update" problem in concurrent environments.
+            </p>
+
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              Select a pattern from the sidebar on the right to see idiomatic implementation details. These snippets are designed to be copied directly into your production middleware.
+            </p>
+          </div>
+
+          {/* Performance */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Performance & Efficiency</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Minimize latency and stay well within your rate limit quotas by reducing the amount of data transferred.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('200px 120px 1fr')}>
+              <span>Practice</span>
+              <span>Benefit</span>
+              <span>Recommendation</span>
+            </div>
+            {performanceRows.map((r, idx) => (
+              <div key={r.practice} style={bodyRowStyle('200px 120px 1fr', idx === performanceRows.length - 1)}>
+                <span style={{ color: '#F68B1F', fontWeight: '600' }}>{r.practice}</span>
+                <span style={{ color: '#3fb950', fontSize: '12px', fontWeight: '600' }}>{r.benefit}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Reliability */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Reliability & Correctness</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Ensure your data remains consistent even during network partitions or concurrent actor spikes.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('200px 120px 1fr')}>
+              <span>Practice</span>
+              <span>Benefit</span>
+              <span>Recommendation</span>
+            </div>
+            {reliabilityRows.map((r, idx) => (
+              <div key={r.practice} style={bodyRowStyle('200px 120px 1fr', idx === reliabilityRows.length - 1)}>
+                <span style={{ color: '#F68B1F', fontWeight: '600' }}>{r.practice}</span>
+                <span style={{ color: '#79c0ff', fontSize: '12px', fontWeight: '600' }}>{r.benefit}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Observability */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Observability Checklist</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Never guess why a request failed. Follow these steps to make your integration self-documenting.</p>
+          <div style={{ ...cardTableStyle, marginBottom: '3rem' }}>
+            <div style={headerCellsStyle('60px 180px 1fr')}>
+              <span style={{ textAlign: 'center' }}>#</span>
+              <span>Focus</span>
+              <span>What to do</span>
+            </div>
+            {debugSteps.map((s, idx) => (
+              <div key={s.n} style={bodyRowStyle('60px 180px 1fr', idx === debugSteps.length - 1)}>
+                <span style={{ textAlign: 'center', fontFamily: 'monospace', color: '#F68B1F', fontWeight: '700', fontSize: '14px' }}>{s.n}</span>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{s.t}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{s.d}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Next Steps */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Where to go next</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+            {nextSteps.map((n) => (
+              <a key={n.href} href={n.href} style={{ textDecoration: 'none', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.15s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--ifm-font-color-base)', fontSize: '14px', fontWeight: '700' }}>{n.title}</span>
+                  <span style={{ color: '#F68B1F', display: 'flex' }}><ArrowRight size={14} /></span>
+                </div>
+                <span style={{ color: '#88888f', fontSize: '12px', lineHeight: '1.5' }}>{n.desc}</span>
+              </a>
+            ))}
+          </div>
+
+          {/* Feedback Section */}
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div style={{ animation: 'fadeIn 0.5s' }}>
+                {feedback === 'yes' ? (
+                  <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                    ✨ Thanks for your feedback! We're glad this helped.
+                  </p>
+                ) : (
+                  <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+                    <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+                    <textarea
+                      style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }}
+                      placeholder="Your feedback..."
+                      rows="4"
+                    ></textarea>
+                    <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ paddingBottom: '8rem' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Scenario picker + code */}
+      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem', borderLeft: '1px solid #1e1e20' }}>
+        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+          {/* Scenario Picker */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setScenarioOpen(!scenarioOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                backgroundColor: '#1a1a1c',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '0.5rem',
+                fontSize: '14px',
+                color: 'white',
+                border: '1px solid #303033',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ overflow: 'hidden' }}>
+                <span style={{ fontWeight: '600' }}>{selected.name}</span>
+                <span style={{ color: '#88888f', marginLeft: '0.5rem', fontSize: '12px' }}>· {selected.desc}</span>
+              </span>
+              <ChevronDown size={16} style={{ color: '#88888f', transform: scenarioOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+            </button>
+
+            {scenarioOpen && (
+              <div style={{ position: 'absolute', width: '100%', marginTop: '0.5rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', zIndex: 50, padding: '0.5rem 0', overflow: 'hidden', maxHeight: '420px', overflowY: 'auto' }}>
+                {scenarios.map((s) => (
+                  <button
+                    key={s.id}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.625rem 1.25rem',
+                      fontSize: '13px',
+                      backgroundColor: scenarioId === s.id ? '#F68B1F' : 'transparent',
+                      color: scenarioId === s.id ? 'white' : '#adadb8',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                    onClick={() => {
+                      setScenarioId(s.id);
+                      setScenarioOpen(false);
+                    }}
+                  >
+                    <span>{s.name}</span>
+                    <span style={{ color: scenarioId === s.id ? 'rgba(255,255,255,0.7)' : '#6b6b7b', fontSize: '11px' }}>{s.desc}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Code snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Pattern — {selected.name}</h3>
+            {renderCode(codeSnippets[scenarioId], 'snippet-' + scenarioId)}
+          </div>
+
+          {/* Tip Card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Pro tip</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>
+              Caching doesn't just save money; it prevents <span style={{ color: '#F68B1F' }}>thundering herd</span> problems in your own infrastructure. If multiple nodes start at once, local ETags ensure they don't all pull the same 5MB payload from TechWriter simultaneously.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<SdkBestPracticesPage />
