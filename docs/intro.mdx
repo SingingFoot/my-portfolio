@@ -6,8 +6,6 @@ description: Detailed professional portfolio of Oleh Shynkarenko
 
 import Link from '@docusaurus/Link';
 
-{/* ---------- HERO ---------- */}
-
 <div
   style={{
     position: 'relative',
@@ -54,48 +52,52 @@ import Link from '@docusaurus/Link';
         backgroundColor: 'var(--ifm-hero-bg)',
       }}
     />
-    <div style={{ flex: '1 1 320px', minWidth: '260px' }}>
-      <h1
+<div style={{ flex: '1 1 320px', minWidth: '260px' }}>
+  <h1
+    style={{
+      margin: 0,
+      fontSize: '2rem',
+      lineHeight: 1.15,
+      color: 'var(--ifm-hero-text)',
+    }}
+  >
+    Oleh Shynkarenko
+  </h1>
+  
+  {/* Замість margin використовуємо padding, щоб відсунути текст від лінії */}
+  <div style={{ paddingTop: '15px' }}> 
+    <p
+      style={{
+        margin: '0.4rem 0 1rem',
+        fontSize: '1rem',
+        fontWeight: 600,
+        color: '#F68B1F',
+        letterSpacing: '0.02em',
+      }}
+    >
+      Senior Technical Writer · Documentation Manager · API & Docs-as-Code Specialist
+    </p>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+      <a
+        className="button"
+        href="/CV Technical Writer Oleh Shynkarenko.pdf"
+        download="CV_Oleh_Shynkarenko.pdf"
         style={{
-          margin: 0,
-          fontSize: '2rem',
-          lineHeight: 1.15,
-          color: 'var(--ifm-hero-text)',
+          backgroundColor: '#F68B1F',
+          borderColor: '#F68B1F',
+          color: '#fff',
+          height: '1.5rem',
+          padding: '0 1.25rem',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 'auto',
+          lineHeight: '1',
         }}
-      >
-        Oleh Shynkarenko
-      </h1>
-      <p
-        style={{
-          margin: '0.4rem 0 1rem',
-          fontSize: '1rem',
-          fontWeight: 600,
-          color: '#F68B1F',
-          letterSpacing: '0.02em',
-        }}
-      >
-        Senior Technical Writer · Documentation Manager · API & Docs-as-Code Specialist
-      </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <a
-          className="button"
-          href="/CV Technical Writer Oleh Shynkarenko.pdf"
-          download="CV_Oleh_Shynkarenko.pdf"
-          style={{
-            backgroundColor: '#F68B1F',
-            borderColor: '#F68B1F',
-            color: '#fff',
-            height: '1.5rem', /* Зменшено висоту приблизно на 30% від 2.1rem */
-            padding: '0 1.25rem',
-            display: 'inline-flex',
-            alignItems: 'center', /* Центрування тексту по вертикалі */
-            justifyContent: 'center',
-            minHeight: 'auto',
-            lineHeight: '1',
-          }}
-        >Download CV</a>
-      </div>
+      >Download CV</a>
     </div>
+  </div>
+</div>
   </div>
 </div>
 
