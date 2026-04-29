@@ -1,39 +1,122 @@
 ---
 sidebar_position: 1
 title: UML diagrams
+hide_table_of_contents: true
 ---
 
-# UML Diagrams in Documentation
+import React from 'react';
 
-Unified Modeling Language (UML) is a standardized way to visualize system architecture. Using diagrams helps stakeholders and developers understand complex logic quickly without having to read hundreds of lines of text.
+export const Sparkles = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+  </svg>
+);
 
-Below are three examples of diagrams built using **Mermaid.js**.
+export const LevelBadge = ({ level }) => {
+  const styles = {
+    Basic:        { bg: 'rgba(63,185,80,0.12)',   color: '#3fb950', border: 'rgba(63,185,80,0.3)' },
+    Intermediate: { bg: 'rgba(246,139,31,0.12)',  color: '#F68B1F', border: 'rgba(246,139,31,0.3)' },
+    Advanced:     { bg: 'rgba(248,81,73,0.12)',   color: '#f85149', border: 'rgba(248,81,73,0.3)' },
+    Expert:       { bg: 'rgba(163,113,247,0.12)', color: '#a371f7', border: 'rgba(163,113,247,0.3)' },
+  };
+  const s = styles[level] || styles.Basic;
+  return (
+    <span style={{ backgroundColor: s.bg, color: s.color, padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: `1px solid ${s.border}` }}>
+      {level}
+    </span>
+  );
+};
 
----
+export const FeedbackSection = () => {
+  const [feedback, setFeedback] = React.useState(null);
+  return (
+    <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+      {!feedback ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+          <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+          <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+          <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+        </div>
+      ) : feedback === 'yes' ? (
+        <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+          ✨ Thanks for your feedback! We're glad this helped.
+        </p>
+      ) : (
+        <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+          <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+          <textarea style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }} placeholder="Your feedback..." rows={4}></textarea>
+          <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+        </div>
+      )}
+      <div style={{ paddingBottom: '8rem' }}></div>
+    </div>
+  );
+};
 
-## 1. Flowchart — Basic Level
-This is a fundamental example showing a logical execution path or a decision-making process. Each node has a specific shape (diamonds for conditions, rectangles for actions). It is the perfect tool for describing business logic and process flows.
+<div style={{
+  backgroundColor: 'var(--ifm-background-color)',
+  margin: '-2rem',
+  borderTop: '1px solid #1e1e20',
+  padding: '4rem'
+}}>
 
-<details>
-<summary><b>Click to see the detailed explanation of the Basic Flowchart</b></summary>
+<div style={{ maxWidth: '1200px' }}>
 
-### Diagram Overview
+<div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+  <span style={{ backgroundColor: 'rgba(246,139,31,0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246,139,31,0.3)' }}>UML</span>
+  <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>Mermaid.js</code>
+</div>
+
+<h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>UML Diagrams in Documentation</h1>
+
+<div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontSize: '15px', lineHeight: '1.75', marginBottom: '3rem', maxWidth: '720px' }}>
+<p><span style={{ color: '#F68B1F', fontWeight: '500' }}>Unified Modeling Language (UML)</span> is a standardized way to visualize system architecture. Using diagrams helps stakeholders and developers understand complex logic quickly without having to read hundreds of lines of text.</p>
+<p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>All diagrams below are built using <strong style={{ color: '#e3e3e8' }}>Mermaid.js</strong> — a Markdown-based diagramming tool that integrates directly into documentation.</p>
+</div>
+
+<div style={{ height: '1px', backgroundColor: '#1e1e20', marginBottom: '4rem' }}></div>
+
+{/* ── 01 Flowchart ── */}
+
+<div style={{ display: 'flex', flexDirection: 'row', gap: '3rem', marginBottom: '4rem', paddingBottom: '4rem', borderBottom: '1px solid #1e1e20' }}>
+
+<div style={{ flex: '1 1 0%' }}>
+
+<div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+  <LevelBadge level="Basic" />
+  <span style={{ fontSize: '13px', color: '#88888f', fontFamily: 'monospace' }}>01 / Flowchart</span>
+</div>
+
+<h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Flowchart — Basic Level</h2>
+
+<p style={{ fontSize: '15px', lineHeight: '1.75', color: '#adadb8', marginBottom: '1.5rem' }}>A fundamental example showing a logical execution path or decision-making process. Each node has a specific shape — diamonds for conditions, rectangles for actions. It is the perfect tool for describing business logic and process flows.</p>
+
+<details style={{ marginBottom: '1rem' }}>
+<summary style={{ cursor: 'pointer', fontWeight: '600', color: '#e3e3e8', fontSize: '14px', padding: '0.75rem 1rem', backgroundColor: '#1a1a1c', borderRadius: '0.5rem', border: '1px solid #303033', listStyle: 'none' }}><b>Click to see the detailed explanation of the Basic Flowchart</b></summary>
+
+<div style={{ marginTop: '1px', padding: '1.25rem 1rem', backgroundColor: '#131315', border: '1px solid #303033', borderTop: 'none', borderRadius: '0 0 0.5rem 0.5rem', fontSize: '14px', lineHeight: '1.75', color: '#adadb8' }}>
+
+**Diagram Overview**
+
 This flowchart illustrates a standard decision-making process during a development cycle. It uses standard UML shapes: **Rectangles** for actions/processes and a **Diamond** for a decision point.
 
-### The Logic Flow
+**The Logic Flow**
 
-1. **Start**: The process begins at the entry point.
-2. **Decision Point (`Is there an error?`)**: 
-   - The system checks for the presence of bugs or configuration issues.
-   - This acts as a logical gate that determines the next step based on a boolean (Yes/No) result.
-3. **Branch A (`Yes` -> `Fix the code`)**: 
-   - If an error is detected, the flow moves to the remediation phase. 
-   - After the fix, the logic loops back to the decision point to re-verify the status.
-4. **Branch B (`No` -> `Deploy project`)**: 
-   - If no errors are found, the system proceeds to the deployment phase.
-5. **End**: The process successfully terminates after the deployment is complete.
+1. **Start** — The process begins at the entry point.
+2. **Decision Point (`Is there an error?`)** — The system checks for the presence of bugs or configuration issues. This acts as a logical gate that determines the next step based on a boolean (Yes/No) result.
+3. **Branch A (`Yes` → `Fix the code`)** — If an error is detected, the flow moves to the remediation phase. After the fix, the logic loops back to the decision point to re-verify.
+4. **Branch B (`No` → `Deploy project`)** — If no errors are found, the system proceeds to the deployment phase.
+5. **End** — The process successfully terminates after deployment is complete.
 
+</div>
 </details>
+
+</div>
+
+<div style={{ flex: '0 0 45%' }}>
+<h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Diagram</h3>
+<div style={{ backgroundColor: '#0d0d0f', border: '1px solid #303033', borderRadius: '12px', padding: '1.5rem', overflowX: 'auto', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)' }}>
 
 ```mermaid
 graph TD;
@@ -44,36 +127,53 @@ graph TD;
     Deploy --> End[End];
 ```
 
+</div>
+</div>
 
-## 2. Sequence Diagram — Intermediate Level
-This diagram illustrates how objects or services interact with each other over time. It displays the exchange of messages between different participants in the system. The vertical lines represent time moving from top to bottom.
+</div>
 
-<details>
-<summary><b>Click to see the detailed explanation of the Authentication Sequence</b></summary>
+{/* ── 02 Sequence Diagram ── */}
 
-### Participants
-* **User**: The human actor interacting with the application's interface.
-* **Browser**: The frontend (client-side) application that handles the UI and user input.
-* **Server API**: The backend (server-side) system that manages data, logic, and authentication.
+<div style={{ display: 'flex', flexDirection: 'row', gap: '3rem', marginBottom: '4rem', paddingBottom: '4rem', borderBottom: '1px solid #1e1e20' }}>
 
-### The Step-by-Step Process
+<div style={{ flex: '1 1 0%' }}>
 
-1. **User Input (`Enters credentials`)**
-   The process begins when the **User** interacts with the login form. They provide their identity data. The **Browser** captures this input.
+<div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+  <LevelBadge level="Intermediate" />
+  <span style={{ fontSize: '13px', color: '#88888f', fontFamily: 'monospace' }}>02 / Sequence Diagram</span>
+</div>
 
-2. **Request Initiation (`POST /login request`)**
-   The **Browser** packages the credentials into a secure HTTP **POST** request and sends it to the `/login` endpoint on the **Server API**.
+<h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Sequence Diagram — Intermediate Level</h2>
 
-3. **Server-Side Processing & Validation**
-   The **Server API** validates the credentials. If authenticated, it generates a **JWT (JSON Web Token)** as a session key.
+<p style={{ fontSize: '15px', lineHeight: '1.75', color: '#adadb8', marginBottom: '1.5rem' }}>Illustrates how objects or services interact with each other over time. It displays the exchange of messages between different participants in the system. The vertical lines represent time moving from top to bottom.</p>
 
-4. **Response (`200 OK (JWT Token)`)**
-   The **Server API** sends back an HTTP **200 OK** response containing the **JWT Token**.
+<details style={{ marginBottom: '1rem' }}>
+<summary style={{ cursor: 'pointer', fontWeight: '600', color: '#e3e3e8', fontSize: '14px', padding: '0.75rem 1rem', backgroundColor: '#1a1a1c', borderRadius: '0.5rem', border: '1px solid #303033', listStyle: 'none' }}><b>Click to see the detailed explanation of the Authentication Sequence</b></summary>
 
-5. **Navigation (`Redirect to Dashboard`)**
-   The **Browser** stores the token and triggers a client-side redirect, moving the **User** to the **Dashboard**.
+<div style={{ marginTop: '1px', padding: '1.25rem 1rem', backgroundColor: '#131315', border: '1px solid #303033', borderTop: 'none', borderRadius: '0 0 0.5rem 0.5rem', fontSize: '14px', lineHeight: '1.75', color: '#adadb8' }}>
 
+**Participants**
+
+* **User** — The human actor interacting with the application's interface.
+* **Browser** — The frontend (client-side) application that handles the UI and user input.
+* **Server API** — The backend (server-side) system that manages data, logic, and authentication.
+
+**The Step-by-Step Process**
+
+1. **User Input (`Enters credentials`)** — The process begins when the **User** interacts with the login form. The **Browser** captures this input.
+2. **Request Initiation (`POST /login request`)** — The **Browser** packages the credentials into a secure HTTP **POST** request and sends it to the `/login` endpoint on the **Server API**.
+3. **Server-Side Processing & Validation** — The **Server API** validates the credentials. If authenticated, it generates a **JWT (JSON Web Token)** as a session key.
+4. **Response (`200 OK (JWT Token)`)** — The **Server API** sends back an HTTP **200 OK** response containing the **JWT Token**.
+5. **Navigation (`Redirect to Dashboard`)** — The **Browser** stores the token and triggers a client-side redirect, moving the **User** to the **Dashboard**.
+
+</div>
 </details>
+
+</div>
+
+<div style={{ flex: '0 0 45%' }}>
+<h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Diagram</h3>
+<div style={{ backgroundColor: '#0d0d0f', border: '1px solid #303033', borderRadius: '12px', padding: '1.5rem', overflowX: 'auto', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)' }}>
 
 ```mermaid
 sequenceDiagram
@@ -87,27 +187,54 @@ sequenceDiagram
     Web-->>User: Redirect to Dashboard
 ```
 
-## 3. State Diagram — Advanced Level
-Used to describe the behavior of complex systems that change their state based on specific events. This scheme is indispensable for technical API documentation or order management systems where tracking transitions between statuses is critical.
+</div>
+</div>
 
-<details>
-<summary><b>Click to see the detailed explanation of the State Diagram</b></summary>
+</div>
 
-### Diagram Overview
+{/* ── 03 State Diagram ── */}
+
+<div style={{ display: 'flex', flexDirection: 'row', gap: '3rem', marginBottom: '4rem', paddingBottom: '4rem', borderBottom: '1px solid #1e1e20' }}>
+
+<div style={{ flex: '1 1 0%' }}>
+
+<div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+  <LevelBadge level="Advanced" />
+  <span style={{ fontSize: '13px', color: '#88888f', fontFamily: 'monospace' }}>03 / State Diagram</span>
+</div>
+
+<h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>State Diagram — Advanced Level</h2>
+
+<p style={{ fontSize: '15px', lineHeight: '1.75', color: '#adadb8', marginBottom: '1.5rem' }}>Used to describe the behavior of complex systems that change their state based on specific events. This scheme is indispensable for technical API documentation or order management systems where tracking transitions between statuses is critical.</p>
+
+<details style={{ marginBottom: '1rem' }}>
+<summary style={{ cursor: 'pointer', fontWeight: '600', color: '#e3e3e8', fontSize: '14px', padding: '0.75rem 1rem', backgroundColor: '#1a1a1c', borderRadius: '0.5rem', border: '1px solid #303033', listStyle: 'none' }}><b>Click to see the detailed explanation of the State Diagram</b></summary>
+
+<div style={{ marginTop: '1px', padding: '1.25rem 1rem', backgroundColor: '#131315', border: '1px solid #303033', borderTop: 'none', borderRadius: '0 0 0.5rem 0.5rem', fontSize: '14px', lineHeight: '1.75', color: '#adadb8' }}>
+
+**Diagram Overview**
+
 This state diagram represents the lifecycle of a background task or a process worker. Unlike a flowchart which shows a path, a state diagram shows the different **states** a system can be in and the **events** that trigger transitions between them.
 
-### State Transitions and Logic
+**State Transitions and Logic**
 
-1. **Initial State (Solid Circle)**: The entry point indicating where the system life cycle begins.
-2. **Idle**: The default state where the system is waiting for input. It is "listening" for a trigger.
-3. **Transition (`New task received`)**: An external event occurs that pushes the system out of the Idle state.
-4. **Processing**: The active state where the core logic or computation is being executed.
-5. **Conditional Outcomes**:
-    - **Success Branch (`Task completed`)**: If the work finishes correctly, the system moves to the **Success** state and then reaches the **Final State** (double circle).
-    - **Error Branch (`Execution failed`)**: If something goes wrong, the system transitions to the **Error** state.
-6. **Retry Logic**: From the Error state, the system doesn't just stop. It follows the "Retry logic" path back to **Processing** to attempt the task again.
+1. **Initial State (Solid Circle)** — The entry point indicating where the system life cycle begins.
+2. **Idle** — The default state where the system is waiting for input. It is "listening" for a trigger.
+3. **Transition (`New task received`)** — An external event occurs that pushes the system out of the Idle state.
+4. **Processing** — The active state where the core logic or computation is being executed.
+5. **Conditional Outcomes:**
+   * **Success Branch (`Task completed`)** — If the work finishes correctly, the system moves to the **Success** state and then reaches the **Final State** (double circle).
+   * **Error Branch (`Execution failed`)** — If something goes wrong, the system transitions to the **Error** state.
+6. **Retry Logic** — From the Error state, the system follows the "Retry logic" path back to **Processing** to attempt the task again.
 
+</div>
 </details>
+
+</div>
+
+<div style={{ flex: '0 0 45%' }}>
+<h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Diagram</h3>
+<div style={{ backgroundColor: '#0d0d0f', border: '1px solid #303033', borderRadius: '12px', padding: '1.5rem', overflowX: 'auto', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)' }}>
 
 ```mermaid
 stateDiagram-v2
@@ -119,100 +246,165 @@ stateDiagram-v2
     Success --> [*]
 ```
 
-## 4. The Hyper-Complex State Machine
-This model represents a resilient, distributed system capable of handling unexpected failures and edge cases.
+</div>
+</div>
 
-<details>
-<summary><b>Technical Specification: Advanced State Transition Logic & Fault Tolerance</b></summary>
+</div>
 
-### Architectural Overview
+{/* ── 04 Hyper-Complex State Machine ── */}
+
+<div style={{ display: 'flex', flexDirection: 'row', gap: '3rem', marginBottom: '4rem', paddingBottom: '4rem', borderBottom: '1px solid #1e1e20' }}>
+
+<div style={{ flex: '1 1 0%' }}>
+
+<div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+  <LevelBadge level="Expert" />
+  <span style={{ fontSize: '13px', color: '#88888f', fontFamily: 'monospace' }}>04 / State Machine</span>
+</div>
+
+<h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>The Hyper-Complex State Machine</h2>
+
+<p style={{ fontSize: '15px', lineHeight: '1.75', color: '#adadb8', marginBottom: '1.5rem' }}>This model represents a resilient, distributed system capable of handling unexpected failures and edge cases. It incorporates high-availability patterns such as circuit breakers, backoff strategies, and hierarchical idle states.</p>
+
+<details style={{ marginBottom: '1rem' }}>
+<summary style={{ cursor: 'pointer', fontWeight: '600', color: '#e3e3e8', fontSize: '14px', padding: '0.75rem 1rem', backgroundColor: '#1a1a1c', borderRadius: '0.5rem', border: '1px solid #303033', listStyle: 'none' }}><b>Technical Specification: Advanced State Transition Logic & Fault Tolerance</b></summary>
+
+<div style={{ marginTop: '1px', padding: '1.25rem 1rem', backgroundColor: '#131315', border: '1px solid #303033', borderTop: 'none', borderRadius: '0 0 0.5rem 0.5rem', fontSize: '14px', lineHeight: '1.75', color: '#adadb8' }}>
+
+**Architectural Overview**
+
 This Finite-State Machine formalizes a resilient worker lifecycle. It moves beyond simple success/failure paths to incorporate **high-availability patterns** such as resource orchestration and circuit breakers, ensuring state integrity even during infrastructure instability.
 
-### 1. Pre-Execution & Quiescence
-* **Initialization & Bootstrapping**: Upon instantiation, the system executes a self-diagnostic. A `FatalError` at this stage triggers an immediate shutdown to prevent corrupted execution.
-* **Hierarchical Idle State**: The system operates in a multi-stage waiting mode, encompassing **Active Polling**, **Data Fetching**, and **Payload Validation**. This ensures the core execution state is never reached with malformed data.
+**1. Pre-Execution & Quiescence**
 
-### 2. Execution & Resource Orchestration
-* **Processing Micro-states**: The execution phase is governed by a **ResourceCheck** loop. This prevents process hanging during CPU or memory exhaustion by transitioning to a `Paused` state until the environment stabilizes.
-* **State Persistence**: Before final evaluation, the system enters an **Evaluating** state to verify that the output meets all business logic constraints.
+* **Initialization & Bootstrapping** — Upon instantiation, the system executes a self-diagnostic. A `FatalError` at this stage triggers an immediate shutdown to prevent corrupted execution.
+* **Hierarchical Idle State** — The system operates in a multi-stage waiting mode, encompassing **Active Polling**, **Data Fetching**, and **Payload Validation**. This ensures the core execution state is never reached with malformed data.
 
-### 3. Fault Tolerance & Exception Handling
+**2. Execution & Resource Orchestration**
+
+* **Processing Micro-states** — The execution phase is governed by a **ResourceCheck** loop. This prevents process hanging during CPU or memory exhaustion by transitioning to a `Paused` state until the environment stabilizes.
+* **State Persistence** — Before final evaluation, the system enters an **Evaluating** state to verify that the output meets all business logic constraints.
+
+**3. Fault Tolerance & Exception Handling**
+
 The system distinguishes between three types of failure to optimize recovery:
-* **Transient Failures**: Handled via a **Backoff & Retry** strategy, allowing for recovery from temporary network blips or database locks.
-* **Timeouts**: Monitored via a dedicated latency recorder to identify performance bottlenecks in the infrastructure.
-* **Circuit Breaker Logic**: If the error threshold is breached, the system "trips" the breaker, locking the state to prevent "retry storms" and transitioning to **Manual Intervention** for audit.
 
-### 4. Deterministic Termination
-* **Post-Process Cleanup**: Upon reaching `Success`, the system executes a cleanup routine to de-allocate resources before entering the terminal sink.
-* **Finality Guards**: This model ensures that no process is left in a "zombie" state; every path leads to either a clean disposal or an audited manual reset.
+* **Transient Failures** — Handled via a **Backoff & Retry** strategy, allowing for recovery from temporary network blips or database locks.
+* **Timeouts** — Monitored via a dedicated latency recorder to identify performance bottlenecks in the infrastructure.
+* **Circuit Breaker Logic** — If the error threshold is breached, the system "trips" the breaker, locking the state to prevent "retry storms" and transitioning to **Manual Intervention** for audit.
 
+**4. Deterministic Termination**
+
+* **Post-Process Cleanup** — Upon reaching `Success`, the system executes a cleanup routine to de-allocate resources before entering the terminal sink.
+* **Finality Guards** — This model ensures that no process is left in a "zombie" state; every path leads to either a clean disposal or an audited manual reset.
+
+</div>
 </details>
+
+</div>
+
+<div style={{ flex: '0 0 45%' }}>
+<h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Diagram</h3>
+<div style={{ backgroundColor: '#0d0d0f', border: '1px solid #303033', borderRadius: '12px', padding: '1.5rem', overflowX: 'auto', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)' }}>
 
 ```mermaid
 stateDiagram-v2
     [*] --> Initialization
-    
+
     Initialization --> Idle: System Ready
     Initialization --> FatalError: Boot Failure
-    
+
     state Idle {
         [*] --> Polling
         Polling --> Fetching: Signal Received
         Fetching --> Validation: Payload Acquired
     }
-    
+
     Idle --> Processing: Validated
     Idle --> Logging: Invalid Payload
     Logging --> Idle: Acknowledge
-    
+
     state Processing {
         [*] --> Executing
         Executing --> ResourceCheck: Internal Step
         ResourceCheck --> Executing: Resources OK
         ResourceCheck --> Paused: Resource Exhaustion
         Paused --> Executing: Resume Signal
-        
+
         Executing --> Evaluating: Logic Finished
     }
-    
+
     Processing --> Success: Criteria Met
     Processing --> TransientFailure: Exception Caught
     Processing --> Timeout: Max Execution Exceeded
-    
+
     state TransientFailure {
         [*] --> Analyzing
         Analyzing --> Backoff: Retryable
         Backoff --> Retrying
         Analyzing --> CircuitBreaker: Rapid Fire Failure
     }
-    
+
     Retrying --> Processing: Attempt N
     CircuitBreaker --> ManualIntervention: System Locked
-    
+
     ManualIntervention --> Initialization: Hard Reset
     ManualIntervention --> Success: Manual Override
-    
+
     Timeout --> Logging: Record Latency
     Success --> Cleanup: Post-Processing
     Cleanup --> [*]
-    
+
     FatalError --> [*]
 ```
 
-### 5. Docusaurus homepage
+</div>
+</div>
 
-This is a React-based Docusaurus homepage represented via a Component Architecture Diagram (Class Diagram style). This visualizes how the different functional components (`HomepageHeader`, `HomepageContent`, `TomJohnsonLatestPost`) relate to each other and the data they handle.
+</div>
 
-<details>
-<summary><b>Technical Specification: Architectural Explanation</b></summary>
+{/* ── 05 Component Architecture (Class Diagram) ── */}
 
-- **The Root** (`Home`): This is your entry point that orchestrates the overall layout of the landing page.
+<div style={{ display: 'flex', flexDirection: 'row', gap: '3rem', marginBottom: '4rem', paddingBottom: '4rem', borderBottom: '1px solid #1e1e20' }}>
 
-- **Encapsulation**: The logic for fetching external data is isolated within `TomJohnsonLatestPost`. This is a clean design because the rest of the homepage doesn't need to know about the RSS feed logic.
+<div style={{ flex: '1 1 0%' }}>
 
-- **Asynchronous Flow**: The diagram shows the dependency on `RSS_API`, representing the `useEffect` hook in your code that triggers the side effect of network communication.
+<div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+  <LevelBadge level="Expert" />
+  <span style={{ fontSize: '13px', color: '#88888f', fontFamily: 'monospace' }}>05 / Class Diagram</span>
+</div>
 
+<h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Docusaurus Homepage</h2>
+
+<p style={{ fontSize: '15px', lineHeight: '1.75', color: '#adadb8', marginBottom: '1.5rem' }}>A React-based Docusaurus homepage represented via a Component Architecture Diagram (Class Diagram style). This visualizes how the different functional components relate to each other and the data they handle.</p>
+
+<details style={{ marginBottom: '1.5rem' }}>
+<summary style={{ cursor: 'pointer', fontWeight: '600', color: '#e3e3e8', fontSize: '14px', padding: '0.75rem 1rem', backgroundColor: '#1a1a1c', borderRadius: '0.5rem', border: '1px solid #303033', listStyle: 'none' }}><b>Technical Specification: Architectural Explanation</b></summary>
+
+<div style={{ marginTop: '1px', padding: '1.25rem 1rem', backgroundColor: '#131315', border: '1px solid #303033', borderTop: 'none', borderRadius: '0 0 0.5rem 0.5rem', fontSize: '14px', lineHeight: '1.75', color: '#adadb8' }}>
+
+* **The Root (`Home`)** — This is your entry point that orchestrates the overall layout of the landing page.
+
+* **Encapsulation** — The logic for fetching external data is isolated within `TomJohnsonLatestPost`. This is a clean design because the rest of the homepage doesn't need to know about the RSS feed logic.
+
+* **Asynchronous Flow** — The diagram shows the dependency on `RSS_API`, representing the `useEffect` hook in your code that triggers the side effect of network communication.
+
+</div>
 </details>
+
+<div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Architecture tip</h3>
+    <Sparkles size={18} />
+  </div>
+  <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>Class diagrams excel at showing <strong style={{ color: '#e3e3e8' }}>component hierarchies</strong> and <strong style={{ color: '#e3e3e8' }}>data dependencies</strong>. Use them alongside sequence diagrams to cover both static structure and runtime behavior.</p>
+</div>
+
+</div>
+
+<div style={{ flex: '0 0 45%' }}>
+<h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Diagram</h3>
+<div style={{ backgroundColor: '#0d0d0f', border: '1px solid #303033', borderRadius: '12px', padding: '1.5rem', overflowX: 'auto', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)' }}>
 
 ```mermaid
 classDiagram
@@ -251,3 +443,13 @@ classDiagram
     TomJohnsonLatestPost ..> TomPost : uses type
     TomJohnsonLatestPost --> RSS_API : fetches data
 ```
+
+</div>
+</div>
+
+</div>
+
+<FeedbackSection />
+
+</div>
+</div>
