@@ -101,7 +101,18 @@ function HomepageHeader() {
                 className="button" 
                 href="/CV Technical Writer Oleh Shynkarenko.pdf" 
                 download="CV_Oleh_Shynkarenko.pdf"
-                style={{ backgroundColor: '#F68B1F', borderColor: '#F68B1F', color: '#fff' }}
+                style={{ 
+                  backgroundColor: '#F68B1F', 
+                  borderColor: '#F68B1F', 
+                  color: '#fff',
+                  height: '2.1rem',
+                  padding: '0 1.25rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: '1',
+                  minHeight: 'auto'
+                }}
               >
                 Download CV
               </a>

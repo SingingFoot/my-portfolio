@@ -1,18 +1,850 @@
 ---
 sidebar_position: 5
 title: Webhooks
+hide_table_of_contents: true
 ---
 
-# Webhooks
+import React, { useState } from 'react';
 
-Use webhooks to receive real-time notifications when events happen in your TechWriter projects.
+export const ChevronDown = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ transition: 'transform 0.3s' }}
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
 
-## Configuration
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
 
-1. Go to **Settings > Webhooks** in your dashboard.
-2. Enter your payload URL.
-3. Select events (e.g., `document.published`).
+export const ArrowRight = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+);
 
-## Signature Verification
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
 
-Each request includes a `X-TechWriter-Signature`. Always verify this to ensure the request came from us.
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
+
+export const WebhookIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"/><path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"/><path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"/></svg>
+);
+
+export const HighlightedCode = ({ code }) => {
+  const highlight = (text) => {
+    let highlighted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(\/\/.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/(#.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g, '<span style="color: #a5d6ff">$1</span>')
+      .replace(/\b(import|from|const|let|await|async|new|var|require|return|if|else|public|private|class|interface|package|use|namespace|def|func|true|false|null|try|catch|throw|when|match|rescue|except)\b/g, '<span style="color: #ff7b72">$1</span>')
+      .replace(/\b(TechWriter|TechWriterClient|WebhookVerifier|RequestOptions|context|ctx|options|client|tw|sc|service|err|error|Error|req|res|app|express|hmac|digest)\b/g, '<span style="color: #ffa657">$1</span>')
+      .replace(/\b([a-z_][a-z0-9_]*)(?=\s*\()/gi, '<span style="color: #d2a8ff">$1</span>')
+      .replace(/\b(\d+)\b/g, '<span style="color: #79c0ff">$1</span>');
+
+    return <code dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
+
+  return (
+    <pre style={{ margin: 0, background: 'transparent', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+      {highlight(code)}
+    </pre>
+  );
+};
+
+export const SdkWebhooksPage = () => {
+  const [language, setLanguage] = useState('Node.js');
+  const [isOpen, setIsOpen] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [copiedSnippets, setCopiedSnippets] = useState({});
+
+  const languages = [
+    { id: 'curl',   name: 'cURL' },
+    { id: 'node',   name: 'Node.js' },
+    { id: 'python', name: 'Python' },
+    { id: 'ruby',   name: 'Ruby' },
+    { id: 'php',    name: 'PHP' },
+    { id: 'go',     name: 'Go' },
+    { id: 'dotnet', name: '.NET' }
+  ];
+
+  const registerSnippets = {
+    'cURL': `curl -X POST https://api.techwriter.io/v1/webhooks \\
+  -H "Authorization: Bearer $TECHWRITER_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "url": "https://your-app.example.com/hooks/techwriter",
+    "events": ["document.published", "document.archived", "comment.created"],
+    "secret": "whs_your_signing_secret_here",
+    "active": true
+  }'`,
+    'Node.js': `import { TechWriterClient } from '@techwriter/sdk-core';
+
+const tw = new TechWriterClient({ apiKey: process.env.TECHWRITER_API_KEY });
+
+const webhook = await tw.webhooks.create({
+  url: 'https://your-app.example.com/hooks/techwriter',
+  events: ['document.published', 'document.archived', 'comment.created'],
+  secret: process.env.TW_WEBHOOK_SECRET,
+  active: true
+});
+
+console.log('Webhook registered:', webhook.id);`,
+    'Python': `import os
+from techwriter import TechWriterClient
+
+tw = TechWriterClient(api_key=os.environ["TECHWRITER_API_KEY"])
+
+webhook = tw.webhooks.create(
+    url="https://your-app.example.com/hooks/techwriter",
+    events=["document.published", "document.archived", "comment.created"],
+    secret=os.environ["TW_WEBHOOK_SECRET"],
+    active=True,
+)
+print("Webhook registered:", webhook.id)`,
+    'Ruby': `require 'techwriter'
+
+tw = TechWriter::Client.new(api_key: ENV['TECHWRITER_API_KEY'])
+
+webhook = tw.webhooks.create(
+  url: 'https://your-app.example.com/hooks/techwriter',
+  events: %w[document.published document.archived comment.created],
+  secret: ENV['TW_WEBHOOK_SECRET'],
+  active: true
+)
+puts "Webhook registered: #{webhook.id}"`,
+    'PHP': `$tw = new \\TechWriter\\Client(['api_key' => getenv('TECHWRITER_API_KEY')]);
+
+$webhook = $tw->webhooks->create([
+  'url'    => 'https://your-app.example.com/hooks/techwriter',
+  'events' => ['document.published', 'document.archived', 'comment.created'],
+  'secret' => getenv('TW_WEBHOOK_SECRET'),
+  'active' => true,
+]);
+echo "Webhook registered: " . $webhook->id;`,
+    'Go': `tw := techwriter.NewClient(techwriter.Config{
+  ApiKey: os.Getenv("TECHWRITER_API_KEY"),
+})
+
+wh, err := tw.Webhooks.Create(ctx, &techwriter.WebhookCreateParams{
+  URL:    "https://your-app.example.com/hooks/techwriter",
+  Events: []string{"document.published", "document.archived", "comment.created"},
+  Secret: os.Getenv("TW_WEBHOOK_SECRET"),
+  Active: true,
+})
+if err != nil { log.Fatal(err) }
+fmt.Println("Webhook registered:", wh.ID)`,
+    '.NET': `var tw = new TechWriterClient(new TechWriterOptions {
+  ApiKey = Environment.GetEnvironmentVariable("TECHWRITER_API_KEY")
+});
+
+var webhook = await tw.Webhooks.CreateAsync(new WebhookCreateOptions {
+  Url    = "https://your-app.example.com/hooks/techwriter",
+  Events = new[] { "document.published", "document.archived", "comment.created" },
+  Secret = Environment.GetEnvironmentVariable("TW_WEBHOOK_SECRET"),
+  Active = true
+});
+Console.WriteLine($"Webhook registered: {webhook.Id}");`
+  };
+
+  const verifySnippets = {
+    'cURL': `# Signature header format:
+# X-TechWriter-Signature: t=<timestamp>,v1=<hmac-sha256-hex>
+
+# Verify manually with openssl:
+echo -n "<timestamp>.<raw_body>" | \\
+  openssl dgst -sha256 -hmac "$TW_WEBHOOK_SECRET"
+
+# Compare the output hex to the v1= value in the header.
+# Reject if |timestamp - now| > 300 seconds (replay attack).`,
+    'Node.js': `import { WebhookVerifier } from '@techwriter/sdk-core';
+import express from 'express';
+
+const app = express();
+const verifier = new WebhookVerifier(process.env.TW_WEBHOOK_SECRET);
+
+// Use raw body — JSON.parse'd body won't verify correctly.
+app.post('/hooks/techwriter', express.raw({ type: 'application/json' }), (req, res) => {
+  try {
+    const event = verifier.constructEvent(
+      req.body,                                   // raw Buffer
+      req.headers['x-techwriter-signature']       // "t=...,v1=..."
+    );
+    // event is verified — safe to process
+    handleEvent(event);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Signature verification failed:', err.message);
+    res.sendStatus(400);
+  }
+});`,
+    'Python': `import os
+import hashlib, hmac, time
+from techwriter.webhooks import WebhookVerifier
+from flask import Flask, request, abort
+
+app = Flask(__name__)
+verifier = WebhookVerifier(os.environ["TW_WEBHOOK_SECRET"])
+
+@app.route("/hooks/techwriter", methods=["POST"])
+def handle_webhook():
+    try:
+        event = verifier.construct_event(
+            payload=request.get_data(),          # raw bytes
+            sig_header=request.headers.get("X-TechWriter-Signature"),
+        )
+    except Exception as e:
+        print("Signature verification failed:", e)
+        abort(400)
+
+    handle_event(event)
+    return "", 200`,
+    'Ruby': `require 'techwriter'
+require 'sinatra'
+
+verifier = TechWriter::WebhookVerifier.new(ENV['TW_WEBHOOK_SECRET'])
+
+post '/hooks/techwriter' do
+  payload = request.body.read
+  sig     = request.env['HTTP_X_TECHWRITER_SIGNATURE']
+
+  begin
+    event = verifier.construct_event(payload, sig)
+  rescue TechWriter::SignatureVerificationError => e
+    puts "Verification failed: #{e.message}"
+    halt 400
+  end
+
+  handle_event(event)
+  status 200
+end`,
+    'PHP': `$verifier = new \\TechWriter\\WebhookVerifier(getenv('TW_WEBHOOK_SECRET'));
+
+$payload = file_get_contents('php://input');
+$sigHeader = $_SERVER['HTTP_X_TECHWRITER_SIGNATURE'] ?? '';
+
+try {
+  $event = $verifier->constructEvent($payload, $sigHeader);
+} catch (\\TechWriter\\Exception\\SignatureVerificationException $e) {
+  http_response_code(400);
+  exit("Verification failed: " . $e->getMessage());
+}
+
+handleEvent($event);
+http_response_code(200);`,
+    'Go': `import "github.com/techwriter/techwriter-go/webhook"
+
+func webhookHandler(w http.ResponseWriter, r *http.Request) {
+  body, _ := io.ReadAll(r.Body)
+  sigHeader := r.Header.Get("X-TechWriter-Signature")
+
+  event, err := webhook.ConstructEvent(
+    body,
+    sigHeader,
+    os.Getenv("TW_WEBHOOK_SECRET"),
+  )
+  if err != nil {
+    http.Error(w, "verification failed", http.StatusBadRequest)
+    return
+  }
+
+  handleEvent(event)
+  w.WriteHeader(http.StatusOK)
+}`,
+    '.NET': `[HttpPost("hooks/techwriter")]
+public async Task<IActionResult> HandleWebhook()
+{
+    var payload = await new StreamReader(Request.Body).ReadToEndAsync();
+    var sigHeader = Request.Headers["X-TechWriter-Signature"].ToString();
+
+    try
+    {
+        var ev = WebhookVerifier.ConstructEvent(
+            payload,
+            sigHeader,
+            Environment.GetEnvironmentVariable("TW_WEBHOOK_SECRET")
+        );
+        HandleEvent(ev);
+        return Ok();
+    }
+    catch (SignatureVerificationException ex)
+    {
+        _logger.LogWarning("Webhook verification failed: {Msg}", ex.Message);
+        return BadRequest();
+    }
+}`
+  };
+
+  const handleSnippets = {
+    'cURL': `# Webhook payload example for document.published:
+{
+  "id": "evt_01HW8N4Z3R8C9X",
+  "type": "document.published",
+  "created": 1714387200,
+  "data": {
+    "object": {
+      "id": "doc_4fR29s",
+      "title": "API Reference",
+      "project_id": "proj_8fK29s",
+      "version": 7,
+      "published_at": "2024-04-29T10:00:00Z"
+    }
+  }
+}`,
+    'Node.js': `async function handleEvent(event) {
+  switch (event.type) {
+    case 'document.published': {
+      const doc = event.data.object;
+      await searchIndex.upsert({ id: doc.id, title: doc.title });
+      break;
+    }
+    case 'document.archived': {
+      await searchIndex.delete(event.data.object.id);
+      break;
+    }
+    case 'comment.created': {
+      const { authorId, body } = event.data.object;
+      await notifyMentions(authorId, body);
+      break;
+    }
+    default:
+      // Unrecognised event — log and ignore, never 500.
+      console.log('Unknown event type:', event.type);
+  }
+}`,
+    'Python': `def handle_event(event):
+    match event["type"]:
+        case "document.published":
+            doc = event["data"]["object"]
+            search_index.upsert({"id": doc["id"], "title": doc["title"]})
+
+        case "document.archived":
+            search_index.delete(event["data"]["object"]["id"])
+
+        case "comment.created":
+            obj = event["data"]["object"]
+            notify_mentions(obj["author_id"], obj["body"])
+
+        case _:
+            # Unknown event — log and ignore, never raise.
+            print("Unknown event type:", event["type"])`,
+    'Ruby': `def handle_event(event)
+  case event[:type]
+  when 'document.published'
+    doc = event[:data][:object]
+    SearchIndex.upsert(id: doc[:id], title: doc[:title])
+
+  when 'document.archived'
+    SearchIndex.delete(event[:data][:object][:id])
+
+  when 'comment.created'
+    obj = event[:data][:object]
+    NotifyMentions.call(author_id: obj[:author_id], body: obj[:body])
+
+  else
+    # Unknown event — log and ignore.
+    Rails.logger.info "Unknown webhook event: #{event[:type]}"
+  end
+end`,
+    'PHP': `function handleEvent(array $event): void {
+  switch ($event['type']) {
+    case 'document.published':
+      $doc = $event['data']['object'];
+      SearchIndex::upsert(['id' => $doc['id'], 'title' => $doc['title']]);
+      break;
+
+    case 'document.archived':
+      SearchIndex::delete($event['data']['object']['id']);
+      break;
+
+    case 'comment.created':
+      $obj = $event['data']['object'];
+      NotifyMentions::dispatch($obj['author_id'], $obj['body']);
+      break;
+
+    default:
+      // Unknown event — log and ignore.
+      error_log('Unknown webhook event: ' . $event['type']);
+  }
+}`,
+    'Go': `func handleEvent(event techwriter.Event) {
+  switch event.Type {
+  case "document.published":
+    doc := event.Data.Object.(techwriter.Document)
+    searchIndex.Upsert(doc.ID, doc.Title)
+
+  case "document.archived":
+    doc := event.Data.Object.(techwriter.Document)
+    searchIndex.Delete(doc.ID)
+
+  case "comment.created":
+    c := event.Data.Object.(techwriter.Comment)
+    notifyMentions(c.AuthorID, c.Body)
+
+  default:
+    // Unknown event — log and ignore, never return an error.
+    log.Printf("unknown webhook event: %s", event.Type)
+  }
+}`,
+    '.NET': `private void HandleEvent(WebhookEvent ev)
+{
+    switch (ev.Type)
+    {
+        case "document.published":
+            var doc = ev.Data.Object as Document;
+            _searchIndex.Upsert(doc.Id, doc.Title);
+            break;
+
+        case "document.archived":
+            _searchIndex.Delete(((Document)ev.Data.Object).Id);
+            break;
+
+        case "comment.created":
+            var c = ev.Data.Object as Comment;
+            _notifier.NotifyMentions(c.AuthorId, c.Body);
+            break;
+
+        default:
+            _logger.LogInformation("Unknown webhook event: {Type}", ev.Type);
+            break;
+    }
+}`
+  };
+
+  const cardTableStyle = { marginBottom: '3rem', border: '1px solid #1e1e20', borderRadius: '0.5rem', overflow: 'hidden' };
+  const headerCellsStyle = (cols) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.75rem 1rem',
+    backgroundColor: '#1a1a1c',
+    borderBottom: '1px solid #303033',
+    fontSize: '11px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: '#88888f'
+  });
+  const bodyRowStyle = (cols, isLast) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.875rem 1rem',
+    borderBottom: isLast ? 'none' : '1px solid #1e1e20',
+    alignItems: 'baseline',
+    fontSize: '13px'
+  });
+
+  const eventRows = [
+    { event: 'document.published',  resource: 'Document', trigger: 'A document transitions to Published status.',           note: 'Fired once per publish — not on re-publishes unless content changed.' },
+    { event: 'document.updated',    resource: 'Document', trigger: 'A draft or published document is saved.',               note: 'High-frequency. Consider filtering on data.object.status.' },
+    { event: 'document.archived',   resource: 'Document', trigger: 'A document is moved to the archive.',                   note: 'The document is soft-deleted. Content is still readable via API.' },
+    { event: 'document.deleted',    resource: 'Document', trigger: 'A document is permanently deleted.',                    note: 'Hard delete. Content cannot be recovered after this event.' },
+    { event: 'comment.created',     resource: 'Comment',  trigger: 'A new inline or document-level comment is posted.',     note: 'Includes author_id, body, and optional mention list.' },
+    { event: 'comment.resolved',    resource: 'Comment',  trigger: 'A comment thread is marked resolved.',                  note: 'data.object.resolved_by contains the resolver\'s user ID.' },
+    { event: 'project.created',     resource: 'Project',  trigger: 'A new project (workspace root) is created.',            note: 'Useful for provisioning downstream resources automatically.' },
+    { event: 'project.deleted',     resource: 'Project',  trigger: 'A project and all its documents are deleted.',          note: 'Cascade — listen for this if you mirror project structure.' },
+    { event: 'user.invited',        resource: 'User',     trigger: 'A new user is invited to the workspace.',               note: 'Fires before the user accepts. data.object.status = pending.' },
+    { event: 'user.role_changed',   resource: 'User',     trigger: 'A user\'s role or group membership changes.',           note: 'Old and new role are both included in data.object.' },
+    { event: 'deployment.created',  resource: 'Deployment', trigger: 'A new portal deployment is triggered.',              note: 'Use this to kick off downstream CDN invalidations.' },
+    { event: 'deployment.failed',   resource: 'Deployment', trigger: 'A portal deployment fails to complete.',             note: 'data.object.reason contains a human-readable failure summary.' }
+  ];
+
+  const headerRows = [
+    { header: 'X-TechWriter-Signature', format: 't=<unix>,v1=<hex>',         desc: 'Timestamp and HMAC-SHA256 of the raw payload. Always verify this before processing.' },
+    { header: 'X-TechWriter-Event',     format: 'document.published',         desc: 'The event type string. Identical to event.type in the body — useful for routing in proxies.' },
+    { header: 'X-TechWriter-Delivery',  format: 'evt_01HW8N4Z3R8C9X',        desc: 'Unique delivery ID for this attempt. Stable across retries — use it for idempotency checks.' },
+    { header: 'X-TechWriter-Version',   format: '2024-04-01',                 desc: 'Payload schema version. Pin to this in your handler to avoid surprise breaks on schema updates.' },
+    { header: 'Content-Type',           format: 'application/json',           desc: 'Always JSON. Read the raw body bytes before parsing — signature verification requires the raw form.' },
+    { header: 'User-Agent',             format: 'TechWriter-Webhook/1.0',     desc: 'Identifies TechWriter as the sender. Use in firewall rules to allow-list inbound requests.' }
+  ];
+
+  const retryRows = [
+    { attempt: '1st', delay: 'Immediate',  condition: 'Non-2xx or connection refused',      note: 'First delivery attempt fires as soon as the event is emitted.' },
+    { attempt: '2nd', delay: '5 seconds',  condition: 'Non-2xx or timeout on attempt 1',    note: 'Short delay — catches brief restarts and cold-start latency.' },
+    { attempt: '3rd', delay: '30 seconds', condition: 'Non-2xx or timeout on attempt 2',    note: 'After this point the event is considered degraded.' },
+    { attempt: '4th', delay: '5 minutes',  condition: 'Non-2xx or timeout on attempt 3',    note: 'Long pause — allows maintenance windows to complete.' },
+    { attempt: '5th', delay: '30 minutes', condition: 'Non-2xx or timeout on attempt 4',    note: 'Final attempt. Failure triggers a webhook.delivery_failed notification.' }
+  ];
+
+  const configRows = [
+    { opt: 'url',        type: 'string',   required: true,  desc: 'HTTPS endpoint that receives POST requests. Plain HTTP is rejected at registration.' },
+    { opt: 'events',     type: 'string[]', required: true,  desc: 'One or more event types to subscribe to. Pass ["*"] to receive all events in the workspace.' },
+    { opt: 'secret',     type: 'string',   required: true,  desc: 'Signing secret used to generate the X-TechWriter-Signature header. Store alongside your API key.' },
+    { opt: 'active',     type: 'boolean',  required: false, desc: 'Whether deliveries are enabled. Defaults to true. Set to false to pause without deleting.' },
+    { opt: 'description',type: 'string',   required: false, desc: 'A human-readable label shown in the dashboard. Useful when you run multiple endpoints.' },
+    { opt: 'metadata',   type: 'object',   required: false, desc: 'Up to 16 arbitrary key-value pairs for your own bookkeeping. Not included in the payload.' },
+    { opt: 'timeout',    type: 'number',   required: false, desc: 'Response timeout in seconds. Default 30. Increase for handlers that fan out to slow downstream services.' }
+  ];
+
+  const securityRows = [
+    { rule: 'Always verify the signature',              why: 'Any server on the internet can POST to your endpoint. An unverified handler processes attacker-crafted data.' },
+    { rule: 'Reject replayed events (|t − now| > 5 min)', why: 'A valid but old payload can trigger duplicate side-effects. The timestamp in the signature protects against replay.' },
+    { rule: 'Return 200 before processing',             why: 'Respond immediately so TechWriter doesn\'t time out and retry. Process the event asynchronously in a background job.' },
+    { rule: 'Use X-TechWriter-Delivery for idempotency', why: 'Retries send the same delivery ID. Store it in a seen-events set and skip duplicates to stay idempotent.' },
+    { rule: 'Rotate secrets without downtime',          why: 'The dashboard supports two active secrets during rotation. Accept both, then revoke the old one after deploys.' },
+    { rule: 'Never 500 on unknown event types',         why: 'TechWriter will retry on non-2xx. Unknown types should be logged and acknowledged with 200 to avoid retry storms.' },
+    { rule: 'Scope the webhooks:manage permission tightly', why: 'The scope that creates webhooks can also read signing secrets. Restrict it to the service that owns the endpoint.' }
+  ];
+
+  const nextSteps = [
+    { href: 'getting-started',  title: 'Getting Started', desc: 'Install the SDK and make your first API call.' },
+    { href: 'authentication',   title: 'Authentication',  desc: 'API keys, OAuth scopes, and key rotation patterns.' },
+    { href: 'api-endpoints',    title: 'API endpoints',   desc: 'Full reference of resources, methods, and request shapes.' },
+    { href: 'error-handling',   title: 'Error handling',  desc: 'Error codes, retry semantics, and idempotency keys.' },
+    { href: 'best-practices',   title: 'Best practices',  desc: 'Caching, concurrency, and consistency guarantees.' }
+  ];
+
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSnippets({ ...copiedSnippets, [id]: true });
+      setTimeout(() => setCopiedSnippets((prev) => ({ ...prev, [id]: false })), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
+
+  const renderCode = (snippet, id) => (
+    <div style={{ marginBottom: '0', position: 'relative' }}>
+      <div style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 10 }}>
+        <button
+          onClick={() => copyToClipboard(snippet, id)}
+          style={{
+            background: '#1a1a1c',
+            color: '#555',
+            padding: '8px',
+            borderRadius: '4px',
+            border: '1px solid #303033',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Copy code"
+        >
+          {copiedSnippets[id] ? <CheckIcon style={{ color: '#F68B1F' }} /> : <CopyIcon />}
+        </button>
+      </div>
+      <div style={{
+        padding: '32px',
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        backgroundColor: '#0d0d0f',
+        color: '#e3e3e8',
+        lineHeight: '1.6',
+        overflowX: 'auto',
+        border: '1px solid #303033',
+        borderRadius: '12px',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+      }}>
+        <HighlightedCode code={snippet} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: '-2rem',
+      borderTop: '1px solid #1e1e20'
+    }}>
+
+      {/* Left Column: Primary Content */}
+      <div style={{
+        flex: '1 1 0%',
+        padding: '4rem',
+        color: 'var(--ifm-font-color-base)',
+        borderRight: '1px solid #1e1e20'
+      }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <span style={{ backgroundColor: 'rgba(246, 139, 31, 0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246, 139, 31, 0.35)' }}>EVENTS</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>webhooks:manage</code>
+            <span style={{ fontSize: '11px', color: '#6b6b7b', fontFamily: 'monospace', backgroundColor: '#1e1e20', padding: '0.125rem 0.5rem', borderRadius: '0.25rem' }}>v3.2.0</span>
+            <span style={{ fontSize: '11px', color: '#3fb950', fontFamily: 'monospace', backgroundColor: 'rgba(63,185,80,0.1)', padding: '0.125rem 0.5rem', borderRadius: '0.25rem', border: '1px solid rgba(63,185,80,0.3)' }}>STABLE</span>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Webhooks</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontSize: '15px', lineHeight: '1.75', marginBottom: '3rem' }}>
+            <p>
+              Webhooks let TechWriter push real-time notifications to your server the moment something happens — a document is published, a comment is posted, a deployment fails. Instead of polling the API for changes, you register an HTTPS endpoint and TechWriter delivers a signed JSON payload within milliseconds of each event.
+            </p>
+
+            <p>
+              Every delivery includes an <span style={{ color: '#F68B1F', fontWeight: '500' }}>HMAC-SHA256 signature</span> so you can cryptographically confirm the payload came from TechWriter and hasn't been tampered with. The SDK ships a <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>WebhookVerifier</code> helper that handles the constant-time comparison and replay-window check for you.
+            </p>
+
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              Pick your language on the right to see the full flow: registering an endpoint, verifying signatures, and dispatching events. All snippets assume your signing secret is in the <code style={{ color: '#e3e3e8' }}>TW_WEBHOOK_SECRET</code> environment variable.
+            </p>
+          </div>
+
+          {/* Events */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Event catalog</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Subscribe to any combination of these events when you register a webhook. Use <code style={{ color: '#F68B1F' }}>["*"]</code> to receive everything.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('220px 110px 1fr')}>
+              <span>Event type</span>
+              <span>Resource</span>
+              <span>When it fires &amp; notes</span>
+            </div>
+            {eventRows.map((r, idx) => (
+              <div key={r.event} style={bodyRowStyle('220px 110px 1fr', idx === eventRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '12px' }}>{r.event}</code>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{r.resource}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.trigger} <span style={{ color: '#6b6b7b' }}>{r.note}</span></span>
+              </div>
+            ))}
+          </div>
+
+          {/* Delivery headers */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Delivery headers</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Every POST request TechWriter sends includes these headers. Verify the signature first — then use the others for routing and idempotency.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('240px 210px 1fr')}>
+              <span>Header</span>
+              <span>Format / example</span>
+              <span>Description</span>
+            </div>
+            {headerRows.map((r, idx) => (
+              <div key={r.header} style={bodyRowStyle('240px 210px 1fr', idx === headerRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '12px' }}>{r.header}</code>
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{r.format}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Retry schedule */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Retry schedule</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>TechWriter retries on any non-2xx response or connection timeout. The delivery ID stays constant across all attempts — use it as your idempotency key.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('100px 140px 1fr 1fr')}>
+              <span>Attempt</span>
+              <span>Wait before retry</span>
+              <span>Trigger</span>
+              <span>Notes</span>
+            </div>
+            {retryRows.map((r, idx) => (
+              <div key={r.attempt} style={bodyRowStyle('100px 140px 1fr 1fr', idx === retryRows.length - 1)}>
+                <span style={{ color: '#F68B1F', fontWeight: '700', fontFamily: 'monospace' }}>{r.attempt}</span>
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{r.delay}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.condition}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.note}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Configuration options */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Webhook configuration</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Options accepted by <code style={{ color: '#F68B1F' }}>tw.webhooks.create()</code> and the REST endpoint. All names are consistent across every SDK language.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('150px 110px 90px 1fr')}>
+              <span>Option</span>
+              <span>Type</span>
+              <span>Required</span>
+              <span>Description</span>
+            </div>
+            {configRows.map((c, idx) => (
+              <div key={c.opt} style={bodyRowStyle('150px 110px 90px 1fr', idx === configRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '13px' }}>{c.opt}</code>
+                <span style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{c.type}</span>
+                <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: c.required ? '#f85149' : '#6b6b7b' }}>{c.required ? 'required' : 'optional'}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{c.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Security */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Security checklist</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Webhooks are an inbound attack surface. These seven rules cover the most common failure modes seen in production integrations.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('300px 1fr')}>
+              <span>Rule</span>
+              <span>Why it matters</span>
+            </div>
+            {securityRows.map((r, idx) => (
+              <div key={r.rule} style={bodyRowStyle('300px 1fr', idx === securityRows.length - 1)}>
+                <span style={{ color: '#e3e3e8', fontWeight: '600', display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                  <span style={{ color: '#F68B1F' }}>•</span>
+                  {r.rule}
+                </span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.why}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Next Steps */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Where to go next</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+            {nextSteps.map((n) => (
+              <a key={n.href} href={n.href} style={{ textDecoration: 'none', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.15s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--ifm-font-color-base)', fontSize: '14px', fontWeight: '700' }}>{n.title}</span>
+                  <span style={{ color: '#F68B1F', display: 'flex' }}><ArrowRight size={14} /></span>
+                </div>
+                <span style={{ color: '#88888f', fontSize: '12px', lineHeight: '1.5' }}>{n.desc}</span>
+              </a>
+            ))}
+          </div>
+
+          {/* Feedback Section */}
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div style={{ animation: 'fadeIn 0.5s' }}>
+                {feedback === 'yes' ? (
+                  <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                    ✨ Thanks for your feedback! We're glad this helped.
+                  </p>
+                ) : (
+                  <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+                    <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+                    <textarea
+                      style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }}
+                      placeholder="Your feedback..."
+                      rows="4"
+                    ></textarea>
+                    <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ paddingBottom: '8rem' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Language picker + code snippets */}
+      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem', borderLeft: '1px solid #1e1e20' }}>
+        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+          {/* Language Picker */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                backgroundColor: '#1a1a1c',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '0.5rem',
+                fontSize: '14px',
+                color: 'white',
+                border: '1px solid #303033',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ fontWeight: '600' }}>{language}</span>
+              <ChevronDown size={16} style={{ color: '#88888f', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+            </button>
+
+            {isOpen && (
+              <div style={{ position: 'absolute', width: '100%', marginTop: '0.5rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', zIndex: 50, padding: '0.5rem 0', overflow: 'hidden' }}>
+                {languages.map((lang) => (
+                  <button
+                    key={lang.id}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.625rem 1.25rem',
+                      fontSize: '13px',
+                      backgroundColor: language === lang.name ? '#F68B1F' : 'transparent',
+                      color: language === lang.name ? 'white' : '#adadb8',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => {
+                      setLanguage(lang.name);
+                      setIsOpen(false);
+                    }}
+                  >
+                    {lang.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Register snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>1. Register a webhook</h3>
+            {renderCode(registerSnippets[language], 'register')}
+          </div>
+
+          {/* Verify snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>2. Verify the signature</h3>
+            {renderCode(verifySnippets[language], 'verify')}
+          </div>
+
+          {/* Handle snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>3. Handle events</h3>
+            {renderCode(handleSnippets[language], 'handle')}
+          </div>
+
+          {/* Tip Card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Pro tip</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>
+              Respond with <code style={{ color: '#F68B1F' }}>200</code> immediately, then process the event in a background job. If your handler calls a slow downstream service synchronously, TechWriter will time out at 30 s and retry — leading to duplicate processing and retry storms during outages.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<SdkWebhooksPage />

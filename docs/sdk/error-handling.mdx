@@ -1,38 +1,718 @@
 ---
 sidebar_position: 4
 title: Error Handling
+hide_table_of_contents: true
 ---
 
-# Error Handling
+import React, { useState } from 'react';
 
-The TechWriter SDK uses standard HTTP response codes to indicate the success or failure of an API request. This guide will help you interpret and handle errors effectively.
+export const ChevronDown = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ transition: 'transform 0.3s' }}
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
 
-## Common Status Codes
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
 
-| Code | Status | Description |
-| :--- | :--- | :--- |
-| **200** | OK | The request was successful. |
-| **400** | Bad Request | Missing required parameters or malformed syntax. |
-| **401** | Unauthorized | Your API Key is invalid or has expired. |
-| **404** | Not Found | The requested project or document does not exist. |
-| **429** | Too Many Requests | Rate limit exceeded. Please slow down. |
-| **500** | Server Error | Internal issue on TechWriter's side. |
+export const ArrowRight = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+);
 
-## Handling Errors in Code
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
 
-When an error occurs, the SDK throws an exception. We recommend wrapping your calls in a `try...catch` block to ensure your application remains stable.
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
 
-```javascript
+export const HighlightedCode = ({ code }) => {
+  const highlight = (text) => {
+    let highlighted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(\/\/.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/(#.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g, '<span style="color: #a5d6ff">$1</span>')
+      .replace(/\b(import|from|const|let|await|async|new|var|require|return|if|else|public|private|class|interface|package|use|namespace|def|func|true|false|null|try|catch|throw|while|for|switch|case|break|continue|in|of)\b/g, '<span style="color: #ff7b72">$1</span>')
+      .replace(/\b(TechWriter|TechWriterClient|TechWriterError|RateLimitError|RequestOptions|Article|ArticleParams|context|ctx|options|client|tw|sc|service|err|error|Error)\b/g, '<span style="color: #ffa657">$1</span>')
+      .replace(/\b([a-z_][a-z0-9_]*)(?=\s*\()/gi, '<span style="color: #d2a8ff">$1</span>')
+      .replace(/\b(\d+)\b/g, '<span style="color: #79c0ff">$1</span>');
+
+    return <code dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
+
+  return (
+    <pre style={{ margin: 0, background: 'transparent', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+      {highlight(code)}
+    </pre>
+  );
+};
+
+export const SdkErrorHandlingPage = () => {
+  const [scenarioId, setScenarioId] = useState('basic');
+  const [scenarioOpen, setScenarioOpen] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [copiedSnippets, setCopiedSnippets] = useState({});
+
+  const scenarios = [
+    { id: 'basic',         name: 'Catch & branch by code',     desc: 'Try / catch basics' },
+    { id: 'retry',         name: 'Custom retry policy',        desc: 'Exponential backoff' },
+    { id: 'rateLimit',     name: 'Honor Retry-After',          desc: '429 handling' },
+    { id: 'idempotency',   name: 'Safe writes with keys',      desc: 'Idempotency-Key' },
+    { id: 'concurrency',   name: 'Resolve a 409 conflict',     desc: 'Optimistic concurrency' },
+    { id: 'validation',    name: 'Map validation errors',      desc: 'Field-level details' },
+    { id: 'circuitBreaker',name: 'Circuit breaker',            desc: 'Fail fast on outages' },
+    { id: 'logging',       name: 'Structured logging',         desc: 'Capture request IDs' }
+  ];
+
+  const codeSnippets = {
+    basic: `import { TechWriterError } from '@techwriter/sdk-core';
+
 try {
-  const result = await client.projects.get('non_existent_id');
-} catch (error) {
-  if (error.status === 404) {
-    console.error('Project not found. Check your Project ID.');
+  const project = await client.projects.get('proj_8fK29s');
+  return project;
+} catch (err) {
+  if (!(err instanceof TechWriterError)) throw err; // network or bug
+
+  switch (err.code) {
+    case 'unauthorized':
+      // refresh credential, then surface to caller
+      throw err;
+    case 'not_found':
+      return null; // project was deleted, treat as absent
+    case 'rate_limited':
+      // SDK will already have retried; bubble up
+      throw err;
+    default:
+      // log + rethrow for the on-call to investigate
+      logger.error({ requestId: err.requestId, code: err.code }, err.message);
+      throw err;
+  }
+}`,
+    retry: `// Override the default retry policy on a single call
+const project = await client.projects.get('proj_8fK29s', {
+  retries: 5,
+  retryDelay: (attempt) => Math.min(2 ** attempt * 250, 8000),
+  retryOn: ['rate_limited', 'server_error', 'network_error']
+});
+
+// Or pass an AbortSignal to bound total wall-clock time
+const controller = new AbortController();
+setTimeout(() => controller.abort(), 10_000);
+
+try {
+  await client.documents.list('proj_8fK29s', { signal: controller.signal });
+} catch (err) {
+  if (err.code === 'request_aborted') {
+    // give up and degrade gracefully
   } else {
-    console.error('An unexpected error occurred:', error.message);
+    throw err;
+  }
+}`,
+    rateLimit: `import { RateLimitError } from '@techwriter/sdk-core';
+
+async function safeCreate(input, attempt = 0) {
+  try {
+    return await client.documents.create('proj_8fK29s', input);
+  } catch (err) {
+    if (err instanceof RateLimitError && attempt < 3) {
+      // Server told us how long to wait — respect it.
+      const waitMs = (err.retryAfter ?? 1) * 1000;
+      await new Promise((r) => setTimeout(r, waitMs));
+      return safeCreate(input, attempt + 1);
+    }
+    throw err;
+  }
+}`,
+    idempotency: `import { randomUUID } from 'node:crypto';
+
+// One key per logical operation — generate it once and persist
+// it next to the work item, then reuse on every retry.
+const idempotencyKey = workItem.idempotencyKey ?? randomUUID();
+await db.workItems.update(workItem.id, { idempotencyKey });
+
+const doc = await client.documents.create('proj_8fK29s', payload, {
+  idempotencyKey
+});
+
+// If the network blips and we retry with the same key, the API
+// returns the original 201 response — no duplicate is created.`,
+    concurrency: `// Optimistic concurrency: read, mutate, write — guard with version
+async function renameDocument(id, newTitle) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const doc = await client.documents.get(id);
+    try {
+      return await client.documents.update(id, {
+        title: newTitle,
+        lastSeenVersion: doc.version
+      });
+    } catch (err) {
+      if (err.code === 'conflict') continue; // someone else wrote, re-read
+      throw err;
+    }
+  }
+  throw new Error('Could not rename ' + id + ' after 3 attempts');
+}`,
+    validation: `try {
+  await client.projects.create({ name: 'My Project', slug: 'My Project!' });
+} catch (err) {
+  if (err.code === 'validation_failed') {
+    // err.details is an array of { field, rule, expected }
+    const fieldErrors = Object.fromEntries(
+      err.details.map((d) => [d.field, \`Must match \${d.expected}\`])
+    );
+    return { ok: false, fieldErrors };
+  }
+  throw err;
+}
+
+// Render fieldErrors next to the form inputs, e.g.
+// { slug: "Must match ^[a-z0-9-]+$" }`,
+    circuitBreaker: `// Stop calling a failing dependency for a cool-off window.
+class CircuitBreaker {
+  constructor({ threshold = 5, cooloffMs = 30_000 } = {}) {
+    this.failures = 0;
+    this.openedAt = 0;
+    this.threshold = threshold;
+    this.cooloffMs = cooloffMs;
+  }
+  async run(fn) {
+    if (this.openedAt && Date.now() - this.openedAt < this.cooloffMs) {
+      throw new Error('circuit_open');
+    }
+    try {
+      const out = await fn();
+      this.failures = 0;
+      this.openedAt = 0;
+      return out;
+    } catch (err) {
+      if (err.code === 'server_error' || err.code === 'network_error') {
+        if (++this.failures >= this.threshold) this.openedAt = Date.now();
+      }
+      throw err;
+    }
   }
 }
-```
 
-## Support
-If you encounter an error that isn't documented here, please reach out to our developer support team at support@techwriter.io.
+const breaker = new CircuitBreaker();
+await breaker.run(() => client.search({ q: 'rate limit' }));`,
+    logging: `// Funnel every TechWriterError through one log line so on-call
+// can grep by requestId in seconds.
+client.on('error', (err, ctx) => {
+  logger.warn({
+    requestId: err.requestId,
+    code: err.code,
+    status: err.status,
+    method: ctx.method,
+    path: ctx.path,
+    attempt: ctx.attempt,
+    durationMs: ctx.durationMs
+  }, err.message);
+});
+
+// And mirror it into your tracing system
+client.on('request', (ctx) => tracer.startSpan('techwriter.' + ctx.path));
+client.on('response', (ctx) => tracer.endSpan(ctx.spanId, { status: ctx.status }));`
+  };
+
+  const cardTableStyle = { marginBottom: '3rem', border: '1px solid #1e1e20', borderRadius: '0.5rem', overflow: 'hidden' };
+  const headerCellsStyle = (cols) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.75rem 1rem',
+    backgroundColor: '#1a1a1c',
+    borderBottom: '1px solid #303033',
+    fontSize: '11px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: '#88888f'
+  });
+  const bodyRowStyle = (cols, isLast) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.875rem 1rem',
+    borderBottom: isLast ? 'none' : '1px solid #1e1e20',
+    alignItems: 'baseline',
+    fontSize: '13px'
+  });
+
+  const severityColors = {
+    Retry:    { fg: '#3fb950', bg: 'rgba(63,185,80,0.10)',   border: 'rgba(63,185,80,0.35)'   },
+    Backoff:  { fg: '#F68B1F', bg: 'rgba(246,139,31,0.10)',  border: 'rgba(246,139,31,0.35)'  },
+    Fix:      { fg: '#a371f7', bg: 'rgba(163,113,247,0.10)', border: 'rgba(163,113,247,0.35)' },
+    Surface:  { fg: '#79c0ff', bg: 'rgba(121,192,255,0.10)', border: 'rgba(121,192,255,0.35)' },
+    Fatal:    { fg: '#f85149', bg: 'rgba(248,81,73,0.10)',   border: 'rgba(248,81,73,0.35)'   }
+  };
+
+  const SeverityPill = ({ severity }) => {
+    const c = severityColors[severity] || severityColors.Surface;
+    return (
+      <span style={{
+        backgroundColor: c.bg,
+        color: c.fg,
+        border: `1px solid ${c.border}`,
+        padding: '0.125rem 0.5rem',
+        borderRadius: '0.375rem',
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        fontWeight: '700',
+        letterSpacing: '0.05em',
+        display: 'inline-block',
+        minWidth: '64px',
+        textAlign: 'center'
+      }}>{severity}</span>
+    );
+  };
+
+  const errorCodeRows = [
+    { code: 'unauthorized',       status: '401', action: 'Fix',     desc: 'API key missing, expired, or rotated. Refresh the credential and retry once.' },
+    { code: 'forbidden',          status: '403', action: 'Surface', desc: 'Authenticated, but the key lacks the scope. Surface to the caller — do not retry.' },
+    { code: 'not_found',          status: '404', action: 'Surface', desc: 'Resource ID does not exist or was soft-deleted. Treat as absent in your domain logic.' },
+    { code: 'validation_failed',  status: '422', action: 'Fix',     desc: 'Payload broke a schema rule. err.details lists field, rule, and expected pattern.' },
+    { code: 'conflict',           status: '409', action: 'Retry',   desc: 'Concurrency conflict. Re-read the resource and retry with the new lastSeenVersion.' },
+    { code: 'rate_limited',       status: '429', action: 'Backoff', desc: 'Quota exceeded. Honor the Retry-After header before retrying.' },
+    { code: 'idempotency_replay', status: '409', action: 'Surface', desc: 'Same Idempotency-Key reused with a different body. Generate a new key.' },
+    { code: 'server_error',       status: '500', action: 'Retry',   desc: 'Transient internal error. SDK retries with exponential backoff up to your retries cap.' },
+    { code: 'service_unavailable',status: '503', action: 'Backoff', desc: 'Dependency degraded. Trip a circuit breaker if it persists for more than 30 seconds.' },
+    { code: 'gateway_timeout',    status: '504', action: 'Retry',   desc: 'Upstream took too long. Safe to retry idempotent reads; use idempotency keys for writes.' },
+    { code: 'network_error',      status: '—',   action: 'Retry',   desc: 'Connection reset, DNS failure, or TLS error before any HTTP response was received.' },
+    { code: 'request_aborted',    status: '—',   action: 'Fatal',   desc: 'Caller cancelled via AbortSignal or timeout. Stop retrying immediately.' }
+  ];
+
+  const exceptionRows = [
+    { name: 'TechWriterError',     ext: 'Error',             notes: 'Base class for every SDK error. Carries code, status, requestId, retryable.' },
+    { name: 'AuthenticationError', ext: 'TechWriterError',   notes: 'Raised on 401. Inspect err.code for unauthorized, expired_token, or revoked_key.' },
+    { name: 'PermissionError',     ext: 'TechWriterError',   notes: 'Raised on 403. err.requiredScope tells you which scope the key was missing.' },
+    { name: 'NotFoundError',       ext: 'TechWriterError',   notes: 'Raised on 404. Use it as a clean signal for "absent" rather than a hard failure.' },
+    { name: 'ValidationError',     ext: 'TechWriterError',   notes: 'Raised on 422. err.details is an array of { field, rule, expected }.' },
+    { name: 'ConflictError',       ext: 'TechWriterError',   notes: 'Raised on 409. err.currentVersion holds the server\'s view of the version.' },
+    { name: 'RateLimitError',      ext: 'TechWriterError',   notes: 'Raised on 429. err.retryAfter is in seconds; err.limit and err.remaining track the quota.' },
+    { name: 'ServerError',         ext: 'TechWriterError',   notes: 'Raised on 5xx. Retryable by default — counts against your retries budget.' },
+    { name: 'NetworkError',        ext: 'TechWriterError',   notes: 'Raised when no HTTP response was received. Always retryable.' }
+  ];
+
+  const fieldRows = [
+    { f: 'code',         t: 'string',   d: 'Stable, machine-readable identifier. Branch your logic on this, not on err.message.' },
+    { f: 'status',       t: 'number',   d: 'HTTP status code. Null for network and abort errors.' },
+    { f: 'message',      t: 'string',   d: 'Human-readable summary. Safe to log; do not parse it programmatically.' },
+    { f: 'requestId',    t: 'string',   d: 'Unique server-side ID. Always include this when contacting support.' },
+    { f: 'retryable',    t: 'boolean',  d: 'Whether the SDK considers this error safe to retry. False for 4xx and abort.' },
+    { f: 'retryAfter',   t: 'number?',  d: 'Seconds to wait before retrying. Set on 429 and some 503 responses.' },
+    { f: 'details',      t: 'array?',   d: 'Field-level breakdown for validation errors: { field, rule, expected }.' },
+    { f: 'attempt',      t: 'number',   d: 'Which retry attempt produced the final error. 1 means it failed on the first try.' },
+    { f: 'cause',        t: 'Error?',   d: 'Underlying cause — the original network error, JSON parse error, etc.' }
+  ];
+
+  const retryRows = [
+    { c: 'rate_limited',        retry: 'Yes',  cap: '5',     wait: 'Retry-After header',  notes: 'SDK pauses for the exact duration the server returned.' },
+    { c: 'server_error',        retry: 'Yes',  cap: '3',     wait: 'Exponential, jitter', notes: 'Base 250 ms, doubling, full-jitter, capped at 8 s.' },
+    { c: 'service_unavailable', retry: 'Yes',  cap: '3',     wait: 'Exponential, jitter', notes: 'Trip a circuit breaker if you see > 5 in 30 s.' },
+    { c: 'gateway_timeout',     retry: 'Yes',  cap: '2',     wait: 'Exponential, jitter', notes: 'Pair with idempotency keys when retrying writes.' },
+    { c: 'network_error',       retry: 'Yes',  cap: '3',     wait: 'Exponential, jitter', notes: 'No HTTP response received — always safe to retry.' },
+    { c: 'conflict',            retry: 'Manual', cap: '—',   wait: 'Re-read first',       notes: 'Read the latest version, re-apply the change, then retry.' },
+    { c: 'validation_failed',   retry: 'No',   cap: '—',     wait: '—',                   notes: 'Fix the payload — retrying without changes always fails.' },
+    { c: 'unauthorized',        retry: 'Once', cap: '1',     wait: 'After token refresh', notes: 'Refresh the credential first, then retry the original call.' },
+    { c: 'forbidden',           retry: 'No',   cap: '—',     wait: '—',                   notes: 'Scope is missing — no amount of retrying will help.' }
+  ];
+
+  const debugSteps = [
+    { n: '1', t: 'Capture the requestId',        d: 'Every error carries err.requestId. Log it before doing anything else — without it support cannot trace the call.' },
+    { n: '2', t: 'Inspect err.code, not err.message', d: 'Codes are stable across versions; messages are not. Branch on the code and never on substrings of the message.' },
+    { n: '3', t: 'Read err.details for 422s',    d: 'Validation errors include field, rule, and expected. Map them straight onto your form inputs for the cleanest UX.' },
+    { n: '4', t: 'Check err.retryable',          d: 'A quick boolean for "should I bother retrying this." False on 4xx and aborts; true on 5xx, 429, and network.' },
+    { n: '5', t: 'Replay with the request log',  d: 'Plug client.on(\'request\') and client.on(\'response\') into your logger to replay any failure offline.' },
+    { n: '6', t: 'Escalate with the requestId',  d: 'When you reach out to support@techwriter.io, include the requestId — answers come back in minutes, not days.' }
+  ];
+
+  const errorBodyExample = `{
+  "error": {
+    "code": "validation_failed",
+    "message": "Field 'slug' must be lowercase kebab-case.",
+    "requestId": "req_01HW8N4Z3R8C9X",
+    "details": [
+      {
+        "field": "slug",
+        "rule": "pattern",
+        "expected": "^[a-z0-9-]+$"
+      }
+    ]
+  }
+}`;
+
+  const nextSteps = [
+    { href: 'getting-started', title: 'Getting started', desc: 'Install, configure, and make your first SDK call.' },
+    { href: 'authentication', title: 'Authentication',   desc: 'Rotate keys, refresh tokens, and scope OAuth flows.' },
+    { href: 'api-endpoints', title: 'API endpoints',     desc: 'Status codes, headers, and the full endpoint reference.' },
+    { href: 'webhooks', title: 'Webhooks',               desc: 'Retry semantics for inbound events and signature checks.' },
+    { href: 'best-practices', title: 'Best practices',   desc: 'Concurrency, idempotency, and consistency guarantees.' }
+  ];
+
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSnippets({ ...copiedSnippets, [id]: true });
+      setTimeout(() => setCopiedSnippets((prev) => ({ ...prev, [id]: false })), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
+
+  const renderCode = (snippet, id) => (
+    <div style={{ marginBottom: '0', position: 'relative' }}>
+      <div style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 10 }}>
+        <button
+          onClick={() => copyToClipboard(snippet, id)}
+          style={{
+            background: '#1a1a1c',
+            color: '#555',
+            padding: '8px',
+            borderRadius: '4px',
+            border: '1px solid #303033',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Copy code"
+        >
+          {copiedSnippets[id] ? <CheckIcon style={{ color: '#F68B1F' }} /> : <CopyIcon />}
+        </button>
+      </div>
+      <div style={{
+        padding: '32px',
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        backgroundColor: '#0d0d0f',
+        color: '#e3e3e8',
+        lineHeight: '1.6',
+        overflowX: 'auto',
+        border: '1px solid #303033',
+        borderRadius: '12px',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+      }}>
+        <HighlightedCode code={snippet} />
+      </div>
+    </div>
+  );
+
+  const selected = scenarios.find((s) => s.id === scenarioId);
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: '-2rem',
+      borderTop: '1px solid #1e1e20'
+    }}>
+
+      {/* Left Column: Primary Content */}
+      <div style={{
+        flex: '1 1 0%',
+        padding: '4rem',
+        color: 'var(--ifm-font-color-base)',
+        borderRight: '1px solid #1e1e20'
+      }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <span style={{ backgroundColor: 'rgba(246, 139, 31, 0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246, 139, 31, 0.35)' }}>RELIABILITY</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>TechWriterError</code>
+            <span style={{ fontSize: '11px', color: '#6b6b7b', fontFamily: 'monospace', backgroundColor: '#1e1e20', padding: '0.125rem 0.5rem', borderRadius: '0.25rem' }}>v3.2.0</span>
+            <span style={{ fontSize: '11px', color: '#3fb950', fontFamily: 'monospace', backgroundColor: 'rgba(63,185,80,0.1)', padding: '0.125rem 0.5rem', borderRadius: '0.25rem', border: '1px solid rgba(63,185,80,0.3)' }}>STABLE</span>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Error handling</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontSize: '15px', lineHeight: '1.75', marginBottom: '3rem' }}>
+            <p>
+              The SDK turns every non-2xx response into a typed exception that extends a single base class, <span style={{ color: '#F68B1F', fontWeight: '500' }}>TechWriterError</span>. Each one carries a stable <code style={{ color: '#F68B1F' }}>code</code>, the original <code style={{ color: '#F68B1F' }}>requestId</code>, a <code style={{ color: '#F68B1F' }}>retryable</code> hint, and — for validation errors — a field-level breakdown you can pipe directly into your form.
+            </p>
+
+            <p>
+              The result: predictable error handling. Branch on the code, log the request ID, decide whether to retry. Transient failures are absorbed by the built-in retry policy before they reach your code, so the exceptions you do see are almost always actionable.
+            </p>
+
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              Pick a scenario in the panel on the right to see a realistic snippet — from basic try / catch to circuit breakers and conflict resolution. Every snippet is copy-pasteable into a Node.js project.
+            </p>
+          </div>
+
+          {/* Error codes */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Error codes</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>The codes you'll meet most often, the HTTP status they ride on, and the recommended response.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('200px 80px 100px 1fr')}>
+              <span>Code</span>
+              <span>Status</span>
+              <span>Action</span>
+              <span>What it means</span>
+            </div>
+            {errorCodeRows.map((r, idx) => (
+              <div key={r.code} style={bodyRowStyle('200px 80px 100px 1fr', idx === errorCodeRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '13px' }}>{r.code}</code>
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{r.status}</code>
+                <SeverityPill severity={r.action} />
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Exception classes */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Exception hierarchy</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Every SDK error is a subclass of <code style={{ color: '#F68B1F' }}>TechWriterError</code>. Catch the base class for a single funnel, or specific subclasses for fine-grained control.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('210px 200px 1fr')}>
+              <span>Class</span>
+              <span>Extends</span>
+              <span>Notes</span>
+            </div>
+            {exceptionRows.map((r, idx) => (
+              <div key={r.name} style={bodyRowStyle('210px 200px 1fr', idx === exceptionRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '13px' }}>{r.name}</code>
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{r.ext}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.notes}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Error fields */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Error object fields</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>The shape of every thrown error. Use these instead of parsing <code style={{ color: '#F68B1F' }}>err.message</code>.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('150px 110px 1fr')}>
+              <span>Field</span>
+              <span>Type</span>
+              <span>Description</span>
+            </div>
+            {fieldRows.map((r, idx) => (
+              <div key={r.f} style={bodyRowStyle('150px 110px 1fr', idx === fieldRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600' }}>{r.f}</code>
+                <span style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{r.t}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.d}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Retry matrix */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Retry behavior</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>What the SDK does on your behalf, by default. Override per-call with the <code style={{ color: '#F68B1F' }}>retries</code> and <code style={{ color: '#F68B1F' }}>retryDelay</code> options.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('170px 90px 60px 180px 1fr')}>
+              <span>Code</span>
+              <span>Auto-retry</span>
+              <span>Cap</span>
+              <span>Wait strategy</span>
+              <span>Notes</span>
+            </div>
+            {retryRows.map((r, idx) => (
+              <div key={r.c} style={bodyRowStyle('170px 90px 60px 180px 1fr', idx === retryRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '12px' }}>{r.c}</code>
+                <span style={{ color: r.retry === 'Yes' ? '#3fb950' : r.retry === 'No' ? '#f85149' : '#F68B1F', fontWeight: '600', fontSize: '12px' }}>{r.retry}</span>
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{r.cap}</code>
+                <span style={{ color: '#e3e3e8', fontSize: '12px' }}>{r.wait}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.notes}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Error body shape */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Wire format</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Every error response uses this envelope. The SDK parses it into the typed exception above; if you call the API directly, this is what you'll see.</p>
+          <div style={{ marginBottom: '3rem' }}>
+            {renderCode(errorBodyExample, 'errorBody')}
+          </div>
+
+          {/* Debug checklist */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Debugging checklist</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Six steps from "something broke" to "ticket closed."</p>
+          <div style={{ ...cardTableStyle, marginBottom: '3rem' }}>
+            <div style={headerCellsStyle('60px 230px 1fr')}>
+              <span style={{ textAlign: 'center' }}>#</span>
+              <span>Step</span>
+              <span>What to do</span>
+            </div>
+            {debugSteps.map((s, idx) => (
+              <div key={s.n} style={bodyRowStyle('60px 230px 1fr', idx === debugSteps.length - 1)}>
+                <span style={{ textAlign: 'center', fontFamily: 'monospace', color: '#F68B1F', fontWeight: '700', fontSize: '14px' }}>{s.n}</span>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{s.t}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{s.d}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Next Steps */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Where to go next</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+            {nextSteps.map((n) => (
+              <a key={n.href} href={n.href} style={{ textDecoration: 'none', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.15s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--ifm-font-color-base)', fontSize: '14px', fontWeight: '700' }}>{n.title}</span>
+                  <span style={{ color: '#F68B1F', display: 'flex' }}><ArrowRight size={14} /></span>
+                </div>
+                <span style={{ color: '#88888f', fontSize: '12px', lineHeight: '1.5' }}>{n.desc}</span>
+              </a>
+            ))}
+          </div>
+
+          {/* Feedback Section */}
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div style={{ animation: 'fadeIn 0.5s' }}>
+                {feedback === 'yes' ? (
+                  <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                    ✨ Thanks for your feedback! We're glad this helped.
+                  </p>
+                ) : (
+                  <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+                    <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+                    <textarea
+                      style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }}
+                      placeholder="Your feedback..."
+                      rows="4"
+                    ></textarea>
+                    <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ paddingBottom: '8rem' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Scenario picker + code */}
+      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem', borderLeft: '1px solid #1e1e20' }}>
+        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+          {/* Scenario Picker */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setScenarioOpen(!scenarioOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                backgroundColor: '#1a1a1c',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '0.5rem',
+                fontSize: '14px',
+                color: 'white',
+                border: '1px solid #303033',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ overflow: 'hidden' }}>
+                <span style={{ fontWeight: '600' }}>{selected.name}</span>
+                <span style={{ color: '#88888f', marginLeft: '0.5rem', fontSize: '12px' }}>· {selected.desc}</span>
+              </span>
+              <ChevronDown size={16} style={{ color: '#88888f', transform: scenarioOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+            </button>
+
+            {scenarioOpen && (
+              <div style={{ position: 'absolute', width: '100%', marginTop: '0.5rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', zIndex: 50, padding: '0.5rem 0', overflow: 'hidden', maxHeight: '420px', overflowY: 'auto' }}>
+                {scenarios.map((s) => (
+                  <button
+                    key={s.id}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.625rem 1.25rem',
+                      fontSize: '13px',
+                      backgroundColor: scenarioId === s.id ? '#F68B1F' : 'transparent',
+                      color: scenarioId === s.id ? 'white' : '#adadb8',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                    onClick={() => {
+                      setScenarioId(s.id);
+                      setScenarioOpen(false);
+                    }}
+                  >
+                    <span>{s.name}</span>
+                    <span style={{ color: scenarioId === s.id ? 'rgba(255,255,255,0.7)' : '#6b6b7b', fontSize: '11px' }}>{s.desc}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Code snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Pattern — {selected.name}</h3>
+            {renderCode(codeSnippets[scenarioId], 'snippet-' + scenarioId)}
+          </div>
+
+          {/* Tip Card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Pro tip</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>
+              Always log <code style={{ color: '#F68B1F' }}>err.requestId</code> alongside <code style={{ color: '#F68B1F' }}>err.code</code>. With those two values, support can replay the exact request from server-side traces — without them, debugging a one-off 500 is a guessing game.
+            </p>
+          </div>
+
+          {/* Support card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Stuck on an error?</h3>
+            <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>
+              Email <a href="mailto:support@techwriter.io" style={{ color: '#F68B1F', textDecoration: 'none' }}>support@techwriter.io</a> with the <code style={{ color: '#F68B1F' }}>requestId</code> and the SDK version. Most tickets are resolved within one business hour.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<SdkErrorHandlingPage />

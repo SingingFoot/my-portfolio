@@ -1,48 +1,873 @@
 ---
 sidebar_position: 3
 title: API Endpoints
+hide_table_of_contents: true
 ---
 
-# API Endpoints
+import React, { useState } from 'react';
 
-The TechWriter SDK provides a set of methods to interact with the core resources of our platform. All endpoints are relative to the base URL: `https://api.techwriter.io/v1`.
+export const ChevronDown = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ transition: 'transform 0.3s' }}
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
 
-## Projects
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
 
-### List All Projects
-Retrieve a list of all projects available in your workspace.
+export const ArrowRight = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+);
 
-**Method:** `GET`  
-**Endpoint:** `/projects`
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
 
-```javascript
-const projects = await client.projects.list();
-```
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
 
-### Get Project by ID
+export const HighlightedCode = ({ code, lang = 'js' }) => {
+  const highlight = (text) => {
+    let highlighted = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(\/\/.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/(#.*$)/gm, '<span style="color: #8b949e">$1</span>')
+      .replace(/("(?:[^"\\]|\\.)*")|('(?:[^'\\]|\\.)*')/g, '<span style="color: #a5d6ff">$1</span>')
+      .replace(/\b(import|from|const|let|await|async|new|var|require|return|if|else|public|private|class|interface|package|use|namespace|def|func|true|false|null|try|catch)\b/g, '<span style="color: #ff7b72">$1</span>')
+      .replace(/\b(TechWriter|TechWriterClient|RequestOptions|Article|ArticleParams|context|ctx|options|client|tw|sc|service)\b/g, '<span style="color: #ffa657">$1</span>')
+      .replace(/\b([a-z_][a-z0-9_]*)(?=\s*\()/gi, '<span style="color: #d2a8ff">$1</span>')
+      .replace(/\b(\d+)\b/g, '<span style="color: #79c0ff">$1</span>');
 
-Fetch details of a specific project.
+    return <code dangerouslySetInnerHTML={{ __html: highlighted }} />;
+  };
 
-**Method**: `GET`
+  return (
+    <pre style={{ margin: 0, background: 'transparent', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+      {highlight(code)}
+    </pre>
+  );
+};
 
-**Endpoint:** `/projects/{projectId}`
+export const SdkApiEndpointsPage = () => {
+  const [endpointId, setEndpointId] = useState('listProjects');
+  const [endpointOpen, setEndpointOpen] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [copiedSnippets, setCopiedSnippets] = useState({});
 
-```javascript
-const project = await client.projects.get('proj_123');
-```
-## Documents
+  const endpoints = [
+    { id: 'listProjects',    name: 'List projects',           method: 'GET',    path: '/projects',                         group: 'Projects'  },
+    { id: 'getProject',      name: 'Get project',             method: 'GET',    path: '/projects/{projectId}',             group: 'Projects'  },
+    { id: 'createProject',   name: 'Create project',          method: 'POST',   path: '/projects',                         group: 'Projects'  },
+    { id: 'updateProject',   name: 'Update project',          method: 'PATCH',  path: '/projects/{projectId}',             group: 'Projects'  },
+    { id: 'deleteProject',   name: 'Delete project',          method: 'DELETE', path: '/projects/{projectId}',             group: 'Projects'  },
+    { id: 'listDocuments',   name: 'List documents',          method: 'GET',    path: '/projects/{projectId}/documents',   group: 'Documents' },
+    { id: 'createDocument',  name: 'Create document',         method: 'POST',   path: '/projects/{projectId}/documents',   group: 'Documents' },
+    { id: 'updateDocument',  name: 'Update document',         method: 'PATCH',  path: '/documents/{documentId}',           group: 'Documents' },
+    { id: 'publishDocument', name: 'Publish document',        method: 'POST',   path: '/documents/{documentId}/publish',   group: 'Documents' },
+    { id: 'searchArticles',  name: 'Search articles',         method: 'GET',    path: '/search',                           group: 'Search'    },
+    { id: 'uploadAsset',     name: 'Upload asset',            method: 'POST',   path: '/assets',                           group: 'Assets'    },
+    { id: 'createWebhook',   name: 'Create webhook',          method: 'POST',   path: '/webhooks',                         group: 'Webhooks'  }
+  ];
 
-### Create a Document
-
-Create a new Markdown-based document.
-
-Method: `POST`
-
-Endpoint: `/projects/{projectId}/documents`
-
-```javascript
-const newDoc = await client.documents.create('proj_123', {
-  title: 'API Reference',
-  content: '# Welcome'
+  const requestSnippets = {
+    listProjects: `// Paginated, filterable list of projects in your workspace
+const page = await client.projects.list({
+  top: 25,
+  filter: 'status eq active',
+  orderBy: 'updatedAt desc'
 });
-```
+
+console.log(\`Returning \${page.items.length} of \${page.totalCount}\`);
+for (const p of page.items) {
+  console.log(\`\${p.id} — \${p.name}\`);
+}`,
+    getProject: `// Fetch a single project with its template and owner expanded
+const project = await client.projects.get('proj_8fK29s', {
+  expand: ['template', 'owner']
+});
+
+console.log(project.name, project.template.name);`,
+    createProject: `// Create a project from a shared template
+const project = await client.projects.create({
+  name: 'Public API v3',
+  slug: 'public-api-v3',
+  templateId: 'tpl_baseline',
+  visibility: 'private',
+  ownerGroupId: 'grp_docs_team'
+});
+
+console.log('Created', project.id);`,
+    updateProject: `// Patch only the fields you care about
+const project = await client.projects.update('proj_8fK29s', {
+  name: 'Public API v3 (GA)',
+  visibility: 'public'
+});`,
+    deleteProject: `// Soft-delete: project enters a 30-day recovery window
+await client.projects.delete('proj_8fK29s', {
+  reason: 'Replaced by Public API v3'
+});`,
+    listDocuments: `// All published documents in a project, newest first
+const page = await client.documents.list('proj_8fK29s', {
+  status: 'published',
+  orderBy: 'publishedAt desc',
+  top: 50
+});`,
+    createDocument: `// Create a Markdown document from a template
+const doc = await client.documents.create('proj_8fK29s', {
+  title: 'Authentication',
+  slug: 'authentication',
+  templateId: 'tpl_concept_page',
+  content: '# Authentication\\n\\nUse OAuth 2.0 with the\\nclient credentials flow.',
+  tags: ['security', 'auth']
+});`,
+    updateDocument: `// Idempotent partial update; pass lastSeenVersion for OCC
+const doc = await client.documents.update('doc_qa7L31', {
+  title: 'Authentication & Authorization',
+  content: '# Auth\\n...',
+  lastSeenVersion: 7
+}, {
+  idempotencyKey: 'edit-auth-20260429-1'
+});`,
+    publishDocument: `// Promote the latest draft into a published deployment
+const release = await client.documents.publish('doc_qa7L31', {
+  channel: 'public-portal',
+  scheduleAt: '2026-05-01T09:00:00Z',
+  changelog: 'Add note about token rotation cadence.'
+});
+
+console.log('Release', release.id, release.status);`,
+    searchArticles: `// Full-text search across every published article you can read
+const results = await client.search({
+  q: 'rate limit',
+  scope: 'published',
+  highlight: true,
+  top: 10
+});
+
+results.hits.forEach((h) =>
+  console.log(\`\${h.score.toFixed(2)} \${h.title}\`)
+);`,
+    uploadAsset: `// Stream upload — the SDK chunks and resumes for you
+import fs from 'node:fs';
+
+const asset = await client.assets.upload({
+  filename: 'architecture-diagram.png',
+  contentType: 'image/png',
+  body: fs.createReadStream('./diagram.png'),
+  visibility: 'workspace'
+});
+
+console.log(asset.url, asset.size);`,
+    createWebhook: `// Subscribe to document lifecycle events
+const hook = await client.webhooks.create({
+  url: 'https://hooks.example.com/techwriter',
+  events: ['document.published', 'document.updated'],
+  secret: process.env.HOOK_SIGNING_SECRET,
+  active: true
+});`
+  };
+
+  const responseSnippets = {
+    listProjects: `{
+  "items": [
+    {
+      "id": "proj_8fK29s",
+      "name": "Public API v3",
+      "slug": "public-api-v3",
+      "status": "active",
+      "documentCount": 42,
+      "updatedAt": "2026-04-28T14:11:09Z"
+    }
+  ],
+  "totalCount": 87,
+  "nextCursor": "eyJ0IjoxNzE0MzAwMDAwfQ"
+}`,
+    getProject: `{
+  "id": "proj_8fK29s",
+  "name": "Public API v3",
+  "slug": "public-api-v3",
+  "visibility": "private",
+  "owner": {
+    "id": "usr_42",
+    "displayName": "Maya Chen"
+  },
+  "template": {
+    "id": "tpl_baseline",
+    "name": "Baseline Reference"
+  },
+  "createdAt": "2026-01-12T08:30:00Z",
+  "updatedAt": "2026-04-28T14:11:09Z"
+}`,
+    createProject: `{
+  "id": "proj_8fK29s",
+  "name": "Public API v3",
+  "slug": "public-api-v3",
+  "status": "active",
+  "createdAt": "2026-04-29T09:00:11Z"
+}`,
+    updateProject: `{
+  "id": "proj_8fK29s",
+  "name": "Public API v3 (GA)",
+  "visibility": "public",
+  "updatedAt": "2026-04-29T09:14:02Z",
+  "version": 12
+}`,
+    deleteProject: `{
+  "id": "proj_8fK29s",
+  "deleted": true,
+  "recoverableUntil": "2026-05-29T09:14:02Z"
+}`,
+    listDocuments: `{
+  "items": [
+    {
+      "id": "doc_qa7L31",
+      "title": "Authentication",
+      "slug": "authentication",
+      "status": "published",
+      "version": 7,
+      "publishedAt": "2026-04-26T18:42:55Z"
+    }
+  ],
+  "totalCount": 42,
+  "nextCursor": null
+}`,
+    createDocument: `{
+  "id": "doc_qa7L31",
+  "title": "Authentication",
+  "slug": "authentication",
+  "status": "draft",
+  "version": 1,
+  "createdAt": "2026-04-29T09:21:48Z"
+}`,
+    updateDocument: `{
+  "id": "doc_qa7L31",
+  "title": "Authentication & Authorization",
+  "status": "draft",
+  "version": 8,
+  "updatedAt": "2026-04-29T09:24:10Z"
+}`,
+    publishDocument: `{
+  "id": "rel_b3QzN1",
+  "documentId": "doc_qa7L31",
+  "channel": "public-portal",
+  "status": "scheduled",
+  "scheduleAt": "2026-05-01T09:00:00Z"
+}`,
+    searchArticles: `{
+  "hits": [
+    {
+      "id": "doc_qa7L31",
+      "title": "Rate limits",
+      "score": 4.21,
+      "highlights": [
+        "...the per-key <em>rate limit</em> resets every 60s..."
+      ]
+    }
+  ],
+  "took": 38
+}`,
+    uploadAsset: `{
+  "id": "ast_2dfE9p",
+  "url": "https://cdn.techwriter.io/ws_42/architecture-diagram.png",
+  "contentType": "image/png",
+  "size": 184320,
+  "checksum": "sha256:9fa4b4..."
+}`,
+    createWebhook: `{
+  "id": "whk_72MkLp",
+  "url": "https://hooks.example.com/techwriter",
+  "events": ["document.published", "document.updated"],
+  "active": true,
+  "createdAt": "2026-04-29T09:31:00Z"
+}`
+  };
+
+  const cardTableStyle = { marginBottom: '3rem', border: '1px solid #1e1e20', borderRadius: '0.5rem', overflow: 'hidden' };
+  const headerCellsStyle = (cols) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.75rem 1rem',
+    backgroundColor: '#1a1a1c',
+    borderBottom: '1px solid #303033',
+    fontSize: '11px',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: '#88888f'
+  });
+  const bodyRowStyle = (cols, isLast) => ({
+    display: 'grid',
+    gridTemplateColumns: cols,
+    gap: '1rem',
+    padding: '0.875rem 1rem',
+    borderBottom: isLast ? 'none' : '1px solid #1e1e20',
+    alignItems: 'baseline',
+    fontSize: '13px'
+  });
+
+  const methodColors = {
+    GET:    { fg: '#3fb950', bg: 'rgba(63,185,80,0.10)',  border: 'rgba(63,185,80,0.35)'  },
+    POST:   { fg: '#F68B1F', bg: 'rgba(246,139,31,0.10)', border: 'rgba(246,139,31,0.35)' },
+    PATCH:  { fg: '#a371f7', bg: 'rgba(163,113,247,0.10)', border: 'rgba(163,113,247,0.35)' },
+    PUT:    { fg: '#79c0ff', bg: 'rgba(121,192,255,0.10)', border: 'rgba(121,192,255,0.35)' },
+    DELETE: { fg: '#f85149', bg: 'rgba(248,81,73,0.10)',  border: 'rgba(248,81,73,0.35)'  }
+  };
+
+  const MethodPill = ({ method, size = 'sm' }) => {
+    const c = methodColors[method] || methodColors.GET;
+    const isLg = size === 'lg';
+    return (
+      <span style={{
+        backgroundColor: c.bg,
+        color: c.fg,
+        border: `1px solid ${c.border}`,
+        padding: isLg ? '0.25rem 0.625rem' : '0.125rem 0.5rem',
+        borderRadius: '0.375rem',
+        fontFamily: 'monospace',
+        fontSize: isLg ? '12px' : '11px',
+        fontWeight: '700',
+        letterSpacing: '0.05em',
+        display: 'inline-block',
+        minWidth: isLg ? '64px' : '54px',
+        textAlign: 'center'
+      }}>{method}</span>
+    );
+  };
+
+  const baseRows = [
+    { env: 'Production', url: 'https://api.techwriter.io/v1', notes: 'Primary multi-region endpoint. Latency-routed to the nearest data center.' },
+    { env: 'EU residency', url: 'https://eu.api.techwriter.io/v1', notes: 'Data stays in Frankfurt. Required for GDPR-scoped workspaces.' },
+    { env: 'Sandbox', url: 'https://sandbox.api.techwriter.io/v1', notes: 'Test workspace. Resets nightly. Ignored by billing and rate limits.' },
+    { env: 'Self-hosted', url: 'https://{your-domain}/api/v1', notes: 'Pass via the baseURL client option. Mirrors the public surface 1:1.' }
+  ];
+
+  const projectsRows = [
+    { method: 'GET',    path: '/projects',                       desc: 'List projects with pagination, filtering, and sorting.' },
+    { method: 'GET',    path: '/projects/{projectId}',           desc: 'Fetch a single project. Use ?expand=template,owner to inline relations.' },
+    { method: 'POST',   path: '/projects',                       desc: 'Create a new project from scratch or from a template.' },
+    { method: 'PATCH',  path: '/projects/{projectId}',           desc: 'Update any subset of fields. Returns the new version number.' },
+    { method: 'DELETE', path: '/projects/{projectId}',           desc: 'Soft-delete. Recoverable for 30 days via /projects/{id}/restore.' }
+  ];
+
+  const documentsRows = [
+    { method: 'GET',    path: '/projects/{projectId}/documents', desc: 'List documents in a project. Filter by status, tag, or author.' },
+    { method: 'POST',   path: '/projects/{projectId}/documents', desc: 'Create a new document. Markdown or structured blocks accepted.' },
+    { method: 'GET',    path: '/documents/{documentId}',         desc: 'Fetch a document at the latest or a specific version.' },
+    { method: 'PATCH',  path: '/documents/{documentId}',         desc: 'Patch fields. Pass lastSeenVersion for optimistic concurrency.' },
+    { method: 'POST',   path: '/documents/{documentId}/publish', desc: 'Promote the current draft to a release on a portal channel.' },
+    { method: 'POST',   path: '/documents/{documentId}/revert',  desc: 'Revert to any prior version. The revert itself becomes a new version.' },
+    { method: 'DELETE', path: '/documents/{documentId}',         desc: 'Archive a document. Removes it from search but preserves history.' }
+  ];
+
+  const otherRows = [
+    { method: 'GET',    path: '/search',                         desc: 'Full-text search across articles you have read access to.', group: 'Search'    },
+    { method: 'POST',   path: '/assets',                         desc: 'Upload an asset (image, PDF, archive). Multipart and resumable.', group: 'Assets'    },
+    { method: 'GET',    path: '/assets/{assetId}',               desc: 'Fetch metadata for an asset, including its CDN URL and checksum.', group: 'Assets'    },
+    { method: 'POST',   path: '/webhooks',                       desc: 'Subscribe an HTTPS endpoint to one or more workspace events.',     group: 'Webhooks'  },
+    { method: 'GET',    path: '/webhooks/{hookId}/deliveries',   desc: 'Inspect recent delivery attempts and their HTTP responses.',       group: 'Webhooks'  },
+    { method: 'GET',    path: '/usage',                          desc: 'Current period rate-limit and storage usage for your workspace.',  group: 'Workspace' }
+  ];
+
+  const statusRows = [
+    { code: '200', label: 'OK',                    desc: 'Successful read or update. Body contains the requested resource.' },
+    { code: '201', label: 'Created',               desc: 'Successful create. The Location header points at the new resource.' },
+    { code: '204', label: 'No Content',            desc: 'Successful action with no response body — typically deletes.' },
+    { code: '400', label: 'Bad Request',           desc: 'Malformed payload, invalid filter syntax, or unknown field.' },
+    { code: '401', label: 'Unauthorized',          desc: 'API key missing, expired, or rotated. Refresh the credential.' },
+    { code: '403', label: 'Forbidden',             desc: 'Authenticated, but the key lacks the scope for this resource.' },
+    { code: '404', label: 'Not Found',             desc: 'No resource matches the supplied identifier in this workspace.' },
+    { code: '409', label: 'Conflict',              desc: 'Concurrency conflict — your lastSeenVersion is stale. Re-read and retry.' },
+    { code: '422', label: 'Unprocessable Entity',  desc: 'Validation failed. The error body lists which fields broke which rule.' },
+    { code: '429', label: 'Too Many Requests',     desc: 'Rate limit exceeded. Honor the Retry-After header before retrying.' },
+    { code: '500', label: 'Server Error',          desc: 'Something on our side. Safe to retry — the SDK does this for you by default.' }
+  ];
+
+  const queryRows = [
+    { name: 'top',     example: 'top=25',                 desc: 'Number of items per page. Default 25, max 200 across every list endpoint.' },
+    { name: 'cursor',  example: 'cursor=eyJ0IjoxNzE0...', desc: 'Opaque continuation token returned as nextCursor. Pass back verbatim.' },
+    { name: 'filter',  example: 'filter=status eq draft', desc: 'OData-style filter. Supports eq, ne, gt, lt, in, contains, and/or.' },
+    { name: 'orderBy', example: 'orderBy=updatedAt desc', desc: 'Field plus direction. Sortable fields are listed on each resource page.' },
+    { name: 'fields',  example: 'fields=id,title,status', desc: 'Sparse fieldsets — return only the columns you need to cut payload size.' },
+    { name: 'expand',  example: 'expand=template,owner',  desc: 'Inline a related resource so you don\'t need a follow-up GET.' },
+    { name: 'asOf',    example: 'asOf=2026-04-01',        desc: 'Time-travel reads. Returns the resource as it was at the given instant.' }
+  ];
+
+  const headerRows = [
+    { name: 'Authorization',       value: 'Bearer {api_key}',        desc: 'Required on every request. The SDK sets this automatically.' },
+    { name: 'Idempotency-Key',     value: '{uuid v4}',               desc: 'Optional on writes. Repeats with the same key return the original response.' },
+    { name: 'TechWriter-Version',  value: '2026-04-01',              desc: 'Pin to a dated API version. Omit to use your workspace default.' },
+    { name: 'X-Request-Id',        value: '{uuid v4}',               desc: 'Echoed in the response for log correlation. Auto-set if omitted.' },
+    { name: 'If-Match',            value: '{etag}',                  desc: 'Concurrency guard for PATCH and DELETE. Server rejects on mismatch.' },
+    { name: 'Accept',              value: 'application/json',        desc: 'Default. Use application/vnd.techwriter+ndjson for streamed lists.' }
+  ];
+
+  const rateLimitRows = [
+    { plan: 'Sandbox',     burst: '60 / minute',    sustained: '1 000 / day',    notes: 'Sufficient for local development and CI smoke tests.' },
+    { plan: 'Starter',     burst: '600 / minute',   sustained: '50 000 / day',   notes: 'Per workspace, shared across all keys and OAuth tokens.' },
+    { plan: 'Growth',      burst: '3 000 / minute', sustained: '500 000 / day',  notes: 'Bulk endpoints get a separate, higher pool.' },
+    { plan: 'Enterprise',  burst: 'Custom',         sustained: 'Custom',         notes: 'Negotiated SLA. Burst cap configurable per region.' }
+  ];
+
+  const errorBodyExample = `{
+  "error": {
+    "code": "validation_failed",
+    "message": "Field 'slug' must be lowercase kebab-case.",
+    "requestId": "req_01HW8N4Z3R8C9X",
+    "details": [
+      {
+        "field": "slug",
+        "rule": "pattern",
+        "expected": "^[a-z0-9-]+$"
+      }
+    ]
+  }
+}`;
+
+  const nextSteps = [
+    { href: 'getting-started', title: 'Getting started', desc: 'Install the SDK, configure the client, make your first call.' },
+    { href: 'authentication', title: 'Authentication',   desc: 'API keys, OAuth 2.0 flows, and key rotation.' },
+    { href: 'error-handling', title: 'Error handling',   desc: 'Error envelope, retry strategy, and idempotency.' },
+    { href: 'webhooks', title: 'Webhooks',               desc: 'Event types, delivery guarantees, and signature verification.' },
+    { href: 'best-practices', title: 'Best practices',   desc: 'Pagination, batching, and rate-limit-friendly patterns.' }
+  ];
+
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSnippets({ ...copiedSnippets, [id]: true });
+      setTimeout(() => setCopiedSnippets((prev) => ({ ...prev, [id]: false })), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
+
+  const renderCode = (snippet, id) => (
+    <div style={{ marginBottom: '0', position: 'relative' }}>
+      <div style={{ position: 'absolute', right: '16px', top: '16px', zIndex: 10 }}>
+        <button
+          onClick={() => copyToClipboard(snippet, id)}
+          style={{
+            background: '#1a1a1c',
+            color: '#555',
+            padding: '8px',
+            borderRadius: '4px',
+            border: '1px solid #303033',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Copy code"
+        >
+          {copiedSnippets[id] ? <CheckIcon style={{ color: '#F68B1F' }} /> : <CopyIcon />}
+        </button>
+      </div>
+      <div style={{
+        padding: '32px',
+        fontFamily: 'monospace',
+        fontSize: '13px',
+        backgroundColor: '#0d0d0f',
+        color: '#e3e3e8',
+        lineHeight: '1.6',
+        overflowX: 'auto',
+        border: '1px solid #303033',
+        borderRadius: '12px',
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
+      }}>
+        <HighlightedCode code={snippet} />
+      </div>
+    </div>
+  );
+
+  const selected = endpoints.find((e) => e.id === endpointId);
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: '-2rem',
+      borderTop: '1px solid #1e1e20'
+    }}>
+
+      {/* Left Column: Primary Content */}
+      <div style={{
+        flex: '1 1 0%',
+        padding: '4rem',
+        color: 'var(--ifm-font-color-base)',
+        borderRight: '1px solid #1e1e20'
+      }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <span style={{ backgroundColor: 'rgba(246, 139, 31, 0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246, 139, 31, 0.35)' }}>REST</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>api.techwriter.io/v1</code>
+            <span style={{ fontSize: '11px', color: '#6b6b7b', fontFamily: 'monospace', backgroundColor: '#1e1e20', padding: '0.125rem 0.5rem', borderRadius: '0.25rem' }}>2026-04-01</span>
+            <span style={{ fontSize: '11px', color: '#3fb950', fontFamily: 'monospace', backgroundColor: 'rgba(63,185,80,0.1)', padding: '0.125rem 0.5rem', borderRadius: '0.25rem', border: '1px solid rgba(63,185,80,0.3)' }}>STABLE</span>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>API endpoints</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', fontSize: '15px', lineHeight: '1.75', marginBottom: '3rem' }}>
+            <p>
+              The TechWriter REST API exposes every resource the SDK wraps. Endpoints are <span style={{ color: '#F68B1F', fontWeight: '500' }}>resource-oriented</span>, take and return JSON, and use ordinary HTTP verbs and status codes. Every write supports idempotency keys, every list supports cursor pagination, and every response includes a request ID for log correlation.
+            </p>
+
+            <p>
+              The reference below covers the twelve endpoints you'll touch most often — projects, documents, search, assets, and webhooks — plus the conventions that apply to every route: base URLs, headers, query parameters, status codes, and the shape of an error.
+            </p>
+
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              Pick an endpoint in the panel on the right to see a runnable request and a representative response side by side. The signature, the SDK call, and the JSON body all stay in sync.
+            </p>
+          </div>
+
+          {/* Base URLs */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Base URLs</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Pick the host that matches your workspace's data residency and environment. The SDK takes one via the <code style={{ color: '#F68B1F' }}>baseURL</code> option.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('150px 280px 1fr')}>
+              <span>Environment</span>
+              <span>URL</span>
+              <span>Notes</span>
+            </div>
+            {baseRows.map((r, idx) => (
+              <div key={r.env} style={bodyRowStyle('150px 280px 1fr', idx === baseRows.length - 1)}>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{r.env}</span>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontSize: '12px' }}>{r.url}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.notes}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Projects endpoints */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Projects</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>A project is a top-level container for documents, templates, and contributors. Most workspaces have between one and a few dozen.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('80px 280px 1fr')}>
+              <span>Method</span>
+              <span>Path</span>
+              <span>Description</span>
+            </div>
+            {projectsRows.map((r, idx) => (
+              <div key={r.path + r.method} style={bodyRowStyle('80px 280px 1fr', idx === projectsRows.length - 1)}>
+                <MethodPill method={r.method} />
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{r.path}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Documents endpoints */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Documents</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Documents are versioned content units. Each move from Draft → In Review → Published bumps the version and emits a webhook event.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('80px 280px 1fr')}>
+              <span>Method</span>
+              <span>Path</span>
+              <span>Description</span>
+            </div>
+            {documentsRows.map((r, idx) => (
+              <div key={r.path + r.method} style={bodyRowStyle('80px 280px 1fr', idx === documentsRows.length - 1)}>
+                <MethodPill method={r.method} />
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{r.path}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Other endpoints */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Search, assets, webhooks, and workspace</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>The remaining surface area: discovery, binary uploads, push notifications, and your live usage telemetry.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('80px 260px 110px 1fr')}>
+              <span>Method</span>
+              <span>Path</span>
+              <span>Group</span>
+              <span>Description</span>
+            </div>
+            {otherRows.map((r, idx) => (
+              <div key={r.path + r.method} style={bodyRowStyle('80px 260px 110px 1fr', idx === otherRows.length - 1)}>
+                <MethodPill method={r.method} />
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{r.path}</code>
+                <span style={{ color: '#88888f', fontSize: '12px' }}>{r.group}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Common headers */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Request headers</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>The SDK sets these for you. If you call the API directly, send them on every request.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('200px 200px 1fr')}>
+              <span>Header</span>
+              <span>Example value</span>
+              <span>Description</span>
+            </div>
+            {headerRows.map((h, idx) => (
+              <div key={h.name} style={bodyRowStyle('200px 200px 1fr', idx === headerRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600' }}>{h.name}</code>
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{h.value}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{h.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Common query params */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Common query parameters</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Every list endpoint accepts the same pagination, filtering, and sparse-fieldset controls.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('120px 220px 1fr')}>
+              <span>Parameter</span>
+              <span>Example</span>
+              <span>Description</span>
+            </div>
+            {queryRows.map((q, idx) => (
+              <div key={q.name} style={bodyRowStyle('120px 220px 1fr', idx === queryRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600' }}>{q.name}</code>
+                <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{q.example}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{q.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Status codes */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Response status codes</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Standard HTTP semantics. The SDK maps each non-2xx into a typed exception with the same code on <code style={{ color: '#F68B1F' }}>err.code</code>.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('80px 200px 1fr')}>
+              <span>Code</span>
+              <span>Meaning</span>
+              <span>When you'll see it</span>
+            </div>
+            {statusRows.map((s, idx) => (
+              <div key={s.code} style={bodyRowStyle('80px 200px 1fr', idx === statusRows.length - 1)}>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '700' }}>{s.code}</code>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{s.label}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{s.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Error body */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Error response shape</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Every non-2xx response uses the same envelope. The <code style={{ color: '#F68B1F' }}>requestId</code> is the single most useful thing to share with support.</p>
+          <div style={{ marginBottom: '3rem' }}>
+            {renderCode(errorBodyExample, 'errorBody')}
+          </div>
+
+          {/* Rate limits */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Rate limits</h2>
+          <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Limits are enforced per workspace. The SDK reads the <code style={{ color: '#F68B1F' }}>X-RateLimit-Remaining</code> and <code style={{ color: '#F68B1F' }}>Retry-After</code> headers automatically.</p>
+          <div style={cardTableStyle}>
+            <div style={headerCellsStyle('140px 160px 200px 1fr')}>
+              <span>Plan</span>
+              <span>Burst</span>
+              <span>Sustained</span>
+              <span>Notes</span>
+            </div>
+            {rateLimitRows.map((r, idx) => (
+              <div key={r.plan} style={bodyRowStyle('140px 160px 200px 1fr', idx === rateLimitRows.length - 1)}>
+                <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{r.plan}</span>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontSize: '12px' }}>{r.burst}</code>
+                <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontSize: '12px' }}>{r.sustained}</code>
+                <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{r.notes}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Next Steps */}
+          <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Where to go next</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem', marginBottom: '3rem' }}>
+            {nextSteps.map((n) => (
+              <a key={n.href} href={n.href} style={{ textDecoration: 'none', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', transition: 'border-color 0.15s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--ifm-font-color-base)', fontSize: '14px', fontWeight: '700' }}>{n.title}</span>
+                  <span style={{ color: '#F68B1F', display: 'flex' }}><ArrowRight size={14} /></span>
+                </div>
+                <span style={{ color: '#88888f', fontSize: '12px', lineHeight: '1.5' }}>{n.desc}</span>
+              </a>
+            ))}
+          </div>
+
+          {/* Feedback Section */}
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this section helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div style={{ animation: 'fadeIn 0.5s' }}>
+                {feedback === 'yes' ? (
+                  <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                    ✨ Thanks for your feedback! We're glad this helped.
+                  </p>
+                ) : (
+                  <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+                    <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+                    <textarea
+                      style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }}
+                      placeholder="Your feedback..."
+                      rows="4"
+                    ></textarea>
+                    <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ paddingBottom: '8rem' }}></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Endpoint picker + request + response */}
+      <div style={{ width: '45%', backgroundColor: 'rgba(0,0,0,0.02)', padding: '3rem', borderLeft: '1px solid #1e1e20' }}>
+        <div style={{ position: 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+          {/* Endpoint Picker */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setEndpointOpen(!endpointOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                width: '100%',
+                backgroundColor: '#1a1a1c',
+                padding: '0.75rem 1.25rem',
+                borderRadius: '0.5rem',
+                fontSize: '14px',
+                color: 'white',
+                border: '1px solid #303033',
+                cursor: 'pointer'
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', overflow: 'hidden' }}>
+                <MethodPill method={selected.method} />
+                <span style={{ fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selected.name}</span>
+                <span style={{ color: '#88888f', fontSize: '12px' }}>· {selected.group}</span>
+              </span>
+              <ChevronDown size={16} style={{ color: '#88888f', transform: endpointOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+            </button>
+
+            {endpointOpen && (
+              <div style={{ position: 'absolute', width: '100%', marginTop: '0.5rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', zIndex: 50, padding: '0.5rem 0', overflow: 'hidden', maxHeight: '420px', overflowY: 'auto' }}>
+                {endpoints.map((e) => (
+                  <button
+                    key={e.id}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '0.625rem 1.25rem',
+                      fontSize: '13px',
+                      backgroundColor: endpointId === e.id ? '#F68B1F' : 'transparent',
+                      color: endpointId === e.id ? 'white' : '#adadb8',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      gap: '0.625rem',
+                      alignItems: 'center'
+                    }}
+                    onClick={() => {
+                      setEndpointId(e.id);
+                      setEndpointOpen(false);
+                    }}
+                  >
+                    {endpointId === e.id ? (
+                      <span style={{
+                        backgroundColor: 'rgba(255,255,255,0.18)',
+                        color: 'white',
+                        padding: '0.125rem 0.5rem',
+                        borderRadius: '0.375rem',
+                        fontFamily: 'monospace',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        minWidth: '54px',
+                        textAlign: 'center',
+                        border: '1px solid rgba(255,255,255,0.25)'
+                      }}>{e.method}</span>
+                    ) : (
+                      <MethodPill method={e.method} />
+                    )}
+                    <span style={{ flex: 1 }}>{e.name}</span>
+                    <span style={{ color: endpointId === e.id ? 'rgba(255,255,255,0.7)' : '#6b6b7b', fontSize: '11px' }}>{e.group}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Endpoint signature */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.5rem' }}>
+            <MethodPill method={selected.method} size="lg" />
+            <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px', overflowX: 'auto' }}>{selected.path}</code>
+          </div>
+
+          {/* Request snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Request — Node.js SDK</h3>
+            {renderCode(requestSnippets[endpointId], 'request-' + endpointId)}
+          </div>
+
+          {/* Response snippet */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Sample response</h3>
+            {renderCode(responseSnippets[endpointId], 'response-' + endpointId)}
+          </div>
+
+          {/* Tip Card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Pro tip</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>
+              Send an <code style={{ color: '#F68B1F' }}>Idempotency-Key</code> on every write. The server caches the response for 24 hours, so retries from a flaky network never create duplicate projects, documents, or webhook subscriptions.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<SdkApiEndpointsPage />

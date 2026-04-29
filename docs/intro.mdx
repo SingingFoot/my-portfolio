@@ -4,101 +4,410 @@ title: Portfolio
 description: Detailed professional portfolio of Oleh Shynkarenko
 ---
 
-# Portfolio: Oleh Shynkarenko
+import Link from '@docusaurus/Link';
 
-**Senior Technical Writer | Documentation Manager | API & Docs-as-Code Specialist**
+{/* ---------- HERO ---------- */}
 
----
+<div
+  style={{
+    position: 'relative',
+    padding: '2.5rem 2rem',
+    marginBottom: '2.5rem',
+    borderRadius: '12px',
+    background: 'var(--ifm-hero-bg)',
+    border: '1px solid rgba(0,0,0,0.06)',
+    overflow: 'hidden',
+  }}
+>
+  <div
+    style={{
+      position: 'absolute',
+      top: '50%',
+      left: 0,
+      right: 0,
+      height: '1px',
+      backgroundColor: '#F68B1F',
+      transform: 'translateY(-50%)',
+      zIndex: 0,
+    }}
+  />
+  <div
+    style={{
+      position: 'relative',
+      zIndex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '2rem',
+      flexWrap: 'wrap',
+    }}
+  >
+    <img
+      src="/img/os.jpg"
+      alt="Oleh Shynkarenko"
+      style={{
+        width: '120px',
+        height: '120px',
+        borderRadius: '50%',
+        objectFit: 'cover',
+        outline: '2px solid #F68B1F',
+        outlineOffset: '5px',
+        backgroundColor: 'var(--ifm-hero-bg)',
+      }}
+    />
+    <div style={{ flex: '1 1 320px', minWidth: '260px' }}>
+      <h1
+        style={{
+          margin: 0,
+          fontSize: '2rem',
+          lineHeight: 1.15,
+          color: 'var(--ifm-hero-text)',
+        }}
+      >
+        Oleh Shynkarenko
+      </h1>
+      <p
+        style={{
+          margin: '0.4rem 0 1rem',
+          fontSize: '1rem',
+          fontWeight: 600,
+          color: '#F68B1F',
+          letterSpacing: '0.02em',
+        }}
+      >
+        Senior Technical Writer · Documentation Manager · API & Docs-as-Code Specialist
+      </p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <a
+          className="button"
+          href="/CV Technical Writer Oleh Shynkarenko.pdf"
+          download="CV_Oleh_Shynkarenko.pdf"
+          style={{
+            backgroundColor: '#F68B1F',
+            borderColor: '#F68B1F',
+            color: '#fff',
+            height: '2.1rem',
+            padding: '0 1.25rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 'auto',
+          }}
+        >Download CV</a>
+        <Link
+          className="button button--outline"
+          to="/"
+          style={{
+            borderColor: '#F68B1F',
+            color: '#F68B1F',
+          }}
+        >
+          ← Back to Home
+        </Link>
+      </div>
+    </div>
+  </div>
+</div>
 
-## 📝 PROFESSIONAL SUMMARY
-Technical Documentation Manager and Senior Technical Writer with 15+ years of experience in technical communication, translation, and content production. Over 6 years of experience in software, IoT, and engineering documentation, combined with 4+ years of leadership in automation and documentation workflow management. Specialized in API documentation, Docs-as-Code, AI-assisted content creation, and developer documentation.
+{/* ---------- AT A GLANCE ---------- */}
 
----
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: '0.75rem',
+    marginBottom: '2.5rem',
+  }}
+>
+  {[
+    { k: '15+', v: 'Years in technical communication' },
+    { k: '6+', v: 'Years in software & IoT docs' },
+    { k: '4+', v: 'Years leading docs teams' },
+    { k: '5', v: 'Languages spoken' },
+  ].map((s) => (
+    <div
+      key={s.k}
+      style={{
+        padding: '1rem 1.1rem',
+        borderRadius: '8px',
+        background: 'rgba(0,0,0,0.03)',
+        borderLeft: '3px solid #F68B1F',
+      }}
+    >
+      <div style={{ fontSize: '1.6rem', fontWeight: 700, lineHeight: 1 }}>{s.k}</div>
+      <div style={{ fontSize: '0.85rem', opacity: 0.8, marginTop: '0.25rem' }}>{s.v}</div>
+    </div>
+  ))}
+</div>
 
-## 🛠 CORE SKILLS
-Technical Writing • API Documentation • Developer Documentation • Docs-as-Code • Markdown • GitHub • CI/CD • Static Site Generators (Docusaurus, MkDocs, Sphinx, Hugo) • AI Tools • Content Automation • XML Authoring • MadCap Flare • RoboHelp • Jira • Confluence
+## PROFESSIONAL SUMMARY
 
----
+Technical Documentation Manager and Senior Technical Writer with 15+ years of experience
+in technical communication, translation, and content production. Over 6 years of
+experience in software, IoT, and engineering documentation, combined with 4+ years of
+leadership in automation and documentation workflow management. Specialized in API
+documentation, Docs-as-Code, AI-assisted content creation, and developer documentation.
 
-## 💼 PROFESSIONAL EXPERIENCE
+## CORE SKILLS
 
-### Senior Technical Writer (Contract)
-**SimpliGov | Remote | Jul 2023 – Apr 2026**
-- Developed and maintained API and developer documentation.
-- Managed release notes and status page updates. [SimpliGov Release Notes (under the paywall ☹️)](https://learn.simpligov.com/page/simpligov-release-notes)
-- Built and maintained internal knowledge base (Confluence).
-- **User Assistance:** Authored the comprehensive [SimpliGov User Guide (under the paywall ☹️)](https://learn.simpligov.com/page/user-guide).
-- **Video Production:** Created technical video tutorials, such as [Form Designer Formulas (under the paywall ☹️)](https://learn.simpligov.com/form-designer-formulas/2104422), to improve user self-service.
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', margin: '0.5rem 0 1.5rem' }}>
+  {[
+    'Technical Writing',
+    'API Documentation',
+    'Developer Documentation',
+    'Docs-as-Code',
+    'Markdown',
+    'GitHub',
+    'CI/CD',
+    'Docusaurus',
+    'MkDocs',
+    'Sphinx',
+    'Hugo',
+    'AI Tools',
+    'Content Automation',
+    'XML Authoring',
+    'MadCap Flare',
+    'RoboHelp',
+    'Jira',
+    'Confluence',
+  ].map((s) => (
+    <span
+      key={s}
+      style={{
+        padding: '0.3rem 0.75rem',
+        borderRadius: '999px',
+        fontSize: '0.8rem',
+        background: 'rgba(246,139,31,0.1)',
+        color: '#F68B1F',
+        border: '1px solid rgba(246,139,31,0.3)',
+        fontWeight: 500,
+      }}
+    >
+      {s}
+    </span>
+  ))}
+</div>
 
-### Senior Technical Writer
-**GlobalLogic | Kyiv, Ukraine | Nov 2021 – Jun 2023**
-*Projects: 3M, Verizon, NuvoAir*
-- Created documentation using Docs-as-Code (Markdown, MkDocs, GitHub).
-- Wrote user guides, developer documentation, and manuals.
-- Created change requests, user stories, and technical specifications.
+## PROFESSIONAL EXPERIENCE
 
-### Senior Technical Writer
-**BJet | Lviv, Ukraine | Aug 2021 – Nov 2021**
-- Developed ERP documentation (Odoo), dashboards, and integrations.
-- Produced video tutorials and localization content.
+{/* SimpliGov */}
+<div style={{ borderLeft: '3px solid #F68B1F', paddingLeft: '1.25rem', marginBottom: '1.75rem' }}>
+  <h3 style={{ margin: '0 0 0.3rem' }}>Senior Technical Writer (Contract)</h3>
+  <div style={{ fontSize: '0.9rem', opacity: 0.85, marginBottom: '0.6rem' }}>
+    <strong style={{ color: '#F68B1F' }}>SimpliGov</strong> · Remote · Jul 2023 – Apr 2026
+  </div>
+  <ul style={{ marginBottom: 0 }}>
+    <li>Developed and maintained API and developer documentation.</li>
+    <li>
+      Managed release notes and status page updates —{' '}
+      <a className="orange-link" href="https://learn.simpligov.com/page/simpligov-release-notes" target="_blank" rel="noopener noreferrer">
+        SimpliGov Release Notes
+      </a>{' '}
+      <em>(under the paywall ☹️)</em>.
+    </li>
+    <li>Built and maintained an internal knowledge base (Confluence).</li>
+    <li>
+      <strong>User Assistance:</strong> authored the comprehensive{' '}
+      <a className="orange-link" href="https://learn.simpligov.com/page/user-guide" target="_blank" rel="noopener noreferrer">
+        SimpliGov User Guide
+      </a>{' '}
+      <em>(under the paywall ☹️)</em>.
+    </li>
+    <li>
+      <strong>Video Production:</strong> created technical video tutorials such as{' '}
+      <a className="orange-link" href="https://learn.simpligov.com/form-designer-formulas/2104422" target="_blank" rel="noopener noreferrer">
+        Form Designer Formulas
+      </a>{' '}
+      <em>(under the paywall ☹️)</em> to improve user self-service.
+    </li>
+  </ul>
+</div>
 
-### Technical Writer
-**ASBIS Ukraine | Kyiv, Ukraine | Sep 2020 – Aug 2021**
-- Created user manuals, quick-start guides, and online help.
-- Documented consumer electronics and hardware products.
+{/* GlobalLogic */}
+<div style={{ borderLeft: '3px solid #F68B1F', paddingLeft: '1.25rem', marginBottom: '1.75rem' }}>
+  <h3 style={{ margin: '0 0 0.3rem' }}>Senior Technical Writer</h3>
+  <div style={{ fontSize: '0.9rem', opacity: 0.85, marginBottom: '0.6rem' }}>
+    <strong style={{ color: '#F68B1F' }}>GlobalLogic</strong> · Kyiv, Ukraine · Nov 2021 – Jun 2023
+    <br />
+    <em>Projects: 3M, Verizon, NuvoAir</em>
+  </div>
+  <ul style={{ marginBottom: 0 }}>
+    <li>Created documentation using Docs-as-Code (Markdown, MkDocs, GitHub).</li>
+    <li>Wrote user guides, developer documentation, and manuals.</li>
+    <li>Created change requests, user stories, and technical specifications.</li>
+  </ul>
+</div>
 
-### Technical Writer / Project Manager
-**EGIS Ukraine | Dec 2018 – Sep 2020**
-- Produced engineering documentation and reports.
-- Managed documentation workflows and communication.
+{/* BJet */}
+<div style={{ borderLeft: '3px solid #F68B1F', paddingLeft: '1.25rem', marginBottom: '1.75rem' }}>
+  <h3 style={{ margin: '0 0 0.3rem' }}>Senior Technical Writer</h3>
+  <div style={{ fontSize: '0.9rem', opacity: 0.85, marginBottom: '0.6rem' }}>
+    <strong style={{ color: '#F68B1F' }}>BJet</strong> · Lviv, Ukraine · Aug 2021 – Nov 2021
+  </div>
+  <ul style={{ marginBottom: 0 }}>
+    <li>Developed ERP documentation (Odoo), dashboards, and integrations.</li>
+    <li>Produced video tutorials and localization content.</li>
+  </ul>
+</div>
 
-### Journalist / Project Manager
-**Media & Radio | 2007 – 2018**
-- Produced reports, articles, and multimedia content.
-- Managed communication and social media content (Hromadske Radio, UHHRU).
+{/* ASBIS */}
+<div style={{ borderLeft: '3px solid #F68B1F', paddingLeft: '1.25rem', marginBottom: '1.75rem' }}>
+  <h3 style={{ margin: '0 0 0.3rem' }}>Technical Writer</h3>
+  <div style={{ fontSize: '0.9rem', opacity: 0.85, marginBottom: '0.6rem' }}>
+    <strong style={{ color: '#F68B1F' }}>ASBIS Ukraine</strong> · Kyiv, Ukraine · Sep 2020 – Aug 2021
+  </div>
+  <ul style={{ marginBottom: 0 }}>
+    <li>Created user manuals, quick-start guides, and online help.</li>
+    <li>Documented consumer electronics and hardware products.</li>
+  </ul>
+</div>
 
-### Automation & Instrumentation Engineer
-**District Heating Networks | Jun 2001 – Jul 2007**
-- Managed automation systems and instrumentation.
-- Maintained measurement systems and documentation.
-- Led technical accounting and metrology processes.
+{/* EGIS */}
+<div style={{ borderLeft: '3px solid #F68B1F', paddingLeft: '1.25rem', marginBottom: '1.75rem' }}>
+  <h3 style={{ margin: '0 0 0.3rem' }}>Technical Writer / Project Manager</h3>
+  <div style={{ fontSize: '0.9rem', opacity: 0.85, marginBottom: '0.6rem' }}>
+    <strong style={{ color: '#F68B1F' }}>EGIS Ukraine</strong> · Dec 2018 – Sep 2020
+  </div>
+  <ul style={{ marginBottom: 0 }}>
+    <li>Produced engineering documentation and reports.</li>
+    <li>Managed documentation workflows and communication.</li>
+  </ul>
+</div>
 
----
+{/* Media & Radio */}
+<div style={{ borderLeft: '3px solid #F68B1F', paddingLeft: '1.25rem', marginBottom: '1.75rem' }}>
+  <h3 style={{ margin: '0 0 0.3rem' }}>Journalist / Project Manager</h3>
+  <div style={{ fontSize: '0.9rem', opacity: 0.85, marginBottom: '0.6rem' }}>
+    <strong style={{ color: '#F68B1F' }}>Media & Radio</strong> · 2007 – 2018
+  </div>
+  <ul style={{ marginBottom: 0 }}>
+    <li>Produced reports, articles, and multimedia content.</li>
+    <li>Managed communication and social media content (Hromadske Radio, UHHRU).</li>
+  </ul>
+</div>
 
-## 🎓 EDUCATION
+{/* District Heating */}
+<div style={{ borderLeft: '3px solid #F68B1F', paddingLeft: '1.25rem', marginBottom: '0.5rem' }}>
+  <h3 style={{ margin: '0 0 0.3rem' }}>Automation & Instrumentation Engineer</h3>
+  <div style={{ fontSize: '0.9rem', opacity: 0.85, marginBottom: '0.6rem' }}>
+    <strong style={{ color: '#F68B1F' }}>District Heating Networks</strong> · Jun 2001 – Jul 2007
+  </div>
+  <ul style={{ marginBottom: 0 }}>
+    <li>Managed automation systems and instrumentation.</li>
+    <li>Maintained measurement systems and documentation.</li>
+    <li>Led technical accounting and metrology processes.</li>
+  </ul>
+</div>
 
-- **University of Pécs** (Hungary) — PhD in Philosophy and Literature (2023–2028).
-Focused on the intersection of technology, science fiction, and philosophy, with active
-participation in international academic conferences and research on AI and modern
-thought.
-- **International Academy of Journalism** (Intajour, Hamburg) — Certificate of Excellence
-(2011–2012). Trained in digital journalism and media communication (video production),
-enhancing skills in content creation, storytelling, and audience engagement.
-- **Classic Private University** — BA in English Translation / ESL (2006–2008). Developed
-advanced English proficiency and translation skills, with a strong focus on clear
-communication and linguistic accuracy.
-- **State Engineering Academy** (Zaporizhzhya National University) — Master’s & Bachelor’s in Engineering (1994–1999).
-Gained a solid foundation in automation, control-measurement systems, technical
-documentation and problem-solving, supporting analytical thinking and structured
-approach to complex systems.
+## EDUCATION
 
----
+<div style={{ display: 'grid', gap: '1rem', margin: '0.5rem 0 1.5rem' }}>
+  <div style={{ padding: '1rem 1.25rem', borderRadius: '8px', background: 'rgba(0,0,0,0.03)' }}>
+    <h4 style={{ margin: '0 0 0.3rem' }}>University of Pécs <span style={{ fontSize: '0.85rem', fontWeight: 400, opacity: 0.75 }}>· Hungary</span></h4>
+    <div style={{ color: '#F68B1F', fontWeight: 600, fontSize: '0.9rem' }}>PhD in Philosophy and Literature · 2023–2028</div>
+    <p style={{ margin: '0.4rem 0 0', fontSize: '0.9rem' }}>
+      Focused on the intersection of technology, science fiction, and philosophy, with active
+      participation in international academic conferences and research on AI and modern thought.
+    </p>
+  </div>
 
-## 🌍 LANGUAGES
-- **English** — Professional working proficiency (C1–C2)
-- **Ukrainian / Russian** — Native or bilingual proficiency
-- **French** — Limited working proficiency (Duolingo Score: 80)
-- **German** — Limited working proficiency (Duolingo Score: 80)
-- **Hungarian** — Limited working proficiency (Duolingo Score: 60)
+  <div style={{ padding: '1rem 1.25rem', borderRadius: '8px', background: 'rgba(0,0,0,0.03)' }}>
+    <h4 style={{ margin: '0 0 0.3rem' }}>International Academy of Journalism (Intajour) <span style={{ fontSize: '0.85rem', fontWeight: 400, opacity: 0.75 }}>· Hamburg</span></h4>
+    <div style={{ color: '#F68B1F', fontWeight: 600, fontSize: '0.9rem' }}>Certificate of Excellence · 2011–2012</div>
+    <p style={{ margin: '0.4rem 0 0', fontSize: '0.9rem' }}>
+      Trained in digital journalism and media communication (video production), enhancing skills
+      in content creation, storytelling, and audience engagement.
+    </p>
+  </div>
 
----
+  <div style={{ padding: '1rem 1.25rem', borderRadius: '8px', background: 'rgba(0,0,0,0.03)' }}>
+    <h4 style={{ margin: '0 0 0.3rem' }}>Classic Private University</h4>
+    <div style={{ color: '#F68B1F', fontWeight: 600, fontSize: '0.9rem' }}>BA in English Translation / ESL · 2006–2008</div>
+    <p style={{ margin: '0.4rem 0 0', fontSize: '0.9rem' }}>
+      Developed advanced English proficiency and translation skills, with a strong focus on clear
+      communication and linguistic accuracy.
+    </p>
+  </div>
 
-## 🔗 KEY PORTFOLIO LINKS
+  <div style={{ padding: '1rem 1.25rem', borderRadius: '8px', background: 'rgba(0,0,0,0.03)' }}>
+    <h4 style={{ margin: '0 0 0.3rem' }}>State Engineering Academy <span style={{ fontSize: '0.85rem', fontWeight: 400, opacity: 0.75 }}>· Zaporizhzhya National University</span></h4>
+    <div style={{ color: '#F68B1F', fontWeight: 600, fontSize: '0.9rem' }}>Master’s & Bachelor’s in Engineering · 1994–1999</div>
+    <p style={{ margin: '0.4rem 0 0', fontSize: '0.9rem' }}>
+      Gained a solid foundation in automation, control-measurement systems, technical
+      documentation and problem-solving — supporting analytical thinking and a structured
+      approach to complex systems.
+    </p>
+  </div>
+</div>
 
-- 🛠️ [SimpliGov User Guide (under the paywall ☹️)](https://learn.simpligov.com/page/user-guide)
-- 🛠️ [SimpliGov Video Tutorial (under the paywall ☹️)](https://learn.simpligov.com/form-designer-formulas/2104422)
-- 🛠️ [signNow API Documentation](https://docs.signnow.com/docs/signnow/welcome)
-- 🎮 [Canyon Gaming Manuals](https://gaming.canyon.eu/user-help-desk/)
-- 📘 [Sphinx and reStructuredText](https://sphinxdoks.netlify.app/)
-- 📘 [My Dissertation](https://sci-fi-ua.netlify.app/)
-- 📝 [Medium Blog](https://olehshynkarenko.medium.com/)
+## LANGUAGES
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', margin: '0.5rem 0 1.5rem' }}>
+  {[
+    { flag: '🇬🇧', name: 'English', level: 'Professional working (C1–C2)' },
+    { flag: '🇺🇦', name: 'Ukrainian / Russian', level: 'Native or bilingual' },
+    { flag: '🇫🇷', name: 'French', level: 'Limited working · Duolingo 80' },
+    { flag: '🇩🇪', name: 'German', level: 'Limited working · Duolingo 80' },
+    { flag: '🇭🇺', name: 'Hungarian', level: 'Limited working · Duolingo 60' },
+  ].map((l) => (
+    <div
+      key={l.name}
+      style={{
+        padding: '0.85rem 1rem',
+        borderRadius: '8px',
+        background: 'rgba(0,0,0,0.03)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.75rem',
+      }}
+    >
+      <span style={{ fontSize: '1.6rem' }}>{l.flag}</span>
+      <div>
+        <div style={{ fontWeight: 600 }}>{l.name}</div>
+        <div style={{ fontSize: '0.8rem', opacity: 0.75 }}>{l.level}</div>
+      </div>
+    </div>
+  ))}
+</div>
+
+## KEY PORTFOLIO LINKS
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem', margin: '0.5rem 0 1.5rem' }}>
+  {[
+    { icon: '🛠️', title: 'SimpliGov User Guide', note: 'under the paywall ☹️', href: 'https://learn.simpligov.com/page/user-guide' },
+    { icon: '🛠️', title: 'SimpliGov Video Tutorial', note: 'under the paywall ☹️', href: 'https://learn.simpligov.com/form-designer-formulas/2104422' },
+    { icon: '🛠️', title: 'signNow API Documentation', note: 'public', href: 'https://docs.signnow.com/docs/signnow/welcome' },
+    { icon: '🎮', title: 'Canyon Gaming Manuals', note: 'public', href: 'https://gaming.canyon.eu/user-help-desk/' },
+    { icon: '📘', title: 'Sphinx and reStructuredText', note: 'tutorial site', href: 'https://sphinxdoks.netlify.app/' },
+    { icon: '📘', title: 'My Dissertation', note: 'research site', href: 'https://sci-fi-ua.netlify.app/' },
+    { icon: '📝', title: 'Medium Blog', note: 'articles', href: 'https://olehshynkarenko.medium.com/' },
+  ].map((l) => (
+    <a
+      key={l.title}
+      href={l.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: 'block',
+        padding: '1rem 1.1rem',
+        borderRadius: '8px',
+        background: 'rgba(0,0,0,0.03)',
+        borderLeft: '3px solid #F68B1F',
+        textDecoration: 'none',
+        color: 'inherit',
+        transition: 'transform 0.15s ease, background 0.15s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'rgba(246,139,31,0.08)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'rgba(0,0,0,0.03)';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}
+    >
+      <div style={{ fontSize: '1.2rem' }}>{l.icon}</div>
+      <div style={{ fontWeight: 600, color: '#F68B1F', marginTop: '0.25rem' }}>{l.title}</div>
+      <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '0.15rem' }}>{l.note}</div>
+    </a>
+  ))}
+</div>
