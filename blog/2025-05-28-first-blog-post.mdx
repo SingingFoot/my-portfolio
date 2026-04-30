@@ -1,0 +1,125 @@
+---
+slug: welcome-to-my-portfolio
+title: Why I Created This Space
+authors: [oshynkarenko]
+tags: [introduction, tech-writing, portfolio]
+---
+
+import Link from '@docusaurus/Link';
+
+<div
+  style={{
+    padding: '1.75rem',
+    marginBottom: '2rem',
+    borderRadius: '12px',
+    background: 'rgba(246,139,31,0.06)',
+    border: '1px solid rgba(246,139,31,0.22)',
+  }}
+>
+  <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.75, color: 'var(--ifm-font-color-base)' }}>
+    Welcome to my digital space! This site is more than just a portfolio — it is a living experiment at the intersection of technical documentation, software development, and the philosophy of Artificial Intelligence.
+  </p>
+</div>
+
+{/* truncate */}
+
+## Why did I create this site?
+
+The world of technical communication is changing rapidly. When I started my journey in documentation, the main challenge was simply structuring information. Today, the primary challenge is **context and integration.**
+
+I built this resource for three core reasons:
+
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '1rem',
+    margin: '1.5rem 0 2.25rem',
+  }}
+>
+  {[
+    {
+      num: '01',
+      title: 'Proof of the "Docs as Code" Concept',
+      body: 'This site is powered by Docusaurus. I believe the best way to write documentation for developers is to use the same tools they do — Markdown, Git, and React.',
+    },
+    {
+      num: '02',
+      title: 'Exploring the "Cyborg" Model',
+      body: 'I am deeply interested in how AI is reshaping our profession. This site serves as a testing ground for new approaches to content automation and human–AI collaboration.',
+    },
+    {
+      num: '03',
+      title: 'Transparency and Expertise',
+      body: 'I want to share my knowledge of APIs, SDKs, and complex technical systems by showing how documentation can become a high-value product for a company.',
+    },
+  ].map((item) => (
+    <div
+      key={item.num}
+      style={{
+        padding: '1.25rem 1.25rem 1.1rem',
+        borderRadius: '10px',
+        background: 'rgba(0,0,0,0.03)',
+        borderLeft: '3px solid #F68B1F',
+      }}
+    >
+      <div
+        style={{
+          fontSize: '2rem',
+          fontWeight: 700,
+          color: 'rgba(246,139,31,0.3)',
+          lineHeight: 1,
+          marginBottom: '0.6rem',
+        }}
+      >
+        {item.num}
+      </div>
+      <h4 style={{ margin: '0 0 0.5rem', color: '#F68B1F', fontSize: '0.95rem' }}>{item.title}</h4>
+      <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.85, lineHeight: 1.65 }}>{item.body}</p>
+    </div>
+  ))}
+</div>
+
+## What will you find here?
+
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '0.75rem',
+    margin: '1rem 0 2rem',
+  }}
+>
+  {[
+    {
+      icon: '🛠️',
+      title: 'API Documentation',
+      desc: 'Examples of structured, clear, and developer-centric documentation.',
+    },
+    {
+      icon: '🧠',
+      title: 'Analytical Blog',
+      desc: 'Reflections on the future of the profession, AI, and the cognitive aspects of human understanding.',
+    },
+    {
+      icon: '📋',
+      title: 'Practical Case Studies',
+      desc: 'Insights on how to transform chaotic engineering notes into flawless technical manuals.',
+    },
+  ].map((item) => (
+    <div
+      key={item.title}
+      style={{
+        padding: '1.1rem',
+        borderRadius: '8px',
+        background: 'rgba(0,0,0,0.03)',
+      }}
+    >
+      <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>{item.icon}</div>
+      <h4 style={{ margin: '0 0 0.35rem', fontSize: '0.95rem' }}>{item.title}</h4>
+      <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.75, lineHeight: 1.6 }}>{item.desc}</p>
+    </div>
+  ))}
+</div>
+
+Thank you for visiting. I hope this content helps you see technical writing from a fresh and modern perspective.

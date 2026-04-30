@@ -1,0 +1,92 @@
+---
+slug: mdx-blog-post
+title: MDX Blog Post
+authors: [oshynkarenko]
+tags: [docusaurus]
+---
+
+<div
+  style={{
+    padding: '1.75rem',
+    marginBottom: '2rem',
+    borderRadius: '12px',
+    background: 'rgba(246,139,31,0.06)',
+    border: '1px solid rgba(246,139,31,0.22)',
+  }}
+>
+  <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.75 }}>
+    Blog posts support{' '}
+    <a href="https://docusaurus.io/docs/markdown-features" target="_blank" rel="noopener noreferrer">
+      Docusaurus Markdown features
+    </a>
+    , such as{' '}
+    <a href="https://mdxjs.com/" target="_blank" rel="noopener noreferrer">
+      MDX
+    </a>
+    . This means you can mix Markdown with React components to create rich, interactive content.
+  </p>
+</div>
+
+{/* truncate */}
+
+## What MDX Unlocks
+
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '0.75rem',
+    margin: '1rem 0 2rem',
+  }}
+>
+  {[
+    { icon: '⚛️', title: 'React Components', desc: 'Embed live UI elements directly in your post.' },
+    { icon: '🎨', title: 'Styled Layouts', desc: 'Use JSX and inline styles for rich formatting.' },
+    { icon: '✍️', title: 'Markdown Syntax', desc: 'Still write plain Markdown — MDX is a superset.' },
+    { icon: '🔗', title: 'Docusaurus Features', desc: 'Admonitions, tabs, code blocks, and more.' },
+  ].map((item) => (
+    <div
+      key={item.title}
+      style={{
+        padding: '1.1rem',
+        borderRadius: '8px',
+        background: 'rgba(0,0,0,0.03)',
+        borderLeft: '3px solid #F68B1F',
+      }}
+    >
+      <div style={{ fontSize: '1.5rem', marginBottom: '0.4rem' }}>{item.icon}</div>
+      <h4 style={{ margin: '0 0 0.35rem', fontSize: '0.9rem', color: '#F68B1F' }}>{item.title}</h4>
+      <p style={{ margin: 0, fontSize: '0.82rem', opacity: 0.8, lineHeight: 1.55 }}>{item.desc}</p>
+    </div>
+  ))}
+</div>
+
+## Interactive Example
+
+For example, use JSX to create an interactive button right inside your post:
+
+```js
+<button onClick={() => alert('button clicked!')}>Click me!</button>
+```
+
+<div style={{ margin: '1rem 0 1.5rem' }}>
+  <button
+    onClick={() => alert('button clicked!')}
+    style={{
+      backgroundColor: '#F68B1F',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '6px',
+      padding: '0.6rem 1.4rem',
+      fontSize: '0.95rem',
+      fontWeight: 600,
+      cursor: 'pointer',
+    }}
+  >
+    Click me!
+  </button>
+</div>
+
+:::tip
+Use the power of React to create interactive blog posts — demos, calculators, live previews, and more.
+:::

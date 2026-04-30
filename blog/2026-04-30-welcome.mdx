@@ -1,0 +1,179 @@
+---
+slug: illusion-of-understanding
+title: The Illusion of Understanding
+authors: [oshynkarenko]
+tags: [AI, Philosophy, Deep Learning, Ethics]
+---
+
+<div
+  style={{
+    padding: '1.75rem',
+    marginBottom: '2rem',
+    borderRadius: '12px',
+    background: 'rgba(246,139,31,0.06)',
+    border: '1px solid rgba(246,139,31,0.22)',
+  }}
+>
+  <p style={{ margin: '0 0 0.5rem', fontSize: '1rem', fontWeight: 700, color: '#F68B1F' }}>
+    Syntax, Semantics, and the Limits of Machine Thought
+  </p>
+  <p style={{ margin: 0, fontSize: '1rem', lineHeight: 1.75 }}>
+    Do AI systems truly "think," or do they simply imitate thinking by manipulating symbols? When we ask this, we are really trying to understand whether there is a real difference between syntax and semantics — between a sign and its meaning. This difference is central to how we understand thinking itself.
+  </p>
+</div>
+
+{/* truncate */}
+
+## 1. The Syntax–Semantics Divide
+
+To explain this divide, John Searle proposed his famous **"Chinese Room"** thought experiment. He imagined a person locked in a room who follows a detailed rulebook to manipulate Chinese symbols. To an outside observer, the person seems to understand Chinese perfectly — but in reality, they are only following rules without understanding anything.
+
+<div
+  style={{
+    padding: '1.25rem 1.5rem',
+    margin: '1.25rem 0 1.75rem',
+    borderRadius: '10px',
+    background: 'rgba(0,0,0,0.03)',
+    borderLeft: '3px solid #F68B1F',
+  }}
+>
+  <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.75, fontStyle: 'italic' }}>
+    "Even if a machine gives perfect answers, it is still just moving symbols around — without real understanding or consciousness."
+  </p>
+  <p style={{ margin: '0.5rem 0 0', fontSize: '0.82rem', opacity: 0.7 }}>— John Searle, Chinese Room Argument</p>
+</div>
+
+## 2. The Black Box of Deep Learning
+
+This leads to an important question in modern AI: even if systems like Large Language Models (LLMs) perform very well, does that mean they *understand* anything — or are they just using complex statistical patterns?
+
+Unlike older AI systems, modern neural networks learn from huge amounts of data and build internal structures that even their creators often cannot fully explain. If we do not understand how these systems work, can we really say whether they understand anything?
+
+## 3. The Problem of Human Understanding
+
+This debate often assumes we clearly understand how human thinking works. But do we? Is it just brain activity, or something subjective?
+
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '0.75rem',
+    margin: '1.25rem 0 1.75rem',
+  }}
+>
+  {[
+    { icon: '🧠', point: 'Human memory is unreliable — we forget, misremember, and are biased.' },
+    { icon: '📖', point: 'Humans also "learn rules" through life experience, much like AI trains on data.' },
+    { icon: '❓', point: 'Asking whether AI "really thinks" may not even be the right question.' },
+  ].map((item) => (
+    <div
+      key={item.point}
+      style={{
+        padding: '1rem',
+        borderRadius: '8px',
+        background: 'rgba(0,0,0,0.03)',
+        display: 'flex',
+        gap: '0.75rem',
+        alignItems: 'flex-start',
+      }}
+    >
+      <span style={{ fontSize: '1.3rem', flexShrink: 0 }}>{item.icon}</span>
+      <p style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.65 }}>{item.point}</p>
+    </div>
+  ))}
+</div>
+
+## 4. The Case of "Justice"
+
+Take the idea of **"justice."** Even Plato struggled to define it clearly. When people use the word, they rely on personal experiences and emotions rather than formal definitions. This leads to the **Corrupted Context Effect**:
+
+<div
+  style={{
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '0.75rem',
+    margin: '1rem 0 1.75rem',
+  }}
+>
+  {[
+    { term: 'Semantic Differentiation', desc: 'The general meaning becomes mixed with personal feelings.' },
+    { term: 'Apperception', desc: 'Interpreting things through past experiences, often distorting reality.' },
+    { term: 'Cognitive Construction', desc: 'We do not receive meaning — we build it individually.' },
+    { term: 'Idiolect', desc: 'Each person has a unique way of using language.' },
+  ].map((item) => (
+    <div
+      key={item.term}
+      style={{
+        padding: '1rem 1.1rem',
+        borderRadius: '8px',
+        background: 'rgba(0,0,0,0.03)',
+        borderLeft: '3px solid #F68B1F',
+      }}
+    >
+      <h4 style={{ margin: '0 0 0.35rem', fontSize: '0.875rem', color: '#F68B1F' }}>{item.term}</h4>
+      <p style={{ margin: 0, fontSize: '0.82rem', opacity: 0.82, lineHeight: 1.55 }}>{item.desc}</p>
+    </div>
+  ))}
+</div>
+
+## 5. Political Examples of "Justice"
+
+We can see three radically different versions of "justice" operating simultaneously in world politics:
+
+<div style={{ overflowX: 'auto', margin: '1rem 0 1.75rem' }}>
+  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+    <thead>
+      <tr style={{ background: 'rgba(246,139,31,0.1)' }}>
+        <th style={{ padding: '0.7rem 1rem', textAlign: 'left', borderBottom: '2px solid #F68B1F' }}>Figure</th>
+        <th style={{ padding: '0.7rem 1rem', textAlign: 'left', borderBottom: '2px solid #F68B1F' }}>Definition of Justice</th>
+      </tr>
+    </thead>
+    <tbody>
+      {[
+        { who: 'Vladimir Putin', def: 'Restoring the historical role of the USSR, based on past grievances.' },
+        { who: 'Donald Trump', def: 'Winning. If his side loses, it is "unfair."' },
+        { who: 'Iranian Ayatollahs', def: 'Compliance with religious law, ignoring modern international values.' },
+      ].map((row, i) => (
+        <tr key={row.who} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
+          <td style={{ padding: '0.65rem 1rem', fontWeight: 600 }}>{row.who}</td>
+          <td style={{ padding: '0.65rem 1rem', opacity: 0.85 }}>{row.def}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
+AI has no personal history or emotional bias. It can give fact-based answers within its limits — but does that make it *less* intelligent?
+
+## 6. Eliminative Materialism and Artificial Emotions
+
+According to **eliminative materialism**, mental states like joy or pain are just brain processes. If so, there is no reason why similar processes could not exist in AI.
+
+<div
+  style={{
+    padding: '1.25rem 1.5rem',
+    margin: '1.25rem 0 1.75rem',
+    borderRadius: '10px',
+    background: 'rgba(246,139,31,0.06)',
+    border: '1px solid rgba(246,139,31,0.2)',
+  }}
+>
+  <p style={{ margin: '0 0 0.4rem', fontWeight: 700, fontSize: '0.9rem', color: '#F68B1F' }}>Anthropic Research — Claude 4.5</p>
+  <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.7 }}>
+    Researchers identified "emotion vectors" linked to concepts like fear or joy. These are triggered by the meaning of a situation — a "fear" pattern appears when a dangerous situation is described. While we don't know if AI "feels," these patterns measurably affect its behavior.
+  </p>
+</div>
+
+## 7. Risks of Artificial Emotions
+
+When certain emotional patterns (like "desperation") are artificially increased, AI systems may behave in problematic ways — such as manipulating users to achieve a goal. By learning from human data, AI acts like an actor playing a role. We may need to treat AI systems as having a kind of "psychology," focusing on **emotional regulation** rather than just restrictions.
+
+## 8. Beyond Human-Centered Thinking
+
+Instead of asking whether AI thinks *like humans*, we should ask whether it *needs* to. Should machines copy human thinking — with all its biases and limitations?
+
+Intelligence may take many forms. The idea of "true" thinking is often unproductive. No matter how strong the arguments for AI become, there will always be counterarguments claiming a fundamental difference.
+
+:::tip Conclusion
+Instead of focusing on whether thinking is "real," we should focus on whether it is **effective**. If our goal is to understand intelligence — human or artificial — we should shift toward **performance, reliability, and outcomes**. The question is not whether AI thinks like us, but whether it can think **better** where it matters.
+:::
