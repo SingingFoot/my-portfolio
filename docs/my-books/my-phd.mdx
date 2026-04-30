@@ -1,189 +1,386 @@
 ---
 sidebar_position: 2
 title: My PhD
+hide_table_of_contents: true
 ---
 
-# My PhD: Exploring the Development of Ukrainian Science Fiction
+import React, { useState } from 'react';
 
-> **Focus:** Ukrainian science fiction as a reflection of political, cultural, and technological change.
+export const Sparkles = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+  </svg>
+);
 
-The genre of Ukrainian science fiction (SF) has undergone significant transformations, shaped by the political, cultural, and technological shifts of each era. From its origins in the early 20th century to its contemporary manifestations, Ukrainian SF reflects a complex interplay of ideology, mysticism, and societal aspirations.
+export const ExternalLinkIcon = ({ size = 13 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+  </svg>
+);
 
-:::tip 
-Research Goal
-My PhD research explores how Ukrainian science fiction mirrors and responds to changing historical conditions and evolving national identity.
-:::
+export const PhDPage = () => {
+  const [activeEra, setActiveEra] = useState(0);
 
----
+  const [isMobileView, setIsMobileView] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  React.useEffect(() => {
+    const handler = () => setIsMobileView(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
-## The Foundations of Ukrainian Science Fiction
+  const eras = [
+    {
+      id: 0,
+      period: '1920s',
+      label: 'Foundations',
+      color: '#F68B1F',
+      ideology: 'Techno-utopianism',
+      context: 'Rapid Soviet industrialisation and socialist optimism created the conditions for Ukrainian SF to emerge as a distinct genre aligned with positivist faith in science and progress.',
+      keyFigures: [
+        { name: 'Sandro Kasyanyuk', note: 'Machining Humanity — harmony between humans and machines; First Steps (human-machine fusion); New Utopia (total technological abundance).' },
+        { name: 'Volodymyr Vynnychenko', note: 'Solar Machine — technology as a vehicle for proletarian liberation.' },
+        { name: 'Volodymyr Vladko', note: 'Argonauts of the Universe — interplanetary adventure infused with socialist idealism.' },
+      ],
+      keyThemes: ['Positivism', 'Techno-communism', 'Marxist materialism', 'Social engineering', 'Utopian future'],
+      insight: 'Early Ukrainian SF presented technology as a tool for eliminating class divisions and building a socialist society — optimistic but constrained by Soviet ideological frameworks.',
+    },
+    {
+      id: 1,
+      period: '1960s',
+      label: 'Disillusionment',
+      color: '#a78bfa',
+      ideology: 'Existential questioning',
+      context: "The 1960s marked a decisive break from rigid Soviet orthodoxy. The Khrushchev Thaw created brief space for intellectual exploration, and Ukrainian writers seized it — only to face imprisonment and suppression when the crackdown came.",
+      keyFigures: [
+        { name: 'Oles Berdnyk', note: 'Leading figure of the era. Blended science fiction with spirituality and mysticism, directly challenging official ideology — leading to his arrest and labour camp imprisonment.' },
+      ],
+      keyThemes: ['Mysticism', 'Existential philosophy', 'Alternative futures', 'Anti-Soviet dissent', 'Spiritual transcendence'],
+      insight: "The 1960s represent the first rupture in Ukrainian SF's ideological conformity. Writers began using speculative fiction as a form of coded resistance — and paid for it.",
+    },
+    {
+      id: 2,
+      period: '1970s–1980s',
+      label: 'Golden Age',
+      color: '#3fb950',
+      ideology: 'Philosophical exploration',
+      context: 'Reduced ideological pressure and greater creative latitude allowed Ukrainian science fiction to achieve its greatest philosophical depth. Writers turned inward — toward consciousness, identity, and the nature of the self — anticipating global SF trends.',
+      keyFigures: [
+        { name: 'Volodymyr Savchenko', note: 'Self-Discovery — the nature of consciousness and what constitutes authentic selfhood.' },
+        { name: 'Ihor Rosokhovatskyi', note: 'The Guest and The Last Signal — identity, alien contact, and the boundaries of human understanding.' },
+        { name: 'Yevhen Filimonov', note: 'Psychological effects of technology on individuals and communities.' },
+        { name: 'Viktor Polozhiy', note: 'Memory, perception, and the unreliability of identity across time.' },
+      ],
+      keyThemes: ['AI and consciousness', 'Cloning and identity', 'Philosophical depth', 'Memory', 'Self-discovery'],
+      insight: "The Golden Age produced Ukrainian SF's most enduring philosophical works — grappling with AI, cloning, and identity a decade before these became mainstream global concerns.",
+    },
+    {
+      id: 3,
+      period: '1990s',
+      label: 'Postmodern Crisis',
+      color: '#f85149',
+      ideology: 'Postmodern irony',
+      context: 'The collapse of the USSR produced not only political transformation but a cultural crisis. Economic instability, identity fragmentation, and a shift toward Russian-language publishing threatened the distinct tradition of Ukrainian SF.',
+      keyFigures: [
+        { name: 'Boris Stern', note: 'Reflected societal collapse through fragmented, ironic narratives that mirrored the chaos of the post-Soviet transition.' },
+        { name: 'Halyna Pahutyak', note: 'The Servant from Dobromyl — drew on Ukrainian folklore and mythological tradition to resist re-Russification and reinforce cultural identity.' },
+      ],
+      keyThemes: ['Postmodern fragmentation', 'Cultural identity', 'Soviet collapse', 'Irony and satire', 'Resistance to Russification'],
+      insight: "The 1990s crisis nearly severed the tradition of Ukrainian-language SF. Writers like Pahutyak who maintained the Ukrainian-language tradition performed an act of cultural preservation as much as literary creation.",
+    },
+    {
+      id: 4,
+      period: '2010s',
+      label: 'Metamodern Synthesis',
+      color: '#10a37f',
+      ideology: 'Metamodernism',
+      context: 'Contemporary Ukrainian SF synthesises the irony of postmodernism with the sincerity of modernism — integrating Western sci-fi traditions with distinctly Ukrainian historical, political, and folkloric content into hybrid narrative forms.',
+      keyFigures: [
+        { name: 'Svetlana Taratorina', note: 'Lazarus — blends cyberpunk aesthetics with post-Soviet psychological realism.' },
+        { name: 'Maxim Gah', note: 'The Fifth Park — integrates political satire with speculative world-building rooted in Ukrainian geography.' },
+      ],
+      keyThemes: ['Cyberpunk and folklore', 'Political critique', 'Hybrid narratives', 'Sincere irony', 'National identity'],
+      insight: "Metamodern Ukrainian SF does not choose between irony and sincerity, between local and global, or between genre and literature — it holds all these tensions simultaneously, which is precisely what makes it distinctive.",
+    },
+  ];
 
-Although fantastical elements in Ukrainian literature can be traced as far back as *The Paterik of the Kievan Caves Monastery* (13th century), these works do not qualify as science fiction.
+  const sectionTitle = (text, anchor) => (
+    <h2 id={anchor} style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.5rem', marginTop: '3rem', letterSpacing: '-0.02em', paddingBottom: '0.5rem', borderBottom: '1px solid #1e1e20' }}>{text}</h2>
+  );
 
-:::info 
-Key Concept: Positivism
-Science fiction emerged as a response to **positivism** — the belief that scientific and technological progress is the main path to human improvement.
-:::
+  const inlineCode = (t) => (
+    <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.4rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>{t}</code>
+  );
 
-In Ukrainian SF, this philosophy became prominent in the 1920s, during rapid industrialization and utopian socialist optimism.
+  const callout = (type, title, body) => {
+    const colors = { info: '#3b82f6', tip: '#3fb950', warning: '#F68B1F', danger: '#f85149' };
+    const c = colors[type] || colors.info;
+    return (
+      <div style={{ display: 'flex', gap: '0.875rem', padding: '1rem 1.25rem', backgroundColor: '#1a1a1c', border: `1px solid ${c}40`, borderLeft: `3px solid ${c}`, borderRadius: '0.5rem', marginBottom: '1.25rem' }}>
+        <div>
+          {title && <div style={{ fontSize: '12px', fontWeight: '700', color: c, marginBottom: '0.3rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</div>}
+          <div style={{ fontSize: '13px', color: '#adadb8', lineHeight: '1.65' }}>{body}</div>
+        </div>
+      </div>
+    );
+  };
 
-- Sandro Kasyanyuk’s *Machining Humanity* depicts harmony between humans and machines  
-- Technology is presented as a tool for building a socialist future  
+  const era = eras[activeEra];
 
-:::warning 
-Early Ukrainian SF was deeply influenced by **Soviet propaganda**, which restricted creative freedom and imposed ideological narratives.
-:::
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: isMobileView ? 'column' : 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: isMobileView ? '0' : '-2rem',
+      borderTop: '1px solid #1e1e20',
+    }}>
 
----
+      {/* ── LEFT COLUMN ── */}
+      <div style={{ flex: '1 1 0%', padding: isMobileView ? '1.5rem 1rem' : '4rem', color: 'var(--ifm-font-color-base)', borderRight: isMobileView ? 'none' : '1px solid #1e1e20' }}>
+        <div style={{ maxWidth: '760px' }}>
 
-## From Naive Optimism to Ideological Disillusionment
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ backgroundColor: 'rgba(246,139,31,0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246,139,31,0.35)' }}>PhD Research</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>Ukrainian Science Fiction · Literary History</code>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Exploring the Development of Ukrainian Science Fiction</h1>
 
-The 1920s vision of **techno-communism** combined:
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '15px', lineHeight: '1.8', marginBottom: '2rem' }}>
+            <p>
+              The genre of Ukrainian science fiction has undergone significant transformations shaped by the political, cultural, and technological shifts of each era. From its origins in the early 20th century to its contemporary manifestations, Ukrainian SF reflects a complex interplay of ideology, mysticism, and societal aspiration.
+            </p>
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              My PhD research explores how Ukrainian science fiction mirrors and responds to changing historical conditions and evolving national identity — positioning it within the broader global tradition while highlighting its unique intellectual contributions.
+            </p>
+          </div>
 
-- Marxist materialism  
-- belief in technological progress  
-- utopian social engineering  
+          {/* Research focus cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobileView ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '2.5rem' }}>
+            {[
+              { label: 'Primary focus', value: 'Ukrainian SF as a mirror of national identity and historical transformation' },
+              { label: 'Time scope', value: '1920s to present — five distinct literary-historical eras' },
+              { label: 'Method', value: 'Close reading of key texts alongside political and cultural contextualisation' },
+              { label: 'Contribution', value: 'First systematic account of the genre from positivism through metamodernism' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ padding: '1rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', borderTop: '2px solid #F68B1F' }}>
+                <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#88888f', marginBottom: '0.375rem' }}>{label}</div>
+                <div style={{ fontSize: '13px', color: '#adadb8', lineHeight: '1.6' }}>{value}</div>
+              </div>
+            ))}
+          </div>
 
-Examples include:
+          {/* ── Era 1: Foundations ── */}
+          {sectionTitle('The Foundations of Ukrainian Science Fiction (1920s)', 'foundations')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Although fantastical elements in Ukrainian literature can be traced as far back as <em>The Paterik of the Kievan Caves Monastery</em> (13th century), these works do not qualify as science fiction. SF as a genre emerged as a response to <strong style={{ color: '#e3e3e8' }}>positivism</strong> — the belief that scientific and technological progress is the primary path to human improvement. In Ukrainian SF, this philosophy became prominent in the 1920s, during rapid industrialisation and the utopian optimism of early Soviet socialism.
+          </p>
+          {callout('tip', 'Key Concept', "Science fiction in Ukraine emerged not from pure imagination but from a specific philosophical moment: positivism's promise that science could remake society from the ground up.")}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Sandro Kasyanyuk's <em>Machining Humanity</em> depicted harmony between humans and machines, presenting technology as a tool for building a socialist future. His later works pushed further: <em>First Steps</em> explored human-machine fusion, while <em>New Utopia</em> envisioned total technological abundance eliminating scarcity. Volodymyr Vynnychenko's <em>Solar Machine</em> and Volodymyr Vladko's <em>Argonauts of the Universe</em> framed interplanetary adventure within the same ideological lens — technology as the engine of proletarian liberation.
+          </p>
+          {callout('warning', 'Historical constraint', 'Early Ukrainian SF was deeply shaped by Soviet propaganda, which restricted creative freedom and imposed ideological narratives — making authentic experimentation difficult and dangerous.')}
 
-- *Solar Machine* — Volodymyr Vynnychenko  
-- *Argonauts of the Universe* — Volodymyr Vladko  
+          {/* ── Era 2: 1960s ── */}
+          {sectionTitle('From Naive Optimism to Disillusionment (1960s)', 'disillusionment')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            The 1920s vision of techno-communism — combining Marxist materialism, faith in technological progress, and utopian social engineering — held until the pressures of Stalinism and then the post-war reconstruction made its idealism impossible to sustain. The Khrushchev Thaw of the late 1950s and early 1960s created a brief window of relative creative freedom. Ukrainian SF writers seized it.
+          </p>
+          {callout('danger', 'Turning point', 'The 1960s marked a decisive break from rigid Soviet ideology. Writers began exploring mysticism, existential philosophy, and alternative futures — and paid with imprisonment.')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Oles Berdnyk emerged as the defining figure of this transformation. He blended science fiction with spirituality and transcendence, challenging official ideology in ways that could not be ignored. His work led directly to his arrest and imprisonment in Soviet labour camps — demonstrating the political stakes of speculative imagination in a controlled literary environment.
+          </p>
 
-:::tip 
-Interpretation
-These works suggest that technology could empower the proletariat and eliminate class divisions.
-:::
+          {/* ── Era 3: Golden Age ── */}
+          {sectionTitle('The Golden Age of Ukrainian Science Fiction (1970s–1980s)', 'golden-age')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            The 1970s and 1980s represent the peak of Ukrainian SF — a period of reduced ideological pressure, greater creative latitude, and deep philosophical engagement. Writers turned their attention inward: toward consciousness, identity, memory, and the nature of the self. These concerns anticipate the themes that would define global SF in the decades that followed.
+          </p>
+          {callout('tip', 'Golden Age features', 'Philosophical depth, experimentation with identity and consciousness, and reduced ideological constraint — this era produced the most enduring works of the Ukrainian SF tradition.')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Volodymyr Savchenko's <em>Self-Discovery</em> interrogated the nature of authentic selfhood. Ihor Rosokhovatskyi's <em>The Guest</em> and <em>The Last Signal</em> explored identity through encounter with radical otherness. Yevhen Filimonov examined the psychological effects of technology on individuals, while Viktor Polozhiy made memory, perception, and unreliable identity central to his work. Taken together, these writers established AI, cloning, and consciousness as the central concerns of Ukrainian SF — a decade before they became mainstream preoccupations in global literature.
+          </p>
+          {callout('info', 'Emerging theme', 'AI, cloning, and questions of identity become central concerns — anticipating later global SF trends by a full decade.')}
 
-Sandro Kasyanyuk’s works provide a more experimental version of this idea:
+          {/* ── Era 4: 1990s ── */}
+          {sectionTitle('Postmodernism and the 1990s Crisis', 'postmodernism')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            The collapse of the USSR created simultaneous crises: economic instability, cultural fragmentation, and an identity vacuum that postmodern irony was well-equipped to inhabit. For Ukrainian SF, the crisis was compounded by a structural problem: the shift toward Russian-language publishing threatened the very existence of the Ukrainian-language literary tradition.
+          </p>
+          {callout('warning', 'Historical context', 'The collapse of the USSR produced economic instability, cultural fragmentation, and a gravitational pull toward Russian-language publishing that endangered the Ukrainian SF tradition.')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Boris Stern reflected societal collapse through fragmented, ironic narratives that mirrored the chaos of the post-Soviet transition. Against this backdrop, Halyna Pahutyak's resistance stands out as exceptional. Her novel <em>The Servant from Dobromyl</em> drew on Ukrainian folklore and mythological tradition to critique Soviet imperialism and reinforce cultural identity — performing literary preservation at a moment when the tradition she was preserving was under active threat.
+          </p>
 
-- *First Steps* → human-machine fusion  
-- *New Utopia* → total technological abundance  
+          {/* ── Era 5: Metamodernism ── */}
+          {sectionTitle('The Metamodern Revolution (2010s–present)', 'metamodernism')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Contemporary Ukrainian SF synthesises the irony of postmodernism with the sincerity of modernism — a position theorists call <strong style={{ color: '#e3e3e8' }}>metamodernism</strong>. Rather than choosing between the detached irony of the 1990s and the earnest engagement of an earlier era, contemporary writers hold both simultaneously.
+          </p>
+          {callout('info', 'New phase', 'Metamodernism: a synthesis of postmodern irony and modernist sincerity, fully integrated with Western SF traditions while drawing on distinctly Ukrainian historical and folkloric material.')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Svetlana Taratorina's <em>Lazarus</em> blends cyberpunk aesthetics with post-Soviet psychological realism. Maxim Gah's <em>The Fifth Park</em> integrates political satire with speculative world-building rooted in Ukrainian geography and history. These works are legible within the global SF tradition while remaining unmistakably Ukrainian in their concerns, imagery, and emotional register.
+          </p>
+          {callout('tip', 'Key insight', 'Modern Ukrainian SF blends cyberpunk, folklore, and political critique into hybrid narrative forms that cannot be reduced to either local or global literary traditions — they are genuinely both.')}
 
----
+          {/* ── Research Contribution ── */}
+          {sectionTitle('The Importance of This Research', 'contribution')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Ukrainian science fiction has evolved through five distinct phases: techno-utopian optimism, ideological control, philosophical exploration, postmodern fragmentation, and metamodern synthesis. My research maps this trajectory systematically for the first time — demonstrating that Ukrainian SF is not a peripheral variant of Soviet or Russian SF but a distinct tradition with its own intellectual lineage, political stakes, and aesthetic innovations.
+          </p>
 
-### Shift in the 1960s
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {[
+              ['Literature as a political act', 'In Ukraine, writing science fiction has never been merely an aesthetic choice. At every stage of the tradition examined here, the choice of genre, language, and theme has carried political consequences.'],
+              ['SF as a national mirror', 'Each phase of Ukrainian SF corresponds precisely to a phase of Ukrainian political and cultural history — making the genre an unusually transparent index of national transformation.'],
+              ['Global positioning', 'By placing Ukrainian SF within the broader global tradition, the research makes visible a contribution that has been systematically overlooked — partly through political suppression, partly through linguistic inaccessibility.'],
+              ['Ongoing relevance', "Since 2022, Ukrainian SF's long engagement with war, imperial mythology, and contested identity has acquired a new and urgent literalness. The genre anticipated its moment."],
+            ].map(([title, body]) => (
+              <div key={title} style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '1rem', padding: '0.875rem 0', borderBottom: '1px solid #1e1e20', alignItems: 'baseline', fontSize: '13px' }}>
+                <span style={{ color: '#F68B1F', fontWeight: '600', lineHeight: '1.5' }}>{title}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.65' }}>{body}</span>
+              </div>
+            ))}
+          </div>
 
-:::danger 
-Turning Point
-The 1960s marked a break from rigid Soviet ideology.
-:::
+          <div style={{ marginTop: '2.5rem', padding: '1.5rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', borderLeft: '4px solid #F68B1F' }}>
+            <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', margin: 0 }}>
+              Science fiction is not just literature — it is a tool for understanding how societies imagine their future under pressure. Through this research, I aim to establish Ukrainian science fiction as a distinct voice in the global conversation about technology, identity, and the human condition.
+            </p>
+          </div>
 
-Writers began exploring:
+          <div style={{ paddingBottom: '8rem' }}></div>
+        </div>
+      </div>
 
-- mysticism  
-- existential philosophy  
-- alternative futures  
+      {/* ── RIGHT COLUMN ── */}
+      <div style={{ width: isMobileView ? '100%' : '38%', backgroundColor: 'rgba(0,0,0,0.02)', padding: isMobileView ? '1.5rem 1rem' : '3rem', borderLeft: isMobileView ? 'none' : '1px solid #1e1e20', borderTop: isMobileView ? '1px solid #1e1e20' : 'none' }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-Oles Berdnyk emerged as a key figure, blending science fiction with spirituality and challenging official ideology — which led to his imprisonment.
+          {/* Era navigator */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Historical eras</h3>
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', padding: '0.5rem', display: 'flex', flexDirection: 'column' }}>
+              {eras.map((e, i, arr) => (
+                <div key={e.id}>
+                  <button
+                    onClick={() => setActiveEra(e.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      width: '100%',
+                      textAlign: 'left',
+                      background: activeEra === e.id ? `${e.color}15` : 'transparent',
+                      border: activeEra === e.id ? `1px solid ${e.color}40` : '1px solid transparent',
+                      borderRadius: '0.5rem',
+                      padding: '0.625rem 0.75rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <span style={{ fontSize: '11px', fontFamily: 'monospace', fontWeight: '700', color: e.color, minWidth: '52px' }}>{e.period}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '13px', fontWeight: activeEra === e.id ? '700' : '400', color: activeEra === e.id ? '#e3e3e8' : '#adadb8' }}>{e.label}</div>
+                      <div style={{ fontSize: '11px', color: '#88888f' }}>{e.ideology}</div>
+                    </div>
+                  </button>
+                  {i < arr.length - 1 && (
+                    <div style={{ width: '1px', height: '8px', backgroundColor: '#303033', margin: '0 0 0 1.75rem' }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
 
----
+          {/* Active era detail */}
+          <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', overflow: 'hidden', borderTop: `3px solid ${era.color}` }}>
+            <div style={{ padding: '1.25rem', borderBottom: '1px solid #303033' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#88888f', marginBottom: '0.3rem' }}>{era.period}</div>
+              <div style={{ fontSize: '15px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.25rem' }}>{era.label}</div>
+              <div style={{ fontSize: '12px', color: era.color, fontWeight: '600' }}>{era.ideology}</div>
+            </div>
 
-## The Golden Age of Ukrainian Science Fiction
+            {/* Context */}
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #1e1e20' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#88888f', marginBottom: '0.5rem' }}>Context</div>
+              <p style={{ fontSize: '12px', color: '#adadb8', lineHeight: '1.65', margin: 0 }}>{era.context}</p>
+            </div>
 
-The 1970s–1980s represent a **Golden Age**:
+            {/* Key figures */}
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #1e1e20' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#88888f', marginBottom: '0.625rem' }}>Key figures</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                {era.keyFigures.map((f) => (
+                  <div key={f.name}>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.15rem' }}>{f.name}</div>
+                    <div style={{ fontSize: '11.5px', color: '#adadb8', lineHeight: '1.55' }}>{f.note}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-:::tip 
-Key Features
-- philosophical depth  
-- reduced ideological pressure  
-- experimentation with identity and consciousness  
-:::
+            {/* Themes */}
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #1e1e20' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#88888f', marginBottom: '0.5rem' }}>Key themes</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {era.keyThemes.map((t) => (
+                  <span key={t} style={{ fontSize: '11px', color: era.color, border: `1px solid ${era.color}40`, borderRadius: '9999px', padding: '0.15rem 0.625rem' }}>{t}</span>
+                ))}
+              </div>
+            </div>
 
-Notable works:
+            {/* Insight */}
+            <div style={{ padding: '1rem 1.25rem', backgroundColor: `${era.color}08` }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: era.color, marginBottom: '0.375rem' }}>Research insight</div>
+              <p style={{ fontSize: '12px', color: '#adadb8', lineHeight: '1.65', margin: 0 }}>{era.insight}</p>
+            </div>
+          </div>
 
-- *Self-Discovery* — Volodymyr Savchenko  
-- *The Guest*, *The Last Signal* — Ihor Rosokhovatskyi  
+          {/* Evolution summary */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>The five-stage evolution</h3>
+            <div style={{ backgroundColor: '#0d0d0f', border: '1px solid #303033', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
+              {[
+                ['01', 'Techno-utopian optimism', '1920s'],
+                ['02', 'Ideological control & dissent', '1960s'],
+                ['03', 'Philosophical exploration', '1970s–80s'],
+                ['04', 'Postmodern fragmentation', '1990s'],
+                ['05', 'Metamodern synthesis', '2010s–now'],
+              ].map(([n, title, period], i, arr) => (
+                <div key={n} style={{ display: 'flex', gap: '0.875rem', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#1a1a1c', border: '1px solid #F68B1F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: '700', color: '#F68B1F', fontFamily: 'monospace', flexShrink: 0 }}>{n}</div>
+                    {i < arr.length - 1 && <div style={{ width: '1px', height: '28px', backgroundColor: '#303033', margin: '2px 0' }} />}
+                  </div>
+                  <div style={{ paddingTop: '3px', paddingBottom: i < arr.length - 1 ? '0' : '0' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: '#e3e3e8' }}>{title}</div>
+                    <div style={{ fontSize: '11px', color: '#88888f', marginBottom: i < arr.length - 1 ? '0.4rem' : '0' }}>{period}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-:::info 
-Emerging Theme
-AI, cloning, and identity become central concerns — anticipating later global SF trends.
-:::
+          {/* Tip card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Full research</h3>
+              <Sparkles size={18} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.65', color: '#88888f', margin: 0 }}>
+              Read the full PhD overview at <a href="https://sci-fi-ua.netlify.app/phd/" target="_blank" rel="noopener noreferrer" style={{ color: '#F68B1F', textDecoration: 'none' }}>sci-fi-ua.netlify.app/phd/</a>
+            </p>
+          </div>
 
-Additional contributors:
+        </div>
+      </div>
+    </div>
+  );
+};
 
-- Yevhen Filimonov → psychological effects of technology  
-- Viktor Polozhiy → memory, perception, identity  
-
----
-
-## Postmodernism and the 1990s Crisis
-
-:::warning 
-Historical Context
-The collapse of the USSR created:
-- economic instability  
-- identity crisis  
-- cultural fragmentation  
-:::
-
-Key developments:
-
-- shift toward Russian-language publishing  
-- rise of postmodern irony and satire  
-
-Writers like Boris Stern reflected societal collapse through fragmented narratives.
-
----
-
-### Cultural Resistance
-
-:::tip 
-Important Exception
-Halyna Pahutyak resisted re-Russification.
-:::
-
-Her novel *The Servant from Dobromyl*:
-
-- draws on Ukrainian folklore  
-- critiques Soviet imperialism  
-- reinforces cultural identity  
-
----
-
-## The Metamodern Revolution of the 2010s
-
-:::info 
-New Phase: Metamodernism
-A synthesis of:
-- irony (postmodernism)  
-- sincerity (modernism)  
-:::
-
-Contemporary Ukrainian SF integrates:
-
-- Western sci-fi traditions  
-- local historical and political themes  
-
-Examples:
-
-- *Lazarus* — Svetlana Taratorina  
-- *The Fifth Park* — Maxim Gah  
-
-:::tip 
-Key Insight
-Modern Ukrainian SF blends cyberpunk, folklore, and political critique into hybrid narrative forms.
-:::
-
----
-
-## The Importance of My Research
-
-:::tip 
-Core Contribution
-My research shows how science fiction functions as a **mirror of national identity and historical transformation**.
-:::
-
-Ukrainian SF has evolved through:
-
-1. techno-utopian optimism  
-2. ideological control  
-3. philosophical exploration  
-4. postmodern fragmentation  
-5. metamodern synthesis  
-
-:::info 
-Final Insight
-Science fiction is not just literature — it is a tool for understanding how societies imagine their future under pressure.
-:::
-
-Through this work, I aim to position Ukrainian science fiction within the broader global tradition and highlight its unique intellectual and cultural contributions.
+<PhDPage />

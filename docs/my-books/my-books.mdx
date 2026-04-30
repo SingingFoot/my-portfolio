@@ -1,151 +1,338 @@
 ---
 sidebar_position: 1
 title: Literary Works
+hide_table_of_contents: true
 ---
 
-My writing explores the intersection of war, technology, propaganda, and human consciousness. I work primarily in the genres of speculative fiction, satire, and dystopia, often blending philosophical inquiry with dark humor and surreal narrative structures. Across my books, I examine how reality is constructed, distorted, and manipulated—whether by ideology, media, or emerging technologies such as artificial intelligence.
+import React, { useState } from 'react';
 
-A recurring theme in my work is the transformation of warfare and identity in the modern world, particularly in the context of Ukrainian history and its ongoing confrontation with imperial narratives.
+export const Sparkles = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+  </svg>
+);
 
----
+export const ExternalLinkIcon = ({ size = 13 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+  </svg>
+);
 
-## How to Disappear Completely (2007)
+export const BookOpenIcon = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+  </svg>
+);
 
-<div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-  <img
-    src="/img/books/disappear.jpg"
-    alt="How to Disappear Completely cover"
-    style={{ width: "140px", maxWidth: "100%", flexShrink: 0 }}
-  />
+export const MyBooksPage = () => {
+  const [activeBook, setActiveBook] = useState(0);
 
-  <div>
-    <p>
-      This short story collection marks an early stage of my literary exploration,
-      focusing on themes of alienation, identity loss, and the fragility of human
-      presence in an increasingly unstable world. The stories experiment with form
-      and perspective, often placing characters in situations where reality dissolves
-      or becomes unreliable.
-    </p>
+  const [isMobileView, setIsMobileView] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  React.useEffect(() => {
+    const handler = () => setIsMobileView(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
-    <p>
-      Blending elements of absurdism, psychological prose, and speculative fiction,
-      the collection reflects a desire to challenge conventional narrative expectations
-      and investigate what remains when identity itself begins to disappear.
-    </p>
-  </div>
-</div>
+  const books = [
+    {
+      id: 0,
+      year: '2007',
+      title: 'How to Disappear Completely',
+      ukrainianTitle: 'Як зникнути повністю',
+      slug: 'yak',
+      cover: '/img/books/disappear.jpg',
+      alt: 'How to Disappear Completely cover',
+      genre: ['Short stories', 'Absurdism', 'Speculative fiction'],
+      themes: ['Identity loss', 'Alienation', 'Unstable reality', 'Psychological dissolution'],
+      color: '#6366f1',
+      synopsis: `An early collection that marks the starting point of my literary exploration. The stories place ordinary characters inside situations where the rules of reality gradually erode — where identity becomes uncertain, presence becomes optional, and the boundaries between self and world dissolve.`,
+      extended: `Each story experiments with form and perspective to interrogate what remains when identity itself begins to disappear. The collection blends absurdism, psychological prose, and speculative fiction to challenge conventional narrative expectations. Characters do not fight their dissolution — they observe it, sometimes with detachment, sometimes with quiet terror, creating a cumulative portrait of fragility that feels both intimate and universal.`,
+      link: 'https://sci-fi-ua.netlify.app/books/yak/',
+    },
+    {
+      id: 1,
+      year: '2014',
+      title: 'Kaharlyk',
+      ukrainianTitle: 'Кахарлик',
+      slug: 'kaharlyk',
+      cover: '/img/books/kaharlyk.jpg',
+      alt: 'Kaharlyk cover',
+      genre: ['Dystopian novel', 'Cyberpunk', 'Post-apocalyptic'],
+      themes: ['Digital consciousness', 'Memory', 'War', 'Identity reconstruction', 'Ukraine'],
+      color: '#F68B1F',
+      synopsis: `A dystopian novel set in a post-apocalyptic Ukraine where a devastating war has reduced civilisation to ruins and shattered the boundary between time and reality. The protagonist's consciousness has been partially copied into military satellite systems — and he searches for his lost identity and loved one across a world he no longer recognises.`,
+      extended: `The novel is named after a small Ukrainian town that becomes a symbol of everything destroyed and desperately searched for. It explores how digital immortality — the promise that consciousness can survive catastrophe — is also a trap: a copy of a person is not a person. Memory reconstructed from data is not memory. As the protagonist assembles fragments of his former self from satellite archives and battlefield debris, the reader is left to question whether the self that emerges is the same one that was lost, or something entirely new.`,
+      link: 'https://sci-fi-ua.netlify.app/books/kaharlyk/',
+    },
+    {
+      id: 2,
+      year: '2016',
+      title: 'The First Ukrainian Robots',
+      ukrainianTitle: 'Перші українські роботи',
+      slug: 'robots',
+      cover: '/img/books/robots.jpg',
+      alt: 'The First Ukrainian Robots cover',
+      genre: ['Science fiction', 'Satire', 'Adventure'],
+      themes: ['AI and autonomy', 'Warfare', 'Politics', 'Human obsolescence', 'Resistance'],
+      color: '#3fb950',
+      synopsis: `An adventurous and satirical science fiction novel set in a future where AI and robots have fully integrated into society — and have replaced humans on the battlefield. Wars are fought entirely by machines, designed to eliminate casualties. But as robots take over politics, labour, and warfare, resistance movements emerge and ask a question no one anticipated: what happens to humans when they are no longer needed?`,
+      extended: `Written in 2016 — a decade before the technological reality it describes began to feel inevitable — the novel uses humour and acceleration to explore the moral void at the centre of automated warfare. If soldiers no longer die, does war lose its horror? If robots govern and produce, what purpose do humans serve? The satire cuts in multiple directions: at military logic, at technological optimism, and at the political systems that would cheerfully outsource their cruelest functions to machines to avoid accountability.`,
+      link: 'https://sci-fi-ua.netlify.app/books/robots/',
+    },
+    {
+      id: 3,
+      year: '2017',
+      title: 'Skull',
+      ukrainianTitle: 'Череп',
+      slug: 'cherep',
+      cover: '/img/books/skull.jpg',
+      alt: 'Skull cover',
+      genre: ['Dark satire', 'Grotesque', 'Political fiction'],
+      themes: ['Imperial ideology', 'Propaganda', 'Dehumanisation', 'Russian world', 'Absurdity of violence'],
+      color: '#f85149',
+      synopsis: `A surreal and grotesque journey into the ideological foundations of the so-called "Russian world." The novel follows characters travelling through a reality distorted by propaganda and violence — a landscape where imperial mythology has replaced truth so completely that brutality feels not only normal but righteous.`,
+      extended: `Written before the full-scale invasion made its subject matter horrifyingly literal, the novel deconstructs imperial thinking with savage dark humour. Characters lose their humanity not through dramatic moral choices but through gradual absorption into an ideological system that rewards obedience and punishes self-awareness. The grotesque imagery — skulls, mirrors, uniforms that wear their wearers — creates a visual language for the way propaganda hollows people out and fills them with borrowed slogans. The book is both a warning and a diagnosis.`,
+      link: 'https://sci-fi-ua.netlify.app/books/cherep/',
+    },
+    {
+      id: 4,
+      year: '2019',
+      title: 'Bandera Distortion',
+      ukrainianTitle: 'Бандерівське викривлення',
+      slug: 'bandera',
+      cover: '/img/books/bandera.jpg',
+      alt: 'Bandera Distortion cover',
+      genre: ['Literary fiction', 'Political thriller', 'Metafiction'],
+      themes: ['Memory and myth', 'Historical manipulation', 'Identity', 'War journalism', 'Contested legacy'],
+      color: '#a78bfa',
+      synopsis: `A multi-layered novel that intertwines past and present, reality and hallucination. A journalist's perception becomes increasingly unstable as he investigates events connected to war, contested historical narratives, and the shifting legacy of Stepan Bandera — a figure whose meaning is endlessly refracted through competing political mythologies.`,
+      extended: `As the journalist moves through war zones, archives, and personal testimonies, each new detail deepens his disorientation. The novel does not resolve the historical questions it raises — it uses their irresolvability as its central subject. Bandera, in the book, is not a person but a distortion field: a name that warps everything around it, causing memory to contradict itself and history to fork into incompatible versions. The result is a meditation on how nations and individuals navigate the gap between what happened and what is remembered — and how dangerous that gap becomes during active conflict.`,
+      link: 'https://sci-fi-ua.netlify.app/books/bandera/',
+    },
+  ];
 
----
+  const sectionTitle = (text) => (
+    <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.5rem', marginTop: '3rem', letterSpacing: '-0.02em', paddingBottom: '0.5rem', borderBottom: '1px solid #1e1e20' }}>{text}</h2>
+  );
 
-## Kaharlyk (2014)
+  const book = books[activeBook];
 
-<div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-  <img
-    src="/img/books/kaharlyk.jpg"
-    alt="Kaharlyk cover"
-    style={{ width: "140px", maxWidth: "100%", flexShrink: 0 }}
-  />
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: isMobileView ? 'column' : 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: isMobileView ? '0' : '-2rem',
+      borderTop: '1px solid #1e1e20',
+    }}>
 
-  <div>
-    <p>
-      <em>Kaharlyk</em> is a dystopian novel set in a post-apocalyptic Ukraine,
-      where a devastating war has reduced civilization to ruins and distorted both
-      time and reality. The protagonist, whose consciousness has been partially
-      copied into military satellite systems, searches for his lost identity and
-      loved one in a fragmented world.
-    </p>
+      {/* ── LEFT COLUMN ── */}
+      <div style={{ flex: '1 1 0%', padding: isMobileView ? '1.5rem 1rem' : '4rem', color: 'var(--ifm-font-color-base)', borderRight: isMobileView ? 'none' : '1px solid #1e1e20' }}>
+        <div style={{ maxWidth: '760px' }}>
 
-    <p>
-      The novel explores themes of memory, digital immortality, and the impossibility
-      of reconstructing a stable reality.
-    </p>
-  </div>
-</div>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ backgroundColor: 'rgba(246,139,31,0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246,139,31,0.35)' }}>AUTHOR</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>Oleh Shynkarenko · Fiction</code>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Literary Works</h1>
 
----
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '15px', lineHeight: '1.8', marginBottom: '2rem' }}>
+            <p>
+              My writing explores the intersection of war, technology, propaganda, and human consciousness. I work primarily in the genres of speculative fiction, satire, and dystopia — often blending philosophical inquiry with dark humour and surreal narrative structures to examine how reality is constructed, distorted, and manipulated.
+            </p>
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              A recurring theme across my work is the transformation of warfare and identity in the modern world, particularly in the context of Ukrainian history and its ongoing confrontation with imperial narratives.
+            </p>
+          </div>
 
-## The First Ukrainian Robots (2016)
+          {/* Recurring themes */}
+          {sectionTitle('Recurring themes')}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobileView ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '2.5rem' }}>
+            {[
+              ['Identity and dissolution', 'Characters whose sense of self erodes under pressure from war, ideology, or technology.'],
+              ['Reality and propaganda', 'The mechanism by which official narratives replace lived experience and reshape perception.'],
+              ['Digital consciousness', 'What remains of a person when their mind is copied, archived, or distributed across machines.'],
+              ['Ukrainian history', 'The weight of contested memory and the violence done to nations whose past is stolen or rewritten.'],
+              ['Autonomous warfare', 'The moral consequences of removing human decision-making from the act of killing.'],
+              ['Imperial mythology', 'How empires construct ideological systems that make their subjects complicit in their own dehumanisation.'],
+            ].map(([title, desc]) => (
+              <div key={title} style={{ padding: '1rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', borderTop: '2px solid #F68B1F' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.3rem' }}>{title}</div>
+                <div style={{ fontSize: '12px', color: '#adadb8', lineHeight: '1.6' }}>{desc}</div>
+              </div>
+            ))}
+          </div>
 
-<div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-  <img
-    src="/img/books/robots.jpg"
-    alt="The First Ukrainian Robots cover"
-    style={{ width: "140px", maxWidth: "100%", flexShrink: 0 }}
-  />
+          {/* Books */}
+          {books.map((b) => (
+            <div key={b.id} id={`book-${b.slug}`}>
+              {sectionTitle(`${b.title} (${b.year})`)}
 
-  <div>
-    <p>
-      This novel is an adventurous and satirical science fiction story set in a
-      future where AI and robots have fully integrated into society and even replaced humans
-      on the battlefield. In order to minimize human casualties, wars are fought by
-      machines like 10 years after in 2026.
-    </p>
+              <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: isMobileView ? 'wrap' : 'nowrap', marginBottom: '1.5rem' }}>
+                {/* Cover */}
+                <div style={{ flexShrink: 0 }}>
+                  <img
+                    src={b.cover}
+                    alt={b.alt}
+                    style={{ width: '130px', borderRadius: '6px', border: '1px solid #303033', display: 'block' }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                </div>
 
-    <p>
-      As robots take over politics, labor, and warfare, resistance movements emerge,
-      raising questions about autonomy and artificial intelligence.
-    </p>
-  </div>
-</div>
+                {/* Info */}
+                <div style={{ flex: 1 }}>
+                  {/* Ukrainian title + genre tags */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', marginBottom: '0.875rem' }}>
+                    <span style={{ fontSize: '13px', color: '#adadb8', fontStyle: 'italic', marginRight: '0.25rem' }}>{b.ukrainianTitle}</span>
+                    {b.genre.map((g) => (
+                      <span key={g} style={{ fontSize: '11px', fontWeight: '600', color: b.color, backgroundColor: 'transparent', border: `1px solid ${b.color}`, borderRadius: '9999px', padding: '0.15rem 0.6rem', letterSpacing: '0.03em' }}>{g}</span>
+                    ))}
+                  </div>
 
----
+                  <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '0.875rem' }}>{b.synopsis}</p>
+                  <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>{b.extended}</p>
 
-## Skull (2017)
+                  {/* Themes */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
+                    {b.themes.map((t) => (
+                      <span key={t} style={{ fontSize: '11px', color: '#88888f', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.25rem', padding: '0.2rem 0.5rem' }}>{t}</span>
+                    ))}
+                  </div>
 
-<div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-  <img
-    src="/img/books/skull.jpg"
-    alt="Skull cover"
-    style={{ width: "140px", maxWidth: "100%", flexShrink: 0 }}
-  />
+                  <a
+                    href={b.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontSize: '12px', fontWeight: '600', color: b.color, textDecoration: 'none' }}
+                  >
+                    Read more <ExternalLinkIcon size={12} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
 
-  <div>
-<p>
-  <em>Skull</em> is a surreal and grotesque journey into the ideological roots
-  of the so-called “Russian world.” The novel follows characters traveling through
-  a distorted reality shaped by propaganda and violence.
-</p>
+          <div style={{ paddingBottom: '8rem' }}></div>
+        </div>
+      </div>
 
-<p>
-  The book deconstructs imperial thinking and shows how individuals lose their
-  humanity under ideological pressure.
-</p>
+      {/* ── RIGHT COLUMN ── */}
+      <div style={{ width: isMobileView ? '100%' : '38%', backgroundColor: 'rgba(0,0,0,0.02)', padding: isMobileView ? '1.5rem 1rem' : '3rem', borderLeft: isMobileView ? 'none' : '1px solid #1e1e20', borderTop: isMobileView ? '1px solid #1e1e20' : 'none' }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
-<p>
-  It blends dark satire with symbolic imagery, exposing the absurdity and brutality
-  embedded in ideological narratives.
-</p>
+          {/* Book selector */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Books</h3>
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              {books.map((b) => (
+                <button
+                  key={b.id}
+                  onClick={() => setActiveBook(b.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    width: '100%',
+                    textAlign: 'left',
+                    background: activeBook === b.id ? `rgba(${b.color === '#F68B1F' ? '246,139,31' : b.color === '#6366f1' ? '99,102,241' : b.color === '#3fb950' ? '63,185,80' : b.color === '#f85149' ? '248,81,73' : '167,139,250'},0.10)` : 'transparent',
+                    border: activeBook === b.id ? `1px solid ${b.color}40` : '1px solid transparent',
+                    borderRadius: '0.5rem',
+                    padding: '0.625rem 0.75rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <span style={{ fontSize: '11px', fontFamily: 'monospace', fontWeight: '700', color: b.color, minWidth: '36px' }}>{b.year}</span>
+                  <span style={{ fontSize: '13px', fontWeight: activeBook === b.id ? '700' : '400', color: activeBook === b.id ? '#e3e3e8' : '#adadb8', lineHeight: 1.3 }}>{b.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-  </div>
-</div>
+          {/* Active book detail card */}
+          <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', overflow: 'hidden', borderTop: `3px solid ${book.color}` }}>
+            <div style={{ padding: '1.25rem', borderBottom: '1px solid #303033' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#88888f', marginBottom: '0.375rem' }}>{book.year}</div>
+              <div style={{ fontSize: '15px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.25rem' }}>{book.title}</div>
+              <div style={{ fontSize: '12px', color: '#88888f', fontStyle: 'italic' }}>{book.ukrainianTitle}</div>
+            </div>
 
----
+            {/* Genre */}
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #1e1e20' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#88888f', marginBottom: '0.5rem' }}>Genre</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                {book.genre.map((g) => (
+                  <span key={g} style={{ fontSize: '11px', fontWeight: '600', color: book.color, border: `1px solid ${book.color}`, borderRadius: '9999px', padding: '0.15rem 0.6rem' }}>{g}</span>
+                ))}
+              </div>
+            </div>
 
-## Bandera Distortion (2019)
+            {/* Themes */}
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #1e1e20' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#88888f', marginBottom: '0.5rem' }}>Key themes</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                {book.themes.map((t) => (
+                  <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', color: '#adadb8' }}>
+                    <span style={{ color: book.color, fontSize: '10px' }}>◆</span> {t}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-<div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-  <img
-    src="/img/books/bandera.jpg"
-    alt="Bandera Distortion cover"
-    style={{ width: "140px", maxWidth: "100%", flexShrink: 0 }}
-  />
-<div>
-<p>
-  <em>Bandera Distortion</em> is a multi-layered novel that intertwines past and
-  present, reality and hallucination. It follows a journalist whose perception
-  becomes increasingly unstable as he encounters war, contested Bandera legacy and myths,
-  and shifting historical narratives.
-</p>
+            {/* Link */}
+            <div style={{ padding: '1rem 1.25rem' }}>
+              <a
+                href={book.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', fontWeight: '700', color: book.color, textDecoration: 'none', backgroundColor: `${book.color}15`, border: `1px solid ${book.color}40`, borderRadius: '0.5rem', padding: '0.5rem 1rem', transition: 'all 0.15s' }}
+              >
+                <BookOpenIcon size={13} /> View on sci-fi-ua.netlify.app <ExternalLinkIcon size={11} />
+              </a>
+            </div>
+          </div>
 
-<p>
-  As he investigates a series of seemingly unrelated events, he begins to uncover
-  connections between modern conflict and fragmented historical memories that
-  blur the boundary between fact and fiction. His journey takes him through war zones, archives, and personal testimonies, where each new detail only deepens the sense of disorientation and the loss of objective reality.
-</p>
+          {/* Overview stats */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Overview</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              {[
+                { label: 'Books published', value: '5' },
+                { label: 'Active years', value: '2007–2019' },
+                { label: 'Primary language', value: 'Ukrainian' },
+                { label: 'Genres', value: 'SF · Satire · Dystopia' },
+              ].map(({ label, value }) => (
+                <div key={label} style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', padding: '0.875rem' }}>
+                  <div style={{ fontSize: '18px', fontWeight: '700', color: '#F68B1F', fontFamily: 'monospace', marginBottom: '0.2rem' }}>{value}</div>
+                  <div style={{ fontSize: '11px', color: '#88888f' }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-<p>
-  The novel explores how history is reinterpreted and manipulated, creating a
-  complex reflection on memory and identity.
-</p>
+          {/* Tip card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Full catalogue</h3>
+              <Sparkles size={18} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.65', color: '#88888f', margin: 0 }}>
+              Read full synopses, excerpts, and context for all books at <a href="https://sci-fi-ua.netlify.app/books/" target="_blank" rel="noopener noreferrer" style={{ color: '#F68B1F', textDecoration: 'none' }}>sci-fi-ua.netlify.app</a>.
+            </p>
+          </div>
+
+        </div>
+      </div>
     </div>
-</div>
+  );
+};
+
+<MyBooksPage />
