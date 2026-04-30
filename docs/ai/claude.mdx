@@ -1,0 +1,456 @@
+---
+sidebar_position: 5
+title: Claude
+hide_table_of_contents: true
+---
+
+import React, { useState } from 'react';
+
+export const Sparkles = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+  </svg>
+);
+
+export const CopyIcon = ({ size = 13 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
+
+export const CheckIcon = ({ size = 13 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+);
+
+export const ClaudePage = () => {
+  const [activeUseCase, setActiveUseCase] = useState(0);
+  const [copied, setCopied] = useState({});
+
+  const [isMobileView, setIsMobileView] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  React.useEffect(() => {
+    const handler = () => setIsMobileView(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  const useCases = [
+    {
+      label: 'API Docs',
+      prompts: [
+        {
+          title: 'Generate an endpoint description',
+          text: `Write API reference documentation for the following endpoint.
+
+Method: POST
+Path: /api/v1/users
+Description: Creates a new user account.
+Request body (JSON): { "email": string, "name": string, "role": "admin"|"editor"|"viewer" }
+Response (201): { "id": string, "createdAt": string }
+Errors: 400 (validation), 409 (email already exists), 422 (invalid role)
+
+Format: use a two-sentence description, then document each request field (name, type, required, description) and each response code.`,
+        },
+        {
+          title: 'Write a getting started for an API',
+          text: `Write a "Getting Started" section for a REST API aimed at developers who are familiar with HTTP but new to this specific product.
+
+Cover: authentication (Bearer token), base URL, making the first request (list users), handling errors (structure of error objects), rate limits (100 req/min).
+
+Keep it under 400 words. Use a single curl example. Do not use passive voice.`,
+        },
+      ],
+    },
+    {
+      label: 'User Guides',
+      prompts: [
+        {
+          title: 'Write a task-based how-to guide',
+          text: `Write a how-to guide for the following task: [task name]
+
+Audience: non-technical end users with no prior experience.
+Product: [product name]
+Goal: the reader should be able to complete the task independently after reading.
+
+Structure: short intro (1–2 sentences), prerequisites, numbered steps, one warning if relevant, and a "what to do next" sentence.
+
+Keep each step under 25 words. Use second person ("you"). Avoid "please" and "simply".`,
+        },
+        {
+          title: 'Turn bullet points into a user guide section',
+          text: `Expand the following bullet points into a polished user guide section.
+
+Audience: [describe audience]
+Tone: friendly but professional
+Format: prose paragraphs with a short intro, body, and a concluding action
+
+Bullet points:
+- [bullet 1]
+- [bullet 2]
+- [bullet 3]
+
+Return only the finished text. No commentary.`,
+        },
+      ],
+    },
+    {
+      label: 'Review & Edit',
+      prompts: [
+        {
+          title: 'Technical accuracy and clarity audit',
+          text: `Review the following documentation excerpt for:
+1. Technical accuracy — flag any claims that may be incorrect or that you cannot verify
+2. Clarity — identify sentences that are ambiguous, overlong, or use passive voice unnecessarily
+3. Completeness — note any steps, terms, or conditions that are assumed but not explained
+
+For each issue, quote the original text and provide a suggested fix.
+
+Excerpt:
+[paste text here]`,
+        },
+        {
+          title: 'Style guide compliance check',
+          text: `Check the following text against these style rules and list any violations with suggested corrections:
+
+Rules:
+- Use second person ("you", not "the user")
+- Present tense only
+- Active voice preferred
+- No "please", "simply", "just", "easy", or "straightforward"
+- Sentence case for headings (not Title Case)
+- Oxford comma required
+
+Text:
+[paste text here]`,
+        },
+      ],
+    },
+    {
+      label: 'Structure',
+      prompts: [
+        {
+          title: 'Build a documentation outline',
+          text: `Create a documentation outline for a [product type] aimed at [audience].
+
+The documentation should cover the full user journey from onboarding to advanced usage. 
+
+Include: Overview, Prerequisites, Getting Started (< 5 min), Core Concepts (3–5 concepts with definitions), How-to Guides (task-based), API Reference, Troubleshooting, and Changelog format.
+
+For each section, add 3–5 specific sub-headings appropriate for this product.`,
+        },
+        {
+          title: 'Organise raw SME notes into structure',
+          text: `The following are raw notes from a subject-matter expert interview. Organise them into a logical documentation structure with clear headings and bullet points. Group related information, identify gaps, and flag anything that needs clarification.
+
+Raw notes:
+[paste SME notes here]`,
+        },
+      ],
+    },
+    {
+      label: 'Style & Tone',
+      prompts: [
+        {
+          title: 'Rewrite for a developer audience',
+          text: `Rewrite the following section for a developer audience. Assume they are comfortable with REST APIs, command-line tools, and JSON. Replace procedural prose with direct instructions. Add a code example if one would be more useful than an explanation.
+
+Original:
+[paste text here]`,
+        },
+        {
+          title: 'Create a micro style guide',
+          text: `Create a short style guide for technical documentation at [company name]. We write for [audience]. Our tone should be [adjectives: e.g. direct, friendly, precise].
+
+Include:
+- Voice and person (first/second/third)
+- Tense
+- 10 words/phrases to avoid and preferred alternatives
+- Heading capitalisation rule
+- Oxford comma policy
+- How to write UI element names (bold, code, quotes?)
+
+Keep each rule to one sentence plus an example.`,
+        },
+      ],
+    },
+  ];
+
+  const copyPrompt = async (text, key) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied((prev) => ({ ...prev, [key]: true }));
+      setTimeout(() => setCopied((prev) => ({ ...prev, [key]: false })), 2000);
+    } catch (e) {}
+  };
+
+  const sectionTitle = (text) => (
+    <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.5rem', marginTop: '3rem', letterSpacing: '-0.02em', paddingBottom: '0.5rem', borderBottom: '1px solid #1e1e20' }}>{text}</h2>
+  );
+
+  const inlineCode = (t) => (
+    <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.4rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>{t}</code>
+  );
+
+  const uc = useCases[activeUseCase];
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: isMobileView ? 'column' : 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: isMobileView ? '0' : '-2rem',
+      borderTop: '1px solid #1e1e20',
+    }}>
+
+      {/* ── LEFT COLUMN ── */}
+      <div style={{ flex: '1 1 0%', padding: isMobileView ? '1.5rem 1rem' : '4rem', color: 'var(--ifm-font-color-base)', borderRight: isMobileView ? 'none' : '1px solid #1e1e20' }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ backgroundColor: 'rgba(246,139,31,0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246,139,31,0.35)' }}>Anthropic</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>Claude · claude.ai</code>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Claude for Technical Writing</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '15px', lineHeight: '1.8', marginBottom: '2rem' }}>
+            <p>
+              Claude is a conversational AI built by Anthropic with a strong emphasis on nuanced, accurate, and well-structured text. For technical writers, it stands out for its ability to hold long context (up to 200,000 tokens), follow complex multi-part instructions, and produce documentation that reads like it was written by a careful human editor — not a language model.
+            </p>
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              Claude is particularly effective for documentation tasks that require extended reasoning: information architecture decisions, style guide creation, multi-section audits, and producing content that must balance technical precision with accessibility.
+            </p>
+          </div>
+
+          {/* What makes Claude suited for tech writing */}
+          {sectionTitle('Why Claude works well for technical writing')}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobileView ? '1fr' : '1fr 1fr', gap: '0.875rem', marginBottom: '2rem' }}>
+            {[
+              ['Long context window', 'Claude can read and reason over entire documentation sets, style guides, and codebases in a single conversation — no chunking required.'],
+              ['Follows complex instructions', 'Multi-rule prompts ("use second person, present tense, Oxford comma, no passive voice") are respected consistently across long outputs.'],
+              ['Structured output', 'Claude reliably produces valid Markdown, MDX components, JSON structures, and reStructuredText without hallucinating syntax.'],
+              ['Calibrated honesty', 'Claude flags when it is uncertain rather than inventing plausible-sounding but incorrect information — important for technical accuracy.'],
+              ['Iterative refinement', 'Claude maintains context across a long conversation, so you can refine content across many turns without losing the thread.'],
+              ['Handles large pastes', 'Paste a full API reference, spec sheet, or codebase excerpt and ask Claude to produce documentation from it — the context holds.'],
+            ].map(([title, body]) => (
+              <div key={title} style={{ padding: '1rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem', borderTop: '2px solid #F68B1F' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.375rem' }}>{title}</div>
+                <div style={{ fontSize: '12px', color: '#adadb8', lineHeight: '1.6' }}>{body}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Use cases */}
+          {sectionTitle('Use cases for technical writers')}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            {[
+              {
+                n: '1',
+                title: 'Writing API documentation',
+                body: 'Provide Claude with an endpoint handler, a schema, or even a Postman collection and ask it to generate a complete API reference section — description, request parameters, response codes, error objects, and usage examples. Claude is consistent about format and rarely invents parameter behaviour.',
+              },
+              {
+                n: '2',
+                title: 'Creating user guides and how-to content',
+                body: 'Give Claude a task description, the target audience, and any product-specific terminology, and it will produce a task-based guide with numbered steps, prerequisites, and callouts. Specify the word limit, tone, and format constraints — Claude follows them reliably.',
+              },
+              {
+                n: '3',
+                title: 'Reviewing and editing existing documentation',
+                body: 'Paste an existing document and ask Claude to audit it for specific issues: passive voice, inconsistent terminology, missing steps, or style guide violations. Claude returns a structured critique with quoted originals and specific suggested fixes — more actionable than generic "it\'s unclear" feedback.',
+              },
+              {
+                n: '4',
+                title: 'Information architecture and structure',
+                body: 'Describe your product and audience, and ask Claude to design the documentation hierarchy — top-level categories, sub-sections, and the logical order of topics. It can apply principles like progressive disclosure, task-based organisation, and the three-click rule to its recommendations.',
+              },
+              {
+                n: '5',
+                title: 'Style guide development',
+                body: 'Describe your brand voice, audience, and a few existing documentation samples, and ask Claude to draft a practical style guide — voice and tone rules, word choices to avoid, heading conventions, and formatting standards. Faster than writing from scratch and easy to iterate.',
+              },
+              {
+                n: '6',
+                title: 'Generating code examples for documentation',
+                body: 'Ask Claude to write working code examples in any language that demonstrate a specific API endpoint, SDK method, or configuration pattern. Specify the language, the library version, the scenario, and the output format (commented inline or in a separate code block).',
+              },
+              {
+                n: '7',
+                title: 'Translating technical concepts',
+                body: 'Paste a section from a technical specification, RFC, or engineering design document and ask Claude to rewrite it for a non-technical audience at a specified reading level. Claude accurately preserves the meaning while removing jargon.',
+              },
+              {
+                n: '8',
+                title: 'Producing release notes',
+                body: 'Feed Claude a git diff, JIRA ticket summary, or engineering changelog and ask it to produce user-facing release notes grouped by category (New Features, Improvements, Bug Fixes). Specify the maximum length per item and the tone — formal, conversational, or product-marketing.',
+              },
+            ].map(({ n, title, body }) => (
+              <div key={n} style={{ display: 'grid', gridTemplateColumns: '28px 1fr', gap: '1rem', alignItems: 'flex-start' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#1a1a1c', border: '1px solid #F68B1F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', color: '#F68B1F', fontFamily: 'monospace', flexShrink: 0, marginTop: '2px' }}>{n}</div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.375rem' }}>{title}</div>
+                  <div style={{ fontSize: '13px', color: '#adadb8', lineHeight: '1.7' }}>{body}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Effective prompting */}
+          {sectionTitle('How to prompt Claude effectively')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Claude responds to specificity. Vague prompts produce generic documentation; precise prompts produce publication-ready content. These prompt patterns consistently produce strong results:
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {[
+              ['Define the audience', 'State who will read the output: "non-technical administrators who have never used a CLI" is more useful than "users".'],
+              ['Specify format constraints', 'Include word count, heading levels, list style, and any components to include or exclude (e.g., "no prerequisites section").'],
+              ['Supply reference material', 'Paste the relevant spec, schema, code, or existing docs so Claude reasons from real source material rather than guessing.'],
+              ['State the tone explicitly', 'Words like "direct, friendly, precise" are enough. Alternatively, paste two sentences in your desired tone and ask Claude to match it.'],
+              ['Use negative constraints', '"Do not use passive voice", "do not include a summary section", "do not use the word \'leverage\'" are all respected.'],
+              ['Ask for output only', 'End with "Return only the final text, no commentary" to skip the preamble and get clean output you can paste directly.'],
+              ['Iterate in one thread', 'Follow-up refinements in the same conversation are more efficient than re-prompting from scratch — Claude keeps all context.'],
+            ].map(([title, body]) => (
+              <div key={title} style={{ display: 'grid', gridTemplateColumns: '185px 1fr', gap: '1rem', padding: '0.875rem 0', borderBottom: '1px solid #1e1e20', alignItems: 'baseline', fontSize: '13px' }}>
+                <span style={{ color: '#F68B1F', fontWeight: '600' }}>{title}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.65' }}>{body}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Claude vs ChatGPT */}
+          {sectionTitle('Claude vs ChatGPT for documentation')}
+          <div style={{ border: '1px solid #303033', borderRadius: '0.75rem', overflow: 'hidden', marginBottom: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', backgroundColor: '#1a1a1c', padding: '0.625rem 1rem', borderBottom: '1px solid #303033', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#88888f', gap: '1rem' }}>
+              <span>Dimension</span>
+              <span style={{ color: '#F68B1F' }}>Claude</span>
+              <span style={{ color: '#10a37f' }}>ChatGPT</span>
+            </div>
+            {[
+              ['Context window', 'Up to 200K tokens — entire codebases and doc sites', 'Up to 128K tokens (GPT-4o)'],
+              ['Long-doc consistency', 'Strong — maintains terminology across long outputs', 'Can drift in very long outputs'],
+              ['Instruction following', 'Reliably follows multi-rule prompts', 'Good; occasionally misses edge cases'],
+              ['Calibrated uncertainty', 'Flags when unsure; avoids confident hallucination', 'May state uncertain facts confidently'],
+              ['Code examples', 'Accurate; prefers clear, idiomatic code', 'Accurate; broader language coverage'],
+              ['Plugin / tool access', 'Limited compared to ChatGPT', 'Rich plugin ecosystem'],
+              ['Best for', 'Long-form technical docs, audits, style guides', 'Drafting, FAQ, quick rewrites'],
+            ].map(([dim, claude, gpt], i, arr) => (
+              <div key={dim} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', padding: '0.75rem 1rem', borderBottom: i < arr.length - 1 ? '1px solid #1e1e20' : 'none', fontSize: '13px', gap: '1rem', alignItems: 'baseline' }}>
+                <span style={{ color: '#88888f', fontWeight: '600', fontSize: '12px' }}>{dim}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.55' }}>{claude}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.55' }}>{gpt}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Access */}
+          {sectionTitle('How to access Claude')}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobileView ? '1fr' : '1fr 1fr', gap: '0.875rem', marginBottom: '2rem' }}>
+            {[
+              { name: 'claude.ai', desc: 'Web and mobile chat interface. Free tier includes Claude 3.5 Haiku. Pro plan ($20/month) adds Claude 3.5 Sonnet and Claude 3 Opus.' },
+              { name: 'API', desc: 'Access Claude models programmatically via the Anthropic API. Suitable for embedding Claude into documentation pipelines and CI/CD workflows.' },
+              { name: 'Claude for Work', desc: 'Team and Enterprise plans with admin controls, SSO, audit logs, and higher rate limits — designed for documentation teams.' },
+              { name: 'Cowork mode', desc: 'Claude desktop app with file access, browser tools, and plugin support — the most powerful environment for documentation workflows.' },
+            ].map((item) => (
+              <div key={item.name} style={{ padding: '1rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#F68B1F', marginBottom: '0.375rem' }}>{item.name}</div>
+                <div style={{ fontSize: '12px', color: '#adadb8', lineHeight: '1.6' }}>{item.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ paddingBottom: '8rem' }}></div>
+        </div>
+      </div>
+
+      {/* ── RIGHT COLUMN ── */}
+      <div style={{ width: isMobileView ? '100%' : '42%', backgroundColor: 'rgba(0,0,0,0.02)', padding: isMobileView ? '1.5rem 1rem' : '3rem', borderLeft: isMobileView ? 'none' : '1px solid #1e1e20', borderTop: isMobileView ? '1px solid #1e1e20' : 'none' }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Prompt library — technical writing</h3>
+
+            {/* Use-case tabs */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '1.25rem' }}>
+              {useCases.map((u, i) => (
+                <button
+                  key={u.label}
+                  onClick={() => setActiveUseCase(i)}
+                  style={{
+                    padding: '0.4rem 0.875rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    border: `1px solid ${activeUseCase === i ? '#F68B1F' : '#303033'}`,
+                    backgroundColor: activeUseCase === i ? 'rgba(246,139,31,0.12)' : '#1a1a1c',
+                    color: activeUseCase === i ? '#F68B1F' : '#adadb8',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >{u.label}</button>
+              ))}
+            </div>
+
+            {/* Prompts */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {uc.prompts.map((p, idx) => {
+                const key = `${activeUseCase}-${idx}`;
+                return (
+                  <div key={key} style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderBottom: '1px solid #303033', backgroundColor: '#0d0d0f' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '600', color: '#e3e3e8' }}>{p.title}</span>
+                      <button
+                        onClick={() => copyPrompt(p.text, key)}
+                        style={{ background: 'transparent', border: '1px solid #303033', borderRadius: '4px', padding: '5px', cursor: 'pointer', color: copied[key] ? '#F68B1F' : '#555', display: 'flex', alignItems: 'center' }}
+                        title="Copy prompt"
+                      >
+                        {copied[key] ? <CheckIcon /> : <CopyIcon />}
+                      </button>
+                    </div>
+                    <pre style={{ margin: 0, padding: '1rem', fontFamily: 'monospace', fontSize: '12px', color: '#adadb8', lineHeight: '1.65', whiteSpace: 'pre-wrap', wordBreak: 'break-word', backgroundColor: '#1a1a1c' }}>
+                      {p.text}
+                    </pre>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tip card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Start every session</h3>
+              <Sparkles size={18} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.65', color: '#88888f', margin: 0 }}>
+              Open each Claude conversation with a context-setting message: <span style={{ color: '#e3e3e8' }}>"You are a technical writer. Our product is [X]. Our audience is [Y]. Our style: second person, present tense, no passive voice."</span> This eliminates repetitive instruction across the session.
+            </p>
+          </div>
+
+          {/* Quick reference */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Claude model quick reference</h3>
+            <div style={{ border: '1px solid #303033', borderRadius: '0.75rem', overflow: 'hidden' }}>
+              {[
+                { model: 'Claude 3.5 Haiku', speed: '⚡ Fast', use: 'Bulk rewrites, quick edits' },
+                { model: 'Claude 3.5 Sonnet', speed: '⚖ Balanced', use: 'Most documentation tasks' },
+                { model: 'Claude 3 Opus', speed: '🎯 Powerful', use: 'Complex audits, long docs' },
+              ].map((m, i, arr) => (
+                <div key={m.model} style={{ padding: '0.875rem 1rem', borderBottom: i < arr.length - 1 ? '1px solid #1e1e20' : 'none', fontSize: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.2rem' }}>
+                    <span style={{ color: '#e3e3e8', fontWeight: '600' }}>{m.model}</span>
+                    <span style={{ color: '#88888f', fontSize: '11px' }}>{m.speed}</span>
+                  </div>
+                  <div style={{ color: '#adadb8' }}>{m.use}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<ClaudePage />

@@ -1,42 +1,312 @@
 ---
 sidebar_position: 2
 title: ChatGPT
+hide_table_of_contents: true
 ---
 
-### What it is
+import React, { useState } from 'react';
 
-ChatGPT is a large language model that helps generate, rewrite, and refine text. For technical writers, it acts as a powerful assistant for drafting documentation, improving clarity, and restructuring content.
+export const Sparkles = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+  </svg>
+);
 
-### How to use it
+export const CopyIcon = ({ size = 13 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
 
-#### 1. Drafting documentation
+export const CheckIcon = ({ size = 13 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+);
 
-You can use ChatGPT to quickly generate initial drafts:
+export const ChatGPTPage = () => {
+  const [activeCategory, setActiveCategory] = useState(0);
+  const [copied, setCopied] = useState({});
 
-> Write a user guide for installing a CLI tool on macOS.
+  const [isMobileView, setIsMobileView] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  React.useEffect(() => {
+    const handler = () => setIsMobileView(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
-This gives you a structured starting point that you can refine.
+  const categories = [
+    {
+      label: 'Drafting',
+      prompts: [
+        {
+          title: 'First draft from a brief',
+          text: `Write a user guide for installing [Tool Name] on macOS. The audience is non-technical end users. Use numbered steps, include one screenshot placeholder per major step, and keep each step under 30 words.`,
+        },
+        {
+          title: 'Release notes from a changelog',
+          text: `Convert the following developer changelog into user-facing release notes. Use plain language, focus on user benefit, and group changes under: New Features, Improvements, Bug Fixes.\n\nChangelog:\n[paste changelog here]`,
+        },
+        {
+          title: 'FAQ from a support thread',
+          text: `Read the following support conversation and generate an FAQ section with 5 questions and concise answers. Format: **Q:** ... **A:** ...\n\nThread:\n[paste thread here]`,
+        },
+      ],
+    },
+    {
+      label: 'Rewriting',
+      prompts: [
+        {
+          title: 'Simplify for end users',
+          text: `Rewrite the following technical paragraph for non-technical end users. Remove jargon, use active voice, and aim for a Flesch reading ease score above 60.\n\n[paste paragraph here]`,
+        },
+        {
+          title: 'Shorten without losing meaning',
+          text: `Edit the following text to be 30% shorter. Preserve all key information, eliminate filler phrases, and use bullet points for any list of three or more items.\n\n[paste text here]`,
+        },
+        {
+          title: 'Audience variant — developer',
+          text: `Rewrite the following user-guide section for a developer audience. Assume familiarity with REST APIs and terminal commands. Add code snippets where helpful.\n\n[paste section here]`,
+        },
+      ],
+    },
+    {
+      label: 'Structuring',
+      prompts: [
+        {
+          title: 'Generate a doc outline',
+          text: `Create a documentation outline for a [product type] aimed at [target audience]. Include: Overview, Prerequisites, Getting Started, Key Concepts, Step-by-step Guide, Troubleshooting, and FAQ. Add 3–5 sub-headings under each section.`,
+        },
+        {
+          title: 'Table of contents from headings',
+          text: `Generate a markdown table of contents for the following headings. Use nested indentation for H3s under H2s.\n\nHeadings:\n[paste heading list here]`,
+        },
+        {
+          title: 'Information architecture review',
+          text: `Review the following documentation structure and suggest improvements for findability and logical flow. Consider: progressive disclosure, task-based organisation, and reducing cognitive load.\n\nStructure:\n[paste structure here]`,
+        },
+      ],
+    },
+    {
+      label: 'Review',
+      prompts: [
+        {
+          title: 'Consistency check',
+          text: `Review the following documentation excerpt for consistency issues: terminology, tense, voice (active vs passive), and capitalisation. List each issue with the original text and a suggested correction.\n\n[paste excerpt here]`,
+        },
+        {
+          title: 'Style guide alignment',
+          text: `Check the following text against these style rules:\n- Use second person ("you")\n- Use present tense\n- Avoid "please" and "simply"\n- Use Oxford comma\n\nList any violations with suggested fixes.\n\n[paste text here]`,
+        },
+        {
+          title: 'Completeness audit',
+          text: `Review this how-to guide and identify any missing steps, undefined terms, or assumptions the reader would not be able to follow without additional context.\n\n[paste guide here]`,
+        },
+      ],
+    },
+  ];
 
----
+  const copyPrompt = async (text, key) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied((prev) => ({ ...prev, [key]: true }));
+      setTimeout(() => setCopied((prev) => ({ ...prev, [key]: false })), 2000);
+    } catch (e) {}
+  };
 
-#### 2. Simplifying complex text
+  const sectionTitle = (text) => (
+    <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.5rem', marginTop: '3rem', letterSpacing: '-0.02em', paddingBottom: '0.5rem', borderBottom: '1px solid #1e1e20' }}>{text}</h2>
+  );
 
-Paste technical content and ask:
+  const inlineCode = (t) => (
+    <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.4rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>{t}</code>
+  );
 
-> Rewrite this in simpler language for end users.
+  const cat = categories[activeCategory];
 
-This is especially useful for user-facing documentation.
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: isMobileView ? 'column' : 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: isMobileView ? '0' : '-2rem',
+      borderTop: '1px solid #1e1e20',
+    }}>
 
----
+      {/* ── LEFT COLUMN ── */}
+      <div style={{ flex: '1 1 0%', padding: isMobileView ? '1.5rem 1rem' : '4rem', color: 'var(--ifm-font-color-base)', borderRight: isMobileView ? 'none' : '1px solid #1e1e20' }}>
+        <div style={{ maxWidth: '760px' }}>
 
-#### 3. Creating variations
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ backgroundColor: 'rgba(16,163,127,0.12)', color: '#10a37f', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(16,163,127,0.35)' }}>OpenAI</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>GPT-4o · ChatGPT</code>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>ChatGPT for Technical Writing</h1>
 
-Need multiple versions?
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '15px', lineHeight: '1.8', marginBottom: '2rem' }}>
+            <p>
+              ChatGPT is a large language model that generates, rewrites, and refines text based on natural-language instructions. For technical writers, it acts as an always-available collaborator — equally capable of producing a first draft from bullet points, rewriting a paragraph for a different audience, or auditing content for consistency issues.
+            </p>
+            <p style={{ borderLeft: '2px solid #10a37f', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              ChatGPT accelerates writing. Accuracy still depends on your expertise — always verify generated facts, parameter names, and version-specific details before publishing.
+            </p>
+          </div>
 
-> Rewrite this for developers / non-technical users.
+          {/* What it is */}
+          {sectionTitle('What it is')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            ChatGPT (powered by OpenAI's GPT-4o model) is a conversational AI accessible via <span style={{ color: '#10a37f' }}>chat.openai.com</span>, the iOS/Android app, and an API. The free tier provides access to GPT-4o mini; the Plus plan ($20/month) adds priority access to GPT-4o, custom instructions, and plugin integrations.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Unlike search engines that retrieve existing pages, ChatGPT generates new text based on patterns learned from a large corpus of documents — making it particularly effective at adapting tone, structure, and vocabulary to your specifications.
+          </p>
 
----
+          {/* Use cases */}
+          {sectionTitle('Use cases for technical writers')}
 
-### Best practice
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '1.5rem' }}>
 
-Always review and validate output. ChatGPT accelerates writing, but accuracy still depends on your expertise.
+            {[
+              {
+                n: '1',
+                title: 'Drafting first content',
+                body: `Provide ChatGPT with a brief description of what you need — product name, audience, format, scope — and receive a structured starting point. First drafts from ChatGPT typically cover the main structure and terminology correctly; your job becomes editing rather than creating from scratch.`,
+              },
+              {
+                n: '2',
+                title: 'Simplifying complex content',
+                body: `Paste a dense paragraph from a spec sheet or internal wiki and ask ChatGPT to rewrite it for your target audience. Specify the reading level, avoid jargon, or request active voice. This is especially powerful for translating engineering prose into user-facing documentation.`,
+              },
+              {
+                n: '3',
+                title: 'Creating audience variants',
+                body: `A single source document often needs to serve multiple audiences: developers, end users, administrators, and executives. ChatGPT can produce distinct variants from a single prompt, each calibrated to the knowledge level and terminology preferences of that audience.`,
+              },
+              {
+                n: '4',
+                title: 'Generating structured content',
+                body: `ChatGPT produces well-formatted tables, numbered step lists, FAQ sections, and comparison matrices from brief descriptions. This is particularly useful when you have raw information from SMEs but need it structured for documentation.`,
+              },
+              {
+                n: '5',
+                title: 'Consistency and review',
+                body: `Ask ChatGPT to check a passage for consistent use of terminology, tense, and voice. You can supply a mini style guide in the prompt (e.g., "always use second person, avoid 'please', use present tense") and ask it to flag violations.`,
+              },
+              {
+                n: '6',
+                title: 'Generating FAQs from support content',
+                body: `Paste a support thread, changelog, or set of release notes and ask ChatGPT to extract the most common user questions and provide concise answers. This turns reactive support content into proactive documentation.`,
+              },
+            ].map(({ n, title, body }) => (
+              <div key={n} style={{ display: 'grid', gridTemplateColumns: '28px 1fr', gap: '1rem', alignItems: 'flex-start' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#1a1a1c', border: '1px solid #10a37f', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', color: '#10a37f', fontFamily: 'monospace', flexShrink: 0, marginTop: '2px' }}>{n}</div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.375rem' }}>{title}</div>
+                  <div style={{ fontSize: '13px', color: '#adadb8', lineHeight: '1.7' }}>{body}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Best practices */}
+          {sectionTitle('Best practices')}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {[
+              ['Be specific', 'Include audience, format, length, and tone in every prompt. "Write documentation" is too vague — "Write a 200-word getting started section for non-technical administrators" gives the model what it needs.'],
+              ['Provide context', 'Paste relevant reference material directly into the prompt. ChatGPT cannot access your private docs, but it can summarise and restructure content you give it.'],
+              ['Iterate in the same thread', 'Follow-up prompts in the same conversation let you refine the output incrementally — "Make it shorter", "Change the tone to more formal", "Add a warning note".'],
+              ['Verify every fact', 'ChatGPT can confidently state incorrect version numbers, API parameters, or command syntax. Cross-check against official sources before publishing.'],
+              ['Use Custom Instructions', "On ChatGPT Plus, set persistent custom instructions — your product name, your style preferences, your audience — so you don't repeat them in every prompt."],
+            ].map(([title, body]) => (
+              <div key={title} style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '1rem', padding: '0.875rem 0', borderBottom: '1px solid #1e1e20', alignItems: 'baseline', fontSize: '13px' }}>
+                <span style={{ color: '#10a37f', fontWeight: '600' }}>{title}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.65' }}>{body}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Limitations */}
+          {sectionTitle('Limitations')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            ChatGPT has a knowledge cutoff date and cannot access private systems, live APIs, or real-time data without plugins. It may reproduce common documentation patterns that are technically correct but don't reflect your product's specific behaviour. Long documents may also lose coherence as the conversation extends — break large tasks into sections.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8' }}>
+            Perhaps most importantly, ChatGPT is not a subject-matter expert. It draws on statistical patterns, not lived experience. The more specific and technical your content domain, the more human oversight the output requires.
+          </p>
+
+          <div style={{ paddingBottom: '8rem' }}></div>
+        </div>
+      </div>
+
+      {/* ── RIGHT COLUMN ── */}
+      <div style={{ width: isMobileView ? '100%' : '42%', backgroundColor: 'rgba(0,0,0,0.02)', padding: isMobileView ? '1.5rem 1rem' : '3rem', borderLeft: isMobileView ? 'none' : '1px solid #1e1e20', borderTop: isMobileView ? '1px solid #1e1e20' : 'none' }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Prompt template library</h3>
+
+            {/* Category tabs */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '1.25rem' }}>
+              {categories.map((c, i) => (
+                <button
+                  key={c.label}
+                  onClick={() => setActiveCategory(i)}
+                  style={{
+                    padding: '0.4rem 0.875rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    border: `1px solid ${activeCategory === i ? '#10a37f' : '#303033'}`,
+                    backgroundColor: activeCategory === i ? 'rgba(16,163,127,0.12)' : '#1a1a1c',
+                    color: activeCategory === i ? '#10a37f' : '#adadb8',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >{c.label}</button>
+              ))}
+            </div>
+
+            {/* Prompts */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {cat.prompts.map((p, idx) => {
+                const key = `${activeCategory}-${idx}`;
+                return (
+                  <div key={key} style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderBottom: '1px solid #303033', backgroundColor: '#0d0d0f' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '600', color: '#e3e3e8' }}>{p.title}</span>
+                      <button
+                        onClick={() => copyPrompt(p.text, key)}
+                        style={{ background: 'transparent', border: '1px solid #303033', borderRadius: '4px', padding: '5px', cursor: 'pointer', color: copied[key] ? '#10a37f' : '#555', display: 'flex', alignItems: 'center' }}
+                        title="Copy prompt"
+                      >
+                        {copied[key] ? <CheckIcon /> : <CopyIcon />}
+                      </button>
+                    </div>
+                    <pre style={{ margin: 0, padding: '1rem', fontFamily: 'monospace', fontSize: '12px', color: '#adadb8', lineHeight: '1.65', whiteSpace: 'pre-wrap', wordBreak: 'break-word', backgroundColor: '#1a1a1c' }}>
+                      {p.text}
+                    </pre>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tip card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #10a37f', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Pro tip</h3>
+              <Sparkles size={18} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.65', color: '#88888f', margin: 0 }}>
+              Add <code style={{ color: '#e3e3e8', fontFamily: 'monospace' }}>"Return only the revised text, no commentary"</code> at the end of rewrite prompts. This stops ChatGPT from explaining what it changed and gives you clean output you can paste directly.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<ChatGPTPage />

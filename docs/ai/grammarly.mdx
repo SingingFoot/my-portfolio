@@ -1,44 +1,329 @@
 ---
 sidebar_position: 3
 title: Grammarly
+hide_table_of_contents: true
 ---
 
-### What it is
+import React, { useState } from 'react';
 
-Grammarly (or alternatives like LanguageTool) uses AI to improve grammar, tone, and readability. For technical writers, it ensures consistency and professional quality across all documents.
+export const Sparkles = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+  </svg>
+);
 
-### How to use it
+export const GrammarlyPage = () => {
+  const [activeExample, setActiveExample] = useState(0);
+  const [showAfter, setShowAfter] = useState(false);
 
-#### 1. Improve clarity
+  const [isMobileView, setIsMobileView] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  React.useEffect(() => {
+    const handler = () => setIsMobileView(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
-Run your documentation through Grammarly to:
+  React.useEffect(() => {
+    setShowAfter(false);
+  }, [activeExample]);
 
-- fix grammar  
-- simplify sentences  
-- improve tone  
+  const examples = [
+    {
+      category: 'Clarity',
+      label: 'Passive → Active',
+      before: `The configuration file should be edited by the user in order to set the correct values for the environment variables that are required for the application to be able to connect to the database successfully.`,
+      after: `Edit the configuration file to set the environment variables your application needs to connect to the database.`,
+      issues: ['Passive voice ("should be edited by")', 'Redundant phrase ("in order to")', 'Noun pile ("environment variables that are required")', '36 words → 19 words'],
+    },
+    {
+      category: 'Tone',
+      label: 'Formal adjustment',
+      before: `Hey! So basically what you wanna do here is just click the button and it'll like, open up the settings panel for you. Pretty simple stuff, honestly!`,
+      after: `To open the settings panel, click the button.`,
+      issues: ['Informal register ("Hey!", "wanna", "like")', 'Filler phrases ("basically", "honestly")', 'Unnecessary padding ("Pretty simple stuff")', '34 words → 9 words'],
+    },
+    {
+      category: 'Conciseness',
+      label: 'Remove filler',
+      before: `It is important to note that the system will, in most cases, automatically detect the correct settings. However, there may be certain situations where manual configuration is necessary and required.`,
+      after: `The system detects the correct settings automatically. In some cases, you may need to configure settings manually.`,
+      issues: ['"It is important to note that" — remove entirely', '"in most cases" / "certain situations" — unify', '"necessary and required" — redundant pair', '33 words → 20 words'],
+    },
+    {
+      category: 'Consistency',
+      label: 'Terminology drift',
+      before: `Users can log in to the portal. Once signed in, they can access the dashboard. After logging into the system, the home screen displays your recent activity.`,
+      after: `Users can log in to the portal. Once logged in, they can access the dashboard. After logging in, the home screen displays recent activity.`,
+      issues: ['"log in" / "signed in" / "logging into" — pick one', '"your" mixed with "they" — inconsistent person', 'Three sentences, three different terms for the same action'],
+    },
+  ];
 
----
+  const integrations = [
+    { name: 'Browser extension', desc: 'Checks text in any web-based editor — Notion, Confluence, Google Docs, CMS platforms.' },
+    { name: 'Microsoft Word', desc: 'Native add-in for Windows and macOS Word. Suggestions appear in a sidebar without leaving the app.' },
+    { name: 'Google Docs', desc: 'Grammarly for Google Docs overlays suggestions directly in the document editor.' },
+    { name: 'macOS / Windows app', desc: 'System-wide keyboard shortcut opens the Grammarly editor from any application.' },
+    { name: 'VS Code extension', desc: 'Checks comments and markdown files inside your code editor.' },
+    { name: 'API (Enterprise)', desc: 'Embed Grammarly writing assistance directly in your own documentation platform.' },
+  ];
 
-#### 2. Maintain consistency
+  const sectionTitle = (text) => (
+    <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.5rem', marginTop: '3rem', letterSpacing: '-0.02em', paddingBottom: '0.5rem', borderBottom: '1px solid #1e1e20' }}>{text}</h2>
+  );
 
-It helps standardize:
+  const ex = examples[activeExample];
 
-- terminology  
-- tone of voice  
-- sentence structure  
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: isMobileView ? 'column' : 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: isMobileView ? '0' : '-2rem',
+      borderTop: '1px solid #1e1e20',
+    }}>
 
----
+      {/* ── LEFT COLUMN ── */}
+      <div style={{ flex: '1 1 0%', padding: isMobileView ? '1.5rem 1rem' : '4rem', color: 'var(--ifm-font-color-base)', borderRight: isMobileView ? 'none' : '1px solid #1e1e20' }}>
+        <div style={{ maxWidth: '760px' }}>
 
-#### 3. Adjust tone
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ backgroundColor: 'rgba(21,195,154,0.12)', color: '#15C39A', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(21,195,154,0.35)' }}>Writing assistant</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>grammarly.com</code>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Grammarly for Technical Writing</h1>
 
-You can make your writing:
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '15px', lineHeight: '1.8', marginBottom: '2rem' }}>
+            <p>
+              Grammarly uses AI to detect grammar errors, flag weak phrasing, adjust tone, and enforce consistency — all in real time, inside the tools you already use. For technical writers, it functions as a final-stage quality gate that catches the issues that slip through when you're deep in content.
+            </p>
+            <p style={{ borderLeft: '2px solid #15C39A', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              Use Grammarly as a <strong style={{ color: '#e3e3e8' }}>polishing tool</strong>, not a drafting aid. Running it too early interrupts creative flow; it works best after you have a complete draft.
+            </p>
+          </div>
 
-- more formal  
-- more concise  
-- more user-friendly  
+          {/* What it is */}
+          {sectionTitle('What it is')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Grammarly is an AI writing assistant available as a browser extension, desktop app, Microsoft Word add-in, and Google Docs integration. It analyses text in real time and surfaces suggestions across four dimensions: correctness (spelling, grammar, punctuation), clarity (sentence structure, wordiness), engagement (word variety, readability), and delivery (tone, formality).
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            The free tier covers the essential correctness checks. Grammarly Premium adds the full clarity, engagement, and delivery analysis. Grammarly Business adds team-wide style guides, brand tone profiles, and usage analytics — the most useful tier for documentation teams.
+          </p>
 
----
+          {/* Use cases */}
+          {sectionTitle('Use cases for technical writers')}
 
-### Best practice
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            {[
+              {
+                n: '1',
+                title: 'Clarity and readability',
+                body: 'Grammarly flags long, complex sentences and passive constructions that obscure meaning. In technical documentation, clear sentences reduce support requests — every word that confuses a reader is a potential ticket.',
+              },
+              {
+                n: '2',
+                title: 'Terminology consistency',
+                body: 'Technical writers often reuse the same concepts across dozens of pages. Grammarly Business lets you define a custom style guide — flag terms to avoid ("click on" → "click"), enforce preferred spellings, and warn when brand names are misused.',
+              },
+              {
+                n: '3',
+                title: 'Tone calibration',
+                body: 'The tone detector shows in real time whether your writing reads as confident, formal, friendly, or urgent. This is useful when adapting a developer guide into a user guide — the informational content stays, but the register shifts.',
+              },
+              {
+                n: '4',
+                title: 'Final review pass',
+                body: 'Before sending documentation for stakeholder review, running it through Grammarly catches the small errors that undermine credibility — inconsistent capitalisation of product names, doubled words, stray apostrophes.',
+              },
+              {
+                n: '5',
+                title: 'Conciseness',
+                body: 'Technical documentation tends toward verbosity. Grammarly\'s conciseness suggestions remove filler phrases like "it is important to note that", "in order to", and "the fact that" — phrases that add length without adding meaning.',
+              },
+            ].map(({ n, title, body }) => (
+              <div key={n} style={{ display: 'grid', gridTemplateColumns: '28px 1fr', gap: '1rem', alignItems: 'flex-start' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#1a1a1c', border: '1px solid #15C39A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', color: '#15C39A', fontFamily: 'monospace', flexShrink: 0, marginTop: '2px' }}>{n}</div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.375rem' }}>{title}</div>
+                  <div style={{ fontSize: '13px', color: '#adadb8', lineHeight: '1.7' }}>{body}</div>
+                </div>
+              </div>
+            ))}
+          </div>
 
-Use it as a **final polishing tool**, not during initial drafting, to avoid interrupting your writing flow.
+          {/* Integrations */}
+          {sectionTitle('Where it integrates')}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobileView ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '2rem' }}>
+            {integrations.map((item) => (
+              <div key={item.name} style={{ padding: '1rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.625rem' }}>
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.3rem' }}>{item.name}</div>
+                <div style={{ fontSize: '12px', color: '#adadb8', lineHeight: '1.55' }}>{item.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Best practices */}
+          {sectionTitle('Best practices')}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {[
+              ['Use after drafting', 'Let your first draft flow without interruption, then run a Grammarly review pass. Editing while writing slows output and encourages over-polishing early content.'],
+              ['Build a team style guide', 'On Business plans, import your style guide into Grammarly\'s custom rules. This enforces consistency across every writer without manual policing.'],
+              ["Don't accept every suggestion", 'Grammarly doesn\'t understand domain-specific terminology. Technical terms, product names, and intentional stylistic choices will trigger false positives — review each suggestion before accepting.'],
+              ['Combine with human review', 'Grammarly catches surface-level issues. A human editor is still required for structure, accuracy, completeness, and audience-appropriateness.'],
+            ].map(([title, body]) => (
+              <div key={title} style={{ display: 'grid', gridTemplateColumns: '175px 1fr', gap: '1rem', padding: '0.875rem 0', borderBottom: '1px solid #1e1e20', alignItems: 'baseline', fontSize: '13px' }}>
+                <span style={{ color: '#15C39A', fontWeight: '600' }}>{title}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.65' }}>{body}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ paddingBottom: '8rem' }}></div>
+        </div>
+      </div>
+
+      {/* ── RIGHT COLUMN ── */}
+      <div style={{ width: isMobileView ? '100%' : '42%', backgroundColor: 'rgba(0,0,0,0.02)', padding: isMobileView ? '1.5rem 1rem' : '3rem', borderLeft: isMobileView ? 'none' : '1px solid #1e1e20', borderTop: isMobileView ? '1px solid #1e1e20' : 'none' }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Before / After examples</h3>
+
+            {/* Category selector */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem', marginBottom: '1.25rem' }}>
+              {examples.map((e, i) => (
+                <button
+                  key={e.label}
+                  onClick={() => setActiveExample(i)}
+                  style={{
+                    padding: '0.4rem 0.875rem',
+                    borderRadius: '0.375rem',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    border: `1px solid ${activeExample === i ? '#15C39A' : '#303033'}`,
+                    backgroundColor: activeExample === i ? 'rgba(21,195,154,0.12)' : '#1a1a1c',
+                    color: activeExample === i ? '#15C39A' : '#adadb8',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
+                  }}
+                >{e.category}</button>
+              ))}
+            </div>
+
+            {/* Before/After panel */}
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', overflow: 'hidden' }}>
+              {/* Tab strip */}
+              <div style={{ display: 'flex', borderBottom: '1px solid #303033' }}>
+                {['Before', 'After'].map((label, i) => {
+                  const active = showAfter === (i === 1);
+                  return (
+                    <button
+                      key={label}
+                      onClick={() => setShowAfter(i === 1)}
+                      style={{
+                        flex: 1,
+                        padding: '0.75rem',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        border: 'none',
+                        backgroundColor: active ? '#0d0d0f' : 'transparent',
+                        color: active ? (i === 1 ? '#15C39A' : '#f85149') : '#88888f',
+                        cursor: 'pointer',
+                        borderBottom: active ? `2px solid ${i === 1 ? '#15C39A' : '#f85149'}` : '2px solid transparent',
+                        transition: 'all 0.15s',
+                      }}
+                    >{label}</button>
+                  );
+                })}
+              </div>
+
+              {/* Label */}
+              <div style={{ padding: '0.5rem 1rem', backgroundColor: '#0d0d0f', borderBottom: '1px solid #303033', fontSize: '11px', color: '#88888f', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                {ex.category} · {ex.label}
+              </div>
+
+              {/* Text */}
+              <div style={{ padding: '1.25rem', fontSize: '13px', color: showAfter ? '#e3e3e8' : '#adadb8', lineHeight: '1.7', fontStyle: showAfter ? 'normal' : 'italic', minHeight: '90px' }}>
+                {showAfter ? ex.after : ex.before}
+              </div>
+
+              {/* Issues list (visible in Before) */}
+              {!showAfter && (
+                <div style={{ borderTop: '1px solid #303033', padding: '1rem', backgroundColor: 'rgba(248,81,73,0.05)' }}>
+                  <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#f85149', marginBottom: '0.5rem' }}>Issues detected</div>
+                  {ex.issues.map((issue) => (
+                    <div key={issue} style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', fontSize: '12px', color: '#adadb8', marginBottom: '0.25rem' }}>
+                      <span style={{ color: '#f85149', flexShrink: 0 }}>·</span>
+                      {issue}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {showAfter && (
+                <div style={{ borderTop: '1px solid #303033', padding: '0.875rem 1rem', backgroundColor: 'rgba(21,195,154,0.05)' }}>
+                  <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#15C39A' }}>Issues resolved</div>
+                </div>
+              )}
+            </div>
+
+            <p style={{ fontSize: '11px', color: '#88888f', marginTop: '0.5rem' }}>Toggle between Before and After to compare the changes.</p>
+          </div>
+
+          {/* Grammarly plan comparison */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Plan comparison</h3>
+            <div style={{ border: '1px solid #303033', borderRadius: '0.75rem', overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 60px 68px 72px', backgroundColor: '#1a1a1c', padding: '0.625rem 1rem', borderBottom: '1px solid #303033', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#88888f', gap: '0.5rem' }}>
+                <span>Feature</span>
+                <span style={{ textAlign: 'center' }}>Free</span>
+                <span style={{ textAlign: 'center' }}>Pro</span>
+                <span style={{ textAlign: 'center', color: '#15C39A' }}>Business</span>
+              </div>
+              {[
+                ['Grammar & spelling', true, true, true],
+                ['Clarity suggestions', false, true, true],
+                ['Tone detection', false, true, true],
+                ['Plagiarism check', false, true, true],
+                ['Custom style guide', false, false, true],
+                ['Team analytics', false, false, true],
+                ['Brand tone profiles', false, false, true],
+              ].map(([feat, free, pro, biz]) => {
+                const cell = (v) => v
+                  ? <span style={{ color: '#3fb950', fontSize: '15px' }}>✓</span>
+                  : <span style={{ color: '#303033', fontSize: '15px' }}>–</span>;
+                return (
+                  <div key={feat} style={{ display: 'grid', gridTemplateColumns: '1fr 60px 68px 72px', padding: '0.625rem 1rem', borderBottom: '1px solid #1e1e20', fontSize: '12px', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ color: '#adadb8' }}>{feat}</span>
+                    <div style={{ textAlign: 'center' }}>{cell(free)}</div>
+                    <div style={{ textAlign: 'center' }}>{cell(pro)}</div>
+                    <div style={{ textAlign: 'center' }}>{cell(biz)}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Tip card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #15C39A', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Pro tip</h3>
+              <Sparkles size={18} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.65', color: '#88888f', margin: 0 }}>
+              Set the <span style={{ color: '#e3e3e8' }}>audience knowledge level</span> to "Expert" in the Grammarly editor when writing developer documentation. This prevents it from flagging intentional technical terms as jargon.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<GrammarlyPage />

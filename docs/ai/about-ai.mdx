@@ -1,10 +1,280 @@
 ---
 sidebar_position: 1
 title: AI for TechWriters
+hide_table_of_contents: true
 ---
 
-Artificial intelligence is no longer a futuristic concept—it is already reshaping how technical writers create, manage, and deliver documentation. From generating content to improving clarity, automating repetitive tasks, and even assisting with information architecture, AI has become an essential tool in the modern documentation workflow.
+import React, { useState } from 'react';
 
-However, the key is not simply using AI, but using it effectively. For technical writers, AI should not replace expertise—it should amplify it. The goal is to reduce manual effort, improve consistency, and focus more on what truly matters: clarity, usability, and user experience.
+export const Sparkles = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+  </svg>
+);
 
-In this article, we will explore three practical AI tools that technical writers can use today to improve productivity and documentation quality.
+export const CheckIcon = ({ size = 14 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+);
+
+export const DashIcon = ({ size = 14 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+);
+
+export const AboutAIPage = () => {
+  const [activeTab, setActiveTab] = useState(0);
+
+  const [isMobileView, setIsMobileView] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  React.useEffect(() => {
+    const handler = () => setIsMobileView(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  const tools = [
+    {
+      name: 'ChatGPT',
+      tag: 'OpenAI',
+      color: '#10a37f',
+      desc: 'Large language model for drafting, rewriting, and structuring documentation.',
+    },
+    {
+      name: 'Grammarly',
+      tag: 'Writing assistant',
+      color: '#15C39A',
+      desc: 'AI-powered grammar, tone, and style checker for polishing finished drafts.',
+    },
+    {
+      name: 'Mintlify',
+      tag: 'Doc platform',
+      color: '#7C3AED',
+      desc: 'Developer-focused documentation platform with AI-assisted content generation.',
+    },
+    {
+      name: 'Claude',
+      tag: 'Anthropic',
+      color: '#F68B1F',
+      desc: 'Conversational AI with strong reasoning skills, excellent for complex technical content.',
+    },
+  ];
+
+  const features = [
+    'Draft new content',
+    'Rewrite & simplify',
+    'API documentation',
+    'Grammar & tone check',
+    'Code docstrings',
+    'Audience variants',
+    'Structured outlines',
+    'Style enforcement',
+  ];
+
+  // true = full support, 'partial' = partial, false = no
+  const matrix = {
+    ChatGPT:  [true, true, 'partial', false, 'partial', true,  true,  false],
+    Grammarly:[false, true, false, true, false, false, false, true],
+    Mintlify: [true, false, true, false, true, false, true,  false],
+    Claude:   [true, true, true,  false, true,  true,  true,  'partial'],
+  };
+
+  const modeCards = [
+    {
+      title: 'Generate',
+      desc: 'Produce first drafts, outlines, and boilerplate from a brief description. Saves hours of blank-page time.',
+      icon: '✦',
+    },
+    {
+      title: 'Refine',
+      desc: 'Feed existing content into an AI editor to improve clarity, conciseness, and tone without rewriting from scratch.',
+      icon: '✧',
+    },
+    {
+      title: 'Automate',
+      desc: 'Connect AI to your codebase or CMS to generate and update documentation programmatically as things change.',
+      icon: '⬡',
+    },
+  ];
+
+  const cellIcon = (val) => {
+    if (val === true) return <span style={{ color: '#3fb950' }}><CheckIcon /></span>;
+    if (val === 'partial') return <span style={{ color: '#F68B1F', fontSize: '11px', fontWeight: '700' }}>~</span>;
+    return <span style={{ color: '#303033' }}><DashIcon /></span>;
+  };
+
+  const sectionTitle = (text) => (
+    <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.5rem', marginTop: '3rem', letterSpacing: '-0.02em', paddingBottom: '0.5rem', borderBottom: '1px solid #1e1e20' }}>{text}</h2>
+  );
+
+  const inlineCode = (t) => (
+    <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.4rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>{t}</code>
+  );
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: isMobileView ? 'column' : 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: isMobileView ? '0' : '-2rem',
+      borderTop: '1px solid #1e1e20',
+    }}>
+
+      {/* ── LEFT COLUMN ── */}
+      <div style={{ flex: '1 1 0%', padding: isMobileView ? '1.5rem 1rem' : '4rem', color: 'var(--ifm-font-color-base)', borderRight: isMobileView ? 'none' : '1px solid #1e1e20' }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ backgroundColor: 'rgba(246,139,31,0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246,139,31,0.35)' }}>OVERVIEW</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>AI Tools for Technical Writers</code>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>AI for Technical Writers</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '15px', lineHeight: '1.8', marginBottom: '2rem' }}>
+            <p>
+              Artificial intelligence is reshaping how technical writers create, manage, and deliver documentation. From generating content to improving clarity, automating repetitive tasks, and assisting with information architecture, AI has become an essential part of the modern documentation workflow.
+            </p>
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              The goal is not to replace expertise — it is to amplify it. AI reduces manual effort, improves consistency, and frees writers to focus on what matters: clarity, usability, and user experience.
+            </p>
+          </div>
+
+          {/* Why AI matters */}
+          {sectionTitle('Why AI matters for technical writers')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            Documentation work is time-intensive and often repetitive. A single product release can require updating dozens of pages, generating release notes, revising API references, and producing multiple audience-specific variants — all under tight deadlines.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1rem' }}>
+            AI tools address these challenges directly. They reduce blank-page anxiety by producing workable first drafts, surface tone and grammar issues that slow review cycles, and — when integrated with code repositories — can keep documentation in sync with software changes automatically.
+          </p>
+
+          {/* Three modes */}
+          {sectionTitle('Three modes of AI assistance')}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+            {modeCards.map((m) => (
+              <div key={m.title} style={{ display: 'flex', gap: '1.25rem', padding: '1.25rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '20px', lineHeight: 1, flexShrink: 0, color: '#F68B1F', marginTop: '2px' }}>{m.icon}</span>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#e3e3e8', marginBottom: '0.375rem' }}>{m.title}</div>
+                  <div style={{ fontSize: '13px', color: '#adadb8', lineHeight: '1.65' }}>{m.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Tools covered */}
+          {sectionTitle('Tools covered in this section')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.8', marginBottom: '1.25rem' }}>
+            This section covers four AI tools that complement each other across the documentation lifecycle — from initial draft to final polish to automated updates.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobileView ? '1fr' : '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+            {tools.map((t) => (
+              <div key={t.name} style={{ padding: '1.25rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', borderTop: `3px solid ${t.color}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.625rem' }}>
+                  <span style={{ fontSize: '15px', fontWeight: '700', color: '#e3e3e8' }}>{t.name}</span>
+                  <span style={{ fontSize: '11px', color: '#88888f', backgroundColor: '#0d0d0f', padding: '0.2rem 0.5rem', borderRadius: '9999px', border: '1px solid #303033' }}>{t.tag}</span>
+                </div>
+                <p style={{ fontSize: '13px', color: '#adadb8', lineHeight: '1.6', margin: 0 }}>{t.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Key considerations */}
+          {sectionTitle('Key considerations')}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '2rem' }}>
+            {[
+              ['Always verify AI output', 'AI can hallucinate facts, API parameters, or version numbers. Every generated sentence that makes a factual claim needs human verification.'],
+              ['Own your voice', "AI prose tends toward the generic. Add your team's terminology, product-specific phrasing, and the tone that your users recognise."],
+              ['Prompt quality = output quality', 'Vague prompts produce vague output. Include audience, context, format, and length constraints in every prompt.'],
+              ['Use AI at the right stage', "Drafting assistance works best before you've committed to structure. Editing assistance works best after you have a complete draft."],
+            ].map(([title, body]) => (
+              <div key={title} style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '1rem', padding: '1rem 0', borderBottom: '1px solid #1e1e20', alignItems: 'baseline', fontSize: '13px' }}>
+                <span style={{ color: '#F68B1F', fontWeight: '600' }}>{title}</span>
+                <span style={{ color: '#adadb8', lineHeight: '1.65' }}>{body}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ paddingBottom: '8rem' }}></div>
+        </div>
+      </div>
+
+      {/* ── RIGHT COLUMN ── */}
+      <div style={{ width: isMobileView ? '100%' : '42%', backgroundColor: 'rgba(0,0,0,0.02)', padding: isMobileView ? '1.5rem 1rem' : '3rem', borderLeft: isMobileView ? 'none' : '1px solid #1e1e20', borderTop: isMobileView ? '1px solid #1e1e20' : 'none' }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+          {/* Feature matrix */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Feature comparison</h3>
+            <div style={{ border: '1px solid #303033', borderRadius: '0.75rem', overflow: 'hidden' }}>
+              {/* Header row */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 56px 68px 60px 56px', backgroundColor: '#1a1a1c', padding: '0.75rem 1rem', borderBottom: '1px solid #303033', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em', color: '#88888f', gap: '0.5rem' }}>
+                <span>Capability</span>
+                <span style={{ textAlign: 'center', color: '#10a37f' }}>GPT</span>
+                <span style={{ textAlign: 'center', color: '#15C39A' }}>Gram.</span>
+                <span style={{ textAlign: 'center', color: '#7C3AED' }}>Mint.</span>
+                <span style={{ textAlign: 'center', color: '#F68B1F' }}>Claude</span>
+              </div>
+              {features.map((f, i) => (
+                <div key={f} style={{ display: 'grid', gridTemplateColumns: '1fr 56px 68px 60px 56px', padding: '0.75rem 1rem', borderBottom: i < features.length - 1 ? '1px solid #1e1e20' : 'none', fontSize: '13px', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ color: '#adadb8' }}>{f}</span>
+                  {['ChatGPT', 'Grammarly', 'Mintlify', 'Claude'].map((tool) => (
+                    <div key={tool} style={{ display: 'flex', justifyContent: 'center' }}>
+                      {cellIcon(matrix[tool][i])}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.75rem', fontSize: '11px', color: '#88888f' }}>
+              <span><span style={{ color: '#3fb950' }}>✓</span> Full support</span>
+              <span><span style={{ color: '#F68B1F' }}>~</span> Partial</span>
+              <span>— Not available</span>
+            </div>
+          </div>
+
+          {/* Tip card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Getting started</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.65', color: '#88888f', margin: 0 }}>
+              Start with <span style={{ color: '#e3e3e8' }}>ChatGPT or Claude</span> for drafting, then run the result through <span style={{ color: '#e3e3e8' }}>Grammarly</span> for a final polish pass. Use <span style={{ color: '#e3e3e8' }}>Mintlify</span> if your team maintains a developer-facing documentation site.
+            </p>
+          </div>
+
+          {/* Workflow diagram */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Recommended workflow</h3>
+            <div style={{ backgroundColor: '#0d0d0f', border: '1px solid #303033', borderRadius: '0.75rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
+              {[
+                ['01', 'Brief', 'Define audience, goal, and scope'],
+                ['02', 'Draft', 'Claude / ChatGPT — generate first draft'],
+                ['03', 'Review', 'Human editor — verify facts, add context'],
+                ['04', 'Polish', 'Grammarly — grammar, tone, conciseness'],
+                ['05', 'Publish', 'Mintlify / Docusaurus — deploy & maintain'],
+              ].map(([n, title, desc], i, arr) => (
+                <div key={n} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#1a1a1c', border: '1px solid #F68B1F', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', color: '#F68B1F', fontFamily: 'monospace', flexShrink: 0 }}>{n}</div>
+                    {i < arr.length - 1 && <div style={{ width: '1px', height: '32px', backgroundColor: '#303033', margin: '2px 0' }}></div>}
+                  </div>
+                  <div style={{ paddingBottom: i < arr.length - 1 ? '0' : '0', paddingTop: '4px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#e3e3e8' }}>{title}</div>
+                    <div style={{ fontSize: '12px', color: '#88888f', marginBottom: i < arr.length - 1 ? '0.5rem' : '0' }}>{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<AboutAIPage />
