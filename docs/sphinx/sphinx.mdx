@@ -1,102 +1,784 @@
 ---
 sidebar_position: 1
 title: reStructuredText
+hide_table_of_contents: true
 ---
 
-# How to Create and Deploy a Sphinx Site: A Step-by-Step Guide
+import React, { useState } from 'react';
 
-This guide provides a comprehensive workflow for setting up a Sphinx documentation project in an Ubuntu environment (UTM) and deploying it to Netlify via GitHub.
+export const ChevronDown = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ transition: 'transform 0.3s' }}
+    className={className}
+  >
+    <path d="m6 9 6 6 6-6"/>
+  </svg>
+);
 
-## Step 1: Preparing the Python Environment
+export const Sparkles = ({ size = 16, className = "" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m12 3 1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/>
+    <path d="M19 17v4"/>
+    <path d="M3 5h4"/>
+    <path d="M17 19h4"/>
+  </svg>
+);
 
-Modern Linux distributions (like Ubuntu 24.04+) protect the system Python from accidental changes. To install Sphinx and its themes, we must use a Virtual Environment (**venv**).
+export const CopyIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+);
 
-### Terminal Commands:
+export const CheckIcon = ({ size = 14, className = "" }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"/></svg>
+);
 
-1. **Create a virtual environment:**
+export const TerminalIcon = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>
+  </svg>
+);
 
-   ```bash
-   python3 -m venv venv
-   ```
-:::info
-Why: This creates an isolated "sandbox" folder where we can install specific project tools without affecting the rest of the system.
-:::
+export const InfoIcon = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+  </svg>
+);
 
-2. **Activate the environment:**
+export const SphinxGuidePage = () => {
+  const [activeStep, setActiveStep] = useState(0);
+  const [copiedSnippets, setCopiedSnippets] = useState({});
+  const [feedback, setFeedback] = useState(null);
 
-```Bash
-source venv/bin/activate
-```
-:::info
-Why: This tells the terminal to use the Python and Pip located inside our project folder.
-:::
+  const [isMobileView, setIsMobileView] = React.useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+  React.useEffect(() => {
+    const handler = () => setIsMobileView(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
-3. **Install Sphinx and Extensions:**
+  const steps = [
+    { id: 0, label: 'Install UTM' },
+    { id: 1, label: 'Create Ubuntu VM' },
+    { id: 2, label: 'Install Ubuntu' },
+    { id: 3, label: 'Configure Ubuntu' },
+    { id: 4, label: 'Shared Directory' },
+    { id: 5, label: 'Python venv' },
+    { id: 6, label: 'Install Sphinx' },
+    { id: 7, label: 'sphinx-quickstart' },
+    { id: 8, label: 'Build & Preview' },
+    { id: 9, label: 'File Assets' },
+    { id: 10, label: 'Push to GitHub' },
+    { id: 11, label: 'Netlify Deploy' },
+  ];
 
-```Bash
-pip install sphinx sphinx-rtd-theme sphinxcontrib-httpdomain sphinxcontrib-mermaid
-```
-:::info
-Why: We need the core engine (Sphinx), the visual design (Read the Docs theme), and extensions to support HTTP domains and Mermaid diagrams.
-:::
+  const stepCommands = {
+    0: {
+      title: 'Install UTM on macOS',
+      note: 'Homebrew users can install UTM with a single command. Alternatively, download the installer from utm.app or the Mac App Store.',
+      blocks: [
+        {
+          label: 'Option A — Homebrew',
+          code: `# Install via Homebrew Cask
+brew install --cask utm`,
+        },
+        {
+          label: 'Option B — Verify after manual install',
+          code: `# Confirm UTM is recognised by macOS
+ls /Applications/UTM.app`,
+        },
+      ],
+    },
+    1: {
+      title: 'Create an Ubuntu VM in UTM',
+      note: 'Download the Ubuntu 24.04 LTS ISO from ubuntu.com before opening UTM. Recommended VM settings: 2+ CPU cores, 4 GB RAM, 25 GB disk.',
+      blocks: [
+        {
+          label: 'UTM configuration (reference)',
+          code: `# UTM → New VM → Virtualize → Linux
+# Attach ISO:  ubuntu-24.04-desktop-amd64.iso
+# CPU Cores:   2  (4 recommended)
+# Memory:      4096 MB
+# Disk Size:   25 GB
+# Enable:      Display → VirtIO GPU
+# Enable:      Sharing → Enable Directory Share`,
+        },
+      ],
+    },
+    2: {
+      title: 'Install Ubuntu inside the VM',
+      note: 'Boot the VM, select "Try or Install Ubuntu", follow the guided installer. After rebooting, eject the ISO in UTM → CD/DVD.',
+      blocks: [
+        {
+          label: 'First boot — check Ubuntu version',
+          code: `# Open the Ubuntu Terminal (Ctrl+Alt+T)
+lsb_release -a
+# Expected output:
+# Distributor ID: Ubuntu
+# Release:        24.04
+# Codename:       noble`,
+        },
+      ],
+    },
+    3: {
+      title: 'Configure Ubuntu after installation',
+      note: 'Update all packages and install the core tools needed for Sphinx development.',
+      blocks: [
+        {
+          label: 'System update',
+          code: `sudo apt update && sudo apt upgrade -y`,
+        },
+        {
+          label: 'Install essential tools',
+          code: `sudo apt install -y \\
+  python3 \\
+  python3-pip \\
+  python3-venv \\
+  git \\
+  curl \\
+  nano`,
+        },
+        {
+          label: 'Verify installations',
+          code: `python3 --version   # Python 3.12.x
+pip3 --version      # pip 24.x
+git --version       # git 2.x`,
+        },
+      ],
+    },
+    4: {
+      title: 'Set up UTM Shared Directory (WebDAV)',
+      note: 'UTM exposes a WebDAV server at localhost:9843 so you can transfer files between macOS and Ubuntu without USB or email.',
+      blocks: [
+        {
+          label: 'Install davfs2 (WebDAV client)',
+          code: `sudo apt install -y davfs2`,
+        },
+        {
+          label: 'Create a mount point and mount the share',
+          code: `sudo mkdir -p /mnt/shared
+sudo mount -t davfs http://localhost:9843 /mnt/shared
+# Press Enter twice when prompted for credentials`,
+        },
+        {
+          label: 'GUI alternative (Ubuntu Files)',
+          code: `# Open Files → Other Locations → Connect to Server
+# Address:  dav://localhost:9843
+# Click: Connect (no username/password needed)`,
+        },
+        {
+          label: 'Auto-mount on boot (optional)',
+          code: `# Add to /etc/fstab:
+echo "http://localhost:9843 /mnt/shared davfs user,noauto 0 0" \\
+  | sudo tee -a /etc/fstab`,
+        },
+      ],
+    },
+    5: {
+      title: 'Create a Python Virtual Environment',
+      note: 'Ubuntu 24.04+ protects the system Python. Always use a virtual environment to install Sphinx without touching system packages.',
+      blocks: [
+        {
+          label: 'Create the project folder and venv',
+          code: `mkdir -p ~/sphinx-project
+cd ~/sphinx-project
+python3 -m venv venv`,
+        },
+        {
+          label: 'Activate the virtual environment',
+          code: `source venv/bin/activate
+# Your prompt changes to: (venv) user@machine:~$`,
+        },
+        {
+          label: 'Verify the isolated Python is active',
+          code: `which python
+# Should show: /home/<user>/sphinx-project/venv/bin/python
+python --version`,
+        },
+        {
+          label: 'Deactivate when done (for reference)',
+          code: `deactivate`,
+        },
+      ],
+    },
+    6: {
+      title: 'Install Sphinx and Extensions',
+      note: 'Install the core Sphinx engine, the Read the Docs theme, and optional extensions for HTTP API docs and Mermaid diagrams.',
+      blocks: [
+        {
+          label: 'Upgrade pip first',
+          code: `pip install --upgrade pip`,
+        },
+        {
+          label: 'Install Sphinx and common extensions',
+          code: `pip install \\
+  sphinx \\
+  sphinx-rtd-theme \\
+  sphinxcontrib-httpdomain \\
+  sphinxcontrib-mermaid`,
+        },
+        {
+          label: 'Verify Sphinx is installed',
+          code: `sphinx-build --version
+# sphinx-build 7.x.x`,
+        },
+        {
+          label: 'Save dependencies to requirements.txt',
+          code: `pip freeze | grep -E \\
+  "sphinx|sphinxcontrib" > requirements.txt
+cat requirements.txt`,
+        },
+      ],
+    },
+    7: {
+      title: 'Run sphinx-quickstart',
+      note: 'The quickstart wizard scaffolds the full project structure. Choosing "y" for separate source/build keeps things tidy.',
+      blocks: [
+        {
+          label: 'Run the interactive setup wizard',
+          code: `cd ~/sphinx-project
+sphinx-quickstart`,
+        },
+        {
+          label: 'Recommended answers to prompts',
+          code: `# Separate source and build directories? [n]: y
+# Project name: My Documentation
+# Author name(s): Your Name
+# Project release: 1.0
+# Project language [en]: en`,
+        },
+        {
+          label: 'Resulting project structure',
+          code: `sphinx-project/
+├── venv/
+├── requirements.txt
+├── Makefile
+├── make.bat
+├── source/
+│   ├── conf.py          # Main configuration
+│   ├── index.rst        # Table of contents root
+│   └── _static/         # CSS, images, logos
+└── build/               # Generated HTML output`,
+        },
+      ],
+    },
+    8: {
+      title: 'Build and Preview the Documentation',
+      note: 'Run make html to compile .rst files into a static website. Use Python\'s built-in server to preview locally.',
+      blocks: [
+        {
+          label: 'Build HTML output',
+          code: `cd ~/sphinx-project
+make html
+# Output → build/html/index.html`,
+        },
+        {
+          label: 'Serve and preview in the browser',
+          code: `cd build/html
+python3 -m http.server 8080
+# Open in Firefox/Chromium: http://localhost:8080`,
+        },
+        {
+          label: 'Clean and rebuild from scratch',
+          code: `make clean
+make html`,
+        },
+        {
+          label: 'Watch for changes (requires sphinx-autobuild)',
+          code: `pip install sphinx-autobuild
+sphinx-autobuild source/ build/html --host 0.0.0.0 --port 8080`,
+        },
+      ],
+    },
+    9: {
+      title: 'Manage File Assets',
+      note: 'Transfer your logo and other static assets from macOS via the UTM shared folder and update conf.py to register them.',
+      blocks: [
+        {
+          label: 'Copy logo from the shared directory',
+          code: `# Assuming the shared mount is at /mnt/shared
+cp /mnt/shared/logo.png ~/sphinx-project/source/_static/logo.png`,
+        },
+        {
+          label: 'Edit conf.py to add the logo and custom CSS',
+          code: `nano ~/sphinx-project/source/conf.py`,
+        },
+        {
+          label: 'Key conf.py settings to add',
+          code: `# --- Theme ---
+html_theme = 'sphinx_rtd_theme'
 
-## Step 2: File Management & Assets
+# --- Logo ---
+html_logo = '_static/logo.png'
 
-To move assets (like your logo.png) from Mac to the Ubuntu VM, we utilized UTM's Shared Directory via WebDAV.
+# --- Custom CSS (optional) ---
+html_static_path = ['_static']
+html_css_files = ['custom.css']
 
-**Accessing files:** In Ubuntu Files, go to **Other Locations** or **Network** and connect to `dav://localhost:9843`.
-
-**Asset Placement:** Move your logo to `source/_static/logo.png`.
-
-**Configuration:** Update `source/conf.py` to recognize the logo:
-
-```Python
-html_logo = "_static/logo.png"
-```
-## Step 3: Pushing to GitHub
-
-Since GitHub no longer accepts standard account passwords in the terminal, we used a **Personal Access Token (PAT)** for authentication.
-
-Initialize Git and Commit:
-
-```Bash
+# --- Extensions ---
+extensions = [
+    'sphinxcontrib.httpdomain',
+    'sphinxcontrib.mermaid',
+]`,
+        },
+        {
+          label: 'Rebuild after updating conf.py',
+          code: `cd ~/sphinx-project
+make clean && make html`,
+        },
+      ],
+    },
+    10: {
+      title: 'Push to GitHub',
+      note: 'GitHub no longer accepts account passwords in the terminal. Use a Personal Access Token (PAT) in place of your password.',
+      blocks: [
+        {
+          label: 'Initialise Git and make first commit',
+          code: `cd ~/sphinx-project
 git init
 git add .
-git commit -m "Initial commit with logo and theme settings"
-```
-Set User Identity:
-
-```Bash
-git config --global user.name "YourName"
-git config --global user.email "your-email@example.com"
-```
-Link and Push:
-
-```Bash
-git remote add origin [https://github.com/YourUsername/your-repo.git](https://github.com/YourUsername/your-repo.git)
+git commit -m "Initial Sphinx project with RTD theme"`,
+        },
+        {
+          label: 'Set Git identity (one-time setup)',
+          code: `git config --global user.name "YourName"
+git config --global user.email "your@email.com"`,
+        },
+        {
+          label: 'Add .gitignore to exclude build output and venv',
+          code: `cat > .gitignore << 'EOF'
+build/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+EOF
+git add .gitignore
+git commit -m "Add .gitignore"`,
+        },
+        {
+          label: 'Link to GitHub and push (use PAT as password)',
+          code: `git remote add origin \\
+  https://github.com/YourUsername/your-repo.git
+git branch -M main
 git push -u origin main
-```
-## Step 4: Netlify Deployment
+# Username: YourGitHubUsername
+# Password: ghp_xxxxxxxxxxxx  ← paste your PAT here`,
+        },
+      ],
+    },
+    11: {
+      title: 'Deploy to Netlify',
+      note: 'Connect your GitHub repo to Netlify. It will rebuild automatically on every push to main.',
+      blocks: [
+        {
+          label: 'Netlify build settings',
+          code: `# Build command:
+pip install sphinx sphinx-rtd-theme \\
+  sphinxcontrib-httpdomain sphinxcontrib-mermaid \\
+  && make html
 
-We configured Netlify to automatically build the site every time we push new code to GitHub.
-
-### Build Settings:
-
-**Build command:** `pip install sphinx sphinx-rtd-theme sphinxcontrib-httpdomain sphinxcontrib-mermaid && make html`
-
-**Publish directory:** `build/html`
-
-### The requirements.txt File:
-
-To keep the deployment stable, ensure your requirements.txt includes:
-
-```Plaintext
-sphinx
+# Publish directory:
+build/html`,
+        },
+        {
+          label: 'requirements.txt (commit this to the repo)',
+          code: `sphinx
 sphinx-rtd-theme
 sphinxcontrib-httpdomain
-sphinxcontrib-mermaid
-```
+sphinxcontrib-mermaid`,
+        },
+        {
+          label: 'Simplified Netlify build command using requirements.txt',
+          code: `pip install -r requirements.txt && make html`,
+        },
+        {
+          label: 'Verify the live site',
+          code: `# After Netlify deploy completes, visit:
+# https://your-site-name.netlify.app
+# or your custom domain if configured`,
+        },
+      ],
+    },
+  };
 
-### Live Result
+  const copyToClipboard = async (text, id) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedSnippets({ ...copiedSnippets, [id]: true });
+      setTimeout(() => setCopiedSnippets((prev) => ({ ...prev, [id]: false })), 2000);
+    } catch (err) {
+      console.error('Failed to copy!', err);
+    }
+  };
 
-[You can view the final documentation site here.](https://sphinxdoks.netlify.app/)
+  const renderTerminalBlock = (block, idx) => {
+    const id = `step-${activeStep}-block-${idx}`;
+    return (
+      <div key={idx} style={{ marginBottom: '1.25rem' }}>
+        <div style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#88888f', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <TerminalIcon size={12} />
+          {block.label}
+        </div>
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', right: '12px', top: '12px', zIndex: 10 }}>
+            <button
+              onClick={() => copyToClipboard(block.code, id)}
+              style={{
+                background: '#1a1a1c',
+                color: '#555',
+                padding: '7px',
+                borderRadius: '4px',
+                border: '1px solid #303033',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title="Copy code"
+            >
+              {copiedSnippets[id] ? <CheckIcon /> : <CopyIcon />}
+            </button>
+          </div>
+          <pre style={{
+            margin: 0,
+            padding: '1.5rem',
+            paddingRight: '3rem',
+            fontFamily: 'monospace',
+            fontSize: '12.5px',
+            backgroundColor: '#0d0d0f',
+            color: '#e3e3e8',
+            lineHeight: '1.7',
+            overflowX: 'auto',
+            border: '1px solid #303033',
+            borderRadius: '10px',
+            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}>
+            <code style={{ color: '#e3e3e8' }}>{block.code}</code>
+          </pre>
+        </div>
+      </div>
+    );
+  };
+
+  const inlineCode = (text) => (
+    <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.4rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8', fontSize: '13px' }}>{text}</code>
+  );
+
+  const sectionTitle = (text) => (
+    <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.5rem', marginTop: '3rem', letterSpacing: '-0.02em', paddingBottom: '0.5rem', borderBottom: '1px solid #1e1e20' }}>{text}</h2>
+  );
+
+  const stepDot = (n, label, active) => (
+    <button
+      key={n}
+      onClick={() => setActiveStep(n)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.625rem',
+        width: '100%',
+        textAlign: 'left',
+        background: active ? 'rgba(246, 139, 31, 0.10)' : 'transparent',
+        border: active ? '1px solid rgba(246, 139, 31, 0.35)' : '1px solid transparent',
+        borderRadius: '0.5rem',
+        padding: '0.5rem 0.75rem',
+        cursor: 'pointer',
+        color: active ? '#F68B1F' : '#adadb8',
+        fontSize: '13px',
+        fontWeight: active ? '700' : '400',
+        transition: 'all 0.15s',
+        marginBottom: '0.25rem',
+      }}
+    >
+      <span style={{
+        minWidth: '22px',
+        height: '22px',
+        borderRadius: '50%',
+        backgroundColor: active ? '#F68B1F' : '#1e1e20',
+        color: active ? 'white' : '#88888f',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '11px',
+        fontWeight: '700',
+        fontFamily: 'monospace',
+        flexShrink: 0,
+      }}>{n + 1}</span>
+      {label}
+    </button>
+  );
+
+  const current = stepCommands[activeStep];
+
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: isMobileView ? 'column' : 'row',
+      minHeight: '100vh',
+      backgroundColor: 'var(--ifm-background-color)',
+      margin: isMobileView ? '0' : '-2rem',
+      borderTop: '1px solid #1e1e20',
+    }}>
+
+      {/* ── LEFT COLUMN: Content ── */}
+      <div style={{
+        flex: '1 1 0%',
+        padding: isMobileView ? '1.5rem 1rem' : '4rem',
+        color: 'var(--ifm-font-color-base)',
+        borderRight: isMobileView ? 'none' : '1px solid #1e1e20',
+      }}>
+        <div style={{ maxWidth: '760px' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <span style={{ backgroundColor: 'rgba(246, 139, 31, 0.12)', color: '#F68B1F', padding: '0.25rem 0.625rem', borderRadius: '0.375rem', fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', letterSpacing: '0.05em', border: '1px solid rgba(246, 139, 31, 0.35)' }}>GUIDE</span>
+            <code style={{ fontSize: '13px', color: '#adadb8', fontFamily: 'monospace' }}>UTM → Ubuntu → Sphinx → Netlify</code>
+          </div>
+          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '1.5rem', letterSpacing: '-0.025em' }}>Sphinx Documentation Site</h1>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '15px', lineHeight: '1.8', marginBottom: '3rem' }}>
+            <p>
+              This guide walks you through the full pipeline for creating a professional documentation site with <span style={{ color: '#F68B1F', fontWeight: '600' }}>Sphinx</span> — from installing a virtual Ubuntu machine inside UTM on macOS, to publishing the finished site on Netlify via GitHub.
+            </p>
+            <p style={{ borderLeft: '2px solid #F68B1F', paddingLeft: '1.5rem', fontStyle: 'italic', color: '#adadb8' }}>
+              Every step includes Terminal commands you can copy directly into your Ubuntu session. Use the step navigator on the right to jump to any stage of the workflow.
+            </p>
+          </div>
+
+          {/* ── Step 0: Install UTM ── */}
+          {sectionTitle('Step 1 — Install UTM on macOS')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1.25rem' }}>
+            <strong style={{ color: '#e3e3e8' }}>UTM</strong> is a free, open-source virtualisation app for macOS built on QEMU. It lets you run a full Linux desktop inside a window on your Mac, with hardware acceleration and seamless file sharing.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Download UTM from <span style={{ color: '#F68B1F' }}>utm.app</span> (free) or the Mac App Store (paid, supports auto-updates). Homebrew users can run {inlineCode('brew install --cask utm')}.
+          </p>
+
+          {/* ── Step 1: Create VM ── */}
+          {sectionTitle('Step 2 — Create an Ubuntu VM in UTM')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            First, download the <strong style={{ color: '#e3e3e8' }}>Ubuntu 24.04 LTS Desktop ISO</strong> from ubuntu.com. Then in UTM:
+          </p>
+          <div style={{ borderLeft: '1px solid #303033', paddingLeft: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {[
+              ['Click', '"Create a New Virtual Machine" → Virtualize → Linux'],
+              ['Attach ISO', 'ubuntu-24.04-desktop-amd64.iso'],
+              ['CPU', '2 cores minimum; 4 recommended'],
+              ['Memory', '4096 MB (4 GB)'],
+              ['Disk', '25 GB (enough for Ubuntu + project files)'],
+              ['Display', 'VirtIO-GPU for smooth rendering'],
+              ['Sharing', 'Enable Directory Share under the Sharing tab'],
+            ].map(([key, val]) => (
+              <div key={key} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: '1rem', fontSize: '13px', alignItems: 'baseline' }}>
+                <span style={{ color: '#F68B1F', fontWeight: '600', fontFamily: 'monospace' }}>{key}</span>
+                <span style={{ color: '#adadb8' }}>{val}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Step 2: Install Ubuntu ── */}
+          {sectionTitle('Step 3 — Install Ubuntu')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Start the VM. It boots from the ISO and presents the Ubuntu installer. Choose <strong style={{ color: '#e3e3e8' }}>Try or Install Ubuntu</strong>, then follow the guided steps: select language, timezone, and keyboard layout, create your username and password, and click <em>Install Now</em>.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            After installation completes and the VM reboots, eject the ISO in UTM under <strong style={{ color: '#e3e3e8' }}>VM Settings → CD/DVD</strong> so it doesn't boot from the installer again.
+          </p>
+
+          {/* ── Step 3: Configure Ubuntu ── */}
+          {sectionTitle('Step 4 — Configure Ubuntu')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Open the <strong style={{ color: '#e3e3e8' }}>Terminal</strong> (Ctrl+Alt+T) and run a full system update, then install the Python and Git tools you'll need throughout this guide.
+          </p>
+
+          {/* ── Step 4: UTM Shared Dir ── */}
+          {sectionTitle('Step 5 — Set Up UTM Shared Directory')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            UTM exposes a <strong style={{ color: '#e3e3e8' }}>WebDAV server</strong> at {inlineCode('http://localhost:9843')} so you can move files between macOS and Ubuntu — ideal for copying logos, fonts, and other static assets into your Sphinx project.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            In Ubuntu's <em>Files</em> app, go to <strong style={{ color: '#e3e3e8' }}>Other Locations → Connect to Server</strong> and type {inlineCode('dav://localhost:9843')}. Alternatively, mount it from the Terminal using {inlineCode('davfs2')}.
+          </p>
+
+          {/* ── Step 5: Python venv ── */}
+          {sectionTitle('Step 6 — Prepare the Python Virtual Environment')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Ubuntu 24.04 and later protect the system Python with <strong style={{ color: '#e3e3e8' }}>PEP 668</strong>, which means {inlineCode('pip install')} at the system level is blocked. The solution is to create an isolated <strong style={{ color: '#e3e3e8' }}>virtual environment (venv)</strong> for each project.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            The venv gives you a private {inlineCode('python')} and {inlineCode('pip')} that install packages only inside your project folder — no root access needed, no system-wide side-effects.
+          </p>
+
+          {/* ── Step 6: Install Sphinx ── */}
+          {sectionTitle('Step 7 — Install Sphinx and Extensions')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            With the venv active, install the following packages:
+          </p>
+          <div style={{ borderLeft: '1px solid #303033', paddingLeft: '1.5rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {[
+              ['sphinx', 'Core documentation engine'],
+              ['sphinx-rtd-theme', 'Read the Docs visual theme'],
+              ['sphinxcontrib-httpdomain', 'HTTP API method documentation'],
+              ['sphinxcontrib-mermaid', 'Mermaid diagram support in .rst files'],
+              ['sphinx-autobuild', 'Live-reload server for local preview (optional)'],
+            ].map(([pkg, desc]) => (
+              <div key={pkg} style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '1rem', fontSize: '13px', alignItems: 'baseline' }}>
+                <code style={{ color: '#F68B1F', fontFamily: 'monospace' }}>{pkg}</code>
+                <span style={{ color: '#adadb8' }}>{desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Step 7: quickstart ── */}
+          {sectionTitle('Step 8 — Run sphinx-quickstart')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            {inlineCode('sphinx-quickstart')} is an interactive wizard that generates the initial project skeleton. The most important prompt asks whether to keep the {inlineCode('source')} and {inlineCode('build')} directories separate — always choose <strong style={{ color: '#e3e3e8' }}>yes</strong>.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            After the wizard completes, the project contains {inlineCode('source/conf.py')} (the main config file), {inlineCode('source/index.rst')} (the root table of contents), and a {inlineCode('Makefile')} that drives the build.
+          </p>
+
+          {/* ── Step 8: Build ── */}
+          {sectionTitle('Step 9 — Build and Preview')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Run {inlineCode('make html')} from the project root. Sphinx reads every {inlineCode('.rst')} file in {inlineCode('source/')}, applies your theme, and writes a complete static website into {inlineCode('build/html/')}. Open {inlineCode('index.html')} directly in a browser, or serve it with Python's built-in HTTP server for live testing.
+          </p>
+
+          {/* ── Step 9: Assets ── */}
+          {sectionTitle('Step 10 — Add File Assets')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Place your logo and any custom CSS inside {inlineCode('source/_static/')}. Then reference them in {inlineCode('source/conf.py')} using the {inlineCode('html_logo')} and {inlineCode('html_css_files')} settings. Rebuild with {inlineCode('make html')} to see the changes.
+          </p>
+
+          {/* ── Step 10: GitHub ── */}
+          {sectionTitle('Step 11 — Push to GitHub')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Initialise a Git repository in your project, commit your source files, and push to GitHub. Since August 2021, GitHub no longer accepts account passwords over HTTPS — use a <strong style={{ color: '#e3e3e8' }}>Personal Access Token (PAT)</strong> instead. Generate one at <span style={{ color: '#F68B1F' }}>github.com → Settings → Developer settings → Personal access tokens</span> with the {inlineCode('repo')} scope, then paste it when Git prompts for a password.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Always commit a {inlineCode('.gitignore')} that excludes {inlineCode('build/')} and {inlineCode('venv/')} — these are generated artefacts and should never be tracked.
+          </p>
+
+          {/* ── Step 11: Netlify ── */}
+          {sectionTitle('Step 12 — Deploy to Netlify')}
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Connect your GitHub repo to <strong style={{ color: '#e3e3e8' }}>Netlify</strong> (netlify.com → Add new site → Import an existing project). Set the build command and publish directory as shown in the right panel. Netlify will install your dependencies, run Sphinx, and publish the output on every push to {inlineCode('main')}.
+          </p>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+            Commit a {inlineCode('requirements.txt')} listing your Sphinx packages so the Netlify build environment knows exactly what to install — this prevents version drift between local and CI builds.
+          </p>
+          <p style={{ fontSize: '14px', marginBottom: '1rem' }}>
+            <span style={{ color: '#F68B1F', fontWeight: '600' }}>Live result: </span>
+            <a href="https://sphinxdoks.netlify.app/" target="_blank" rel="noopener noreferrer" style={{ color: '#adadb8', textDecoration: 'underline' }}>sphinxdoks.netlify.app</a>
+          </p>
+
+          {/* Feedback */}
+          <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+            {!feedback ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this guide helpful?</span>
+                <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+                <button onClick={() => setFeedback('no')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+              </div>
+            ) : (
+              <div>
+                {feedback === 'yes' ? (
+                  <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '0.375rem', display: 'inline-block', border: '1px solid #303033' }}>
+                    ✨ Thanks for your feedback! We're glad this helped.
+                  </p>
+                ) : (
+                  <div style={{ backgroundColor: '#1a1a1c', padding: '1.5rem', borderRadius: '0.375rem', border: '1px solid #303033', maxWidth: '448px' }}>
+                    <p style={{ fontSize: '14px', color: '#e3e3e8', marginBottom: '1rem' }}>We're sorry! How can we improve this page?</p>
+                    <textarea
+                      style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #303033', borderRadius: '0.5rem', padding: '0.75rem', fontSize: '0.875rem', color: '#adadb8', outline: 'none' }}
+                      placeholder="Your feedback..."
+                      rows="4"
+                    ></textarea>
+                    <button style={{ marginTop: '1rem', backgroundColor: '#F68B1F', color: 'white', fontSize: '0.75rem', fontWeight: 'bold', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}>Submit Feedback</button>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ paddingBottom: '8rem' }}></div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── RIGHT COLUMN: Step Navigator + Commands ── */}
+      <div style={{
+        width: isMobileView ? '100%' : '42%',
+        backgroundColor: 'rgba(0,0,0,0.02)',
+        padding: isMobileView ? '1.5rem 1rem' : '3rem',
+        borderLeft: isMobileView ? 'none' : '1px solid #1e1e20',
+        borderTop: isMobileView ? '1px solid #1e1e20' : 'none',
+      }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: isMobileView ? 'auto' : '3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          {/* Step navigator */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>Steps</h3>
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '0.75rem', padding: '0.625rem', display: 'flex', flexDirection: 'column' }}>
+              {steps.map((s) => stepDot(s.id, s.label, s.id === activeStep))}
+            </div>
+          </div>
+
+          {/* Active step commands */}
+          <div>
+            <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>
+              Terminal commands — {current.title}
+            </h3>
+
+            {current.note && (
+              <div style={{ display: 'flex', gap: '0.625rem', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderLeft: '3px solid #F68B1F', borderRadius: '0.5rem', padding: '0.875rem 1rem', marginBottom: '1rem', fontSize: '12.5px', color: '#adadb8', lineHeight: '1.6', alignItems: 'flex-start' }}>
+                <span style={{ color: '#F68B1F', flexShrink: 0, marginTop: '1px' }}><InfoIcon size={14} /></span>
+                {current.note}
+              </div>
+            )}
+
+            {current.blocks.map((block, idx) => renderTerminalBlock(block, idx))}
+          </div>
+
+          {/* Tip card */}
+          <div style={{ backgroundColor: '#1a1a1c', borderRadius: '0.75rem', border: '1px solid #303033', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderLeft: '4px solid #F68B1F', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#88888f', margin: 0 }}>Pro tip</h3>
+              <Sparkles size={18} style={{ color: '#F68B1F' }} />
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: '1.6', color: '#88888f', margin: 0 }}>
+              Always activate the venv before working on your project: <code style={{ color: '#e3e3e8', fontFamily: 'monospace' }}>source venv/bin/activate</code>. Your prompt will show <code style={{ color: '#e3e3e8', fontFamily: 'monospace' }}>(venv)</code> as a reminder. Run <code style={{ color: '#e3e3e8', fontFamily: 'monospace' }}>deactivate</code> when you're done.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<SphinxGuidePage />
