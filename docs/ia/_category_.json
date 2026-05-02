@@ -1,0 +1,8 @@
+{
+  "label": "Industrial Automation",
+  "position": 6,
+  "link": {
+    "type": "generated-index",
+    "description": "Industrial Automation, PLC systems, fieldbus protocols, ISA-95 hierarchy, and Industry 4.0 technologies."
+  }
+}

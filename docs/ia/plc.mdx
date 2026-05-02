@@ -1,0 +1,609 @@
+---
+sidebar_position: 2
+title: PLC — Programmable Logic Controllers
+description: Hardware architecture, IEC 61131-3 programming languages, scan cycle, major manufacturers, and PLC vs DCS vs SCADA comparison.
+hide_table_of_contents: true
+---
+
+import React, { useState, useEffect } from 'react';
+
+export const CpuIcon = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/>
+    <path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/>
+    <path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/>
+  </svg>
+);
+
+export const CodeIcon = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+  </svg>
+);
+
+export const LayersIcon = ({ size = 16 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+    <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+    <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+  </svg>
+);
+
+export const PlcPage = () => {
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [activeTab, setActiveTab] = useState('hardware');
+  const [activeLang, setActiveLang] = useState('LD');
+  const [feedback, setFeedback] = useState(null);
+
+  useEffect(() => {
+    const check = () => setIsMobileView(window.innerWidth < 900);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const sectionTitle = (text) => (
+    <h2 style={{ color: 'var(--ifm-font-color-base)', fontSize: '15px', fontWeight: '700', marginBottom: '1rem', marginTop: '2.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid #1e1e20', letterSpacing: '-0.01em' }}>
+      {text}
+    </h2>
+  );
+
+  const inlineCode = (text) => (
+    <code style={{ backgroundColor: '#1a1a1c', color: '#F68B1F', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px', border: '1px solid #303033' }}>{text}</code>
+  );
+
+  const Chip = ({ label, icon, accent = '#F68B1F' }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '8px', padding: '7px 14px' }}>
+      <span style={{ color: accent }}>{icon}</span>
+      <span style={{ fontSize: '12px', fontWeight: '600', color: '#e3e3e8' }}>{label}</span>
+    </div>
+  );
+
+  const tabs = [
+    { id: 'hardware', label: 'Hardware' },
+    { id: 'scan',     label: 'Scan Cycle' },
+    { id: 'langs',    label: 'Languages' },
+  ];
+
+  // ── Hardware Architecture Block Diagram ──
+  const HardwareDiagram = () => (
+    <div>
+      <svg viewBox="0 0 400 290" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', display: 'block' }}>
+        <defs>
+          <marker id="plcarrow" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#F68B1F"/>
+          </marker>
+        </defs>
+
+        {/* Power Supply Unit */}
+        <rect x="5" y="10" width="72" height="110" rx="6" fill="#2a100a" stroke="#6e2418" strokeWidth="1.5"/>
+        <text x="41" y="32" textAnchor="middle" fill="#F68B1F" fontSize="9" fontWeight="700">POWER</text>
+        <text x="41" y="45" textAnchor="middle" fill="#F68B1F" fontSize="9" fontWeight="700">SUPPLY</text>
+        <text x="41" y="64" textAnchor="middle" fill="#88888f" fontSize="8">24 VDC</text>
+        <text x="41" y="76" textAnchor="middle" fill="#88888f" fontSize="8">120/240 VAC</text>
+        <text x="41" y="88" textAnchor="middle" fill="#88888f" fontSize="8">→ 5 VDC</text>
+        <text x="41" y="100" textAnchor="middle" fill="#88888f" fontSize="8">→ 24 VDC</text>
+        <text x="41" y="112" textAnchor="middle" fill="#a85010" fontSize="7.5">PSU</text>
+
+        {/* PSU → CPU bus */}
+        <line x1="77" y1="65" x2="95" y2="65" stroke="#F68B1F" strokeWidth="1.5" markerEnd="url(#plcarrow)"/>
+
+        {/* CPU Module */}
+        <rect x="96" y="10" width="130" height="110" rx="6" fill="#0c1c2e" stroke="#1b4b72" strokeWidth="2"/>
+        <text x="161" y="30" textAnchor="middle" fill="#60a5fa" fontSize="10" fontWeight="700">CPU MODULE</text>
+        <line x1="110" y1="36" x2="212" y2="36" stroke="#1b4b72" strokeWidth="0.75" strokeDasharray="3,2"/>
+        <text x="161" y="50" textAnchor="middle" fill="#88888f" fontSize="8">Processor (RISC/CISC)</text>
+        <text x="161" y="62" textAnchor="middle" fill="#88888f" fontSize="8">Program Memory (Flash)</text>
+        <text x="161" y="74" textAnchor="middle" fill="#88888f" fontSize="8">Data Memory (RAM / NVRAM)</text>
+        <text x="161" y="86" textAnchor="middle" fill="#88888f" fontSize="8">Real-Time Clock</text>
+        <text x="161" y="98" textAnchor="middle" fill="#88888f" fontSize="8">OS / Firmware</text>
+        <text x="161" y="112" textAnchor="middle" fill="#3676b8" fontSize="7.5">Scan time: 1–100 ms</text>
+
+        {/* CPU → Comms bus */}
+        <line x1="226" y1="65" x2="244" y2="65" stroke="#F68B1F" strokeWidth="1.5" markerEnd="url(#plcarrow)"/>
+
+        {/* Communications Module */}
+        <rect x="245" y="10" width="110" height="110" rx="6" fill="#180f2e" stroke="#4a2472" strokeWidth="1.5"/>
+        <text x="300" y="30" textAnchor="middle" fill="#c084fc" fontSize="9" fontWeight="700">COMMS</text>
+        <line x1="258" y1="36" x2="342" y2="36" stroke="#4a2472" strokeWidth="0.75" strokeDasharray="3,2"/>
+        <text x="300" y="50" textAnchor="middle" fill="#88888f" fontSize="8">Ethernet / PROFINET</text>
+        <text x="300" y="62" textAnchor="middle" fill="#88888f" fontSize="8">EtherNet/IP</text>
+        <text x="300" y="74" textAnchor="middle" fill="#88888f" fontSize="8">PROFIBUS DP</text>
+        <text x="300" y="86" textAnchor="middle" fill="#88888f" fontSize="8">Modbus RTU/TCP</text>
+        <text x="300" y="98" textAnchor="middle" fill="#88888f" fontSize="8">USB / Serial</text>
+        <text x="300" y="112" textAnchor="middle" fill="#7a3ec8" fontSize="7.5">Remote I/O Bus</text>
+
+        {/* I/O Bus (vertical from CPU down) */}
+        <line x1="161" y1="120" x2="161" y2="148" stroke="#F68B1F" strokeWidth="1.5"/>
+        <line x1="50" y1="148" x2="330" y2="148" stroke="#F68B1F" strokeWidth="1.5"/>
+        <text x="200" y="143" textAnchor="middle" fill="#a85010" fontSize="8" fontWeight="600">I/O BUS (BACKPLANE)</text>
+
+        {/* I/O Modules */}
+        {[
+          { x: 5,   label: 'DI',  sub: 'Digital\nInput',  color: '#1b5c22', textCol: '#4ade80' },
+          { x: 82,  label: 'DO',  sub: 'Digital\nOutput', color: '#6e2418', textCol: '#f87171' },
+          { x: 159, label: 'AI',  sub: 'Analog\nInput',   color: '#1b4b72', textCol: '#60a5fa' },
+          { x: 236, label: 'AO',  sub: 'Analog\nOutput',  color: '#4a2472', textCol: '#c084fc' },
+          { x: 313, label: 'SPL', sub: 'Special\nI/O',    color: '#6e4814', textCol: '#fb923c' },
+        ].map(({ x, label, sub, color, textCol }) => (
+          <g key={label}>
+            <line x1={x + 37} y1="148" x2={x + 37} y2="162" stroke="#F68B1F" strokeWidth="1" markerEnd="url(#plcarrow)"/>
+            <rect x={x} y="163" width="74" height="70" rx="5" fill={`${color}55`} stroke={color} strokeWidth="1.5"/>
+            <text x={x + 37} y="182" textAnchor="middle" fill={textCol} fontSize="10" fontWeight="700">{label}</text>
+            {sub.split('\n').map((line, li) => (
+              <text key={li} x={x + 37} y={196 + li * 12} textAnchor="middle" fill="#88888f" fontSize="8">{line}</text>
+            ))}
+          </g>
+        ))}
+
+        {/* Field connection arrows */}
+        {[42, 119, 196, 273].map(x => (
+          <line key={x} x1={x} y1="233" x2={x} y2="248" stroke="#303033" strokeWidth="1" markerEnd="url(#plcarrow)"/>
+        ))}
+        <rect x="5" y="250" width="380" height="32" rx="5" fill="#0b1a0b" stroke="#1b3a1b" strokeWidth="1"/>
+        <text x="200" y="270" textAnchor="middle" fill="#2d8a3d" fontSize="9" fontWeight="600">FIELD DEVICES — Sensors · Actuators · Drives · Valves</text>
+      </svg>
+      <div style={{ fontSize: '10px', color: '#88888f', marginTop: '0.375rem', textAlign: 'center' }}>
+        Modular PLC hardware architecture — IEC 61131-2 compliant
+      </div>
+    </div>
+  );
+
+  // ── PLC Scan Cycle Diagram ──
+  const ScanCycle = () => {
+    const steps = [
+      { cx: 150, cy: 55,  label: '1. Read',     sub: 'Inputs',      fill: '#0b2310', stroke: '#1b5c22', text: '#4ade80' },
+      { cx: 241, cy: 121, label: '2. Execute',  sub: 'Program',     fill: '#0c1c2e', stroke: '#1b4b72', text: '#60a5fa' },
+      { cx: 206, cy: 224, label: '3. Write',    sub: 'Outputs',     fill: '#2a100a', stroke: '#6e2418', text: '#f87171' },
+      { cx: 94,  cy: 224, label: '4. Service',  sub: 'Comms',       fill: '#180f2e', stroke: '#4a2472', text: '#c084fc' },
+      { cx: 59,  cy: 121, label: '5. System',   sub: 'Diagnostics', fill: '#2a1b0a', stroke: '#6e4814', text: '#fb923c' },
+    ];
+
+    // Arrow path control points between consecutive steps
+    const arrows = [
+      { from: [178, 65],  to: [213, 109], c1: [210, 72],  c2: [200, 100] },
+      { from: [240, 138], to: [215, 210], c1: [240, 175], c2: [225, 195] },
+      { from: [171, 231], to: [129, 231], c1: [160, 245], c2: [140, 245] },
+      { from: [72,  210], to: [62,  138], c1: [65,  190], c2: [55,  165] },
+      { from: [65,  104], to: [128, 66],  c1: [60,  82],  c2: [105, 64]  },
+    ];
+
+    return (
+      <div>
+        <svg viewBox="0 0 300 295" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', display: 'block' }}>
+          <defs>
+            <marker id="scanarrow" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+              <polygon points="0 0, 7 2.5, 0 5" fill="#F68B1F"/>
+            </marker>
+          </defs>
+
+          {/* Dashed circle guide */}
+          <circle cx="150" cy="150" r="90" fill="none" stroke="#303033" strokeWidth="1" strokeDasharray="5,4"/>
+
+          {/* Center label */}
+          <text x="150" y="145" textAnchor="middle" fill="#88888f" fontSize="11" fontWeight="700">PLC</text>
+          <text x="150" y="160" textAnchor="middle" fill="#88888f" fontSize="9">SCAN CYCLE</text>
+
+          {/* Arrows */}
+          {arrows.map((a, i) => (
+            <path key={i}
+              d={`M ${a.from[0]} ${a.from[1]} C ${a.c1[0]} ${a.c1[1]}, ${a.c2[0]} ${a.c2[1]}, ${a.to[0]} ${a.to[1]}`}
+              fill="none" stroke="#F68B1F" strokeWidth="1.5" markerEnd="url(#scanarrow)"/>
+          ))}
+
+          {/* Step boxes */}
+          {steps.map(({ cx, cy, label, sub, fill, stroke, text }) => (
+            <g key={label}>
+              <rect x={cx - 36} y={cy - 17} width="72" height="34" rx="5" fill={fill} stroke={stroke} strokeWidth="1.5"/>
+              <text x={cx} y={cy - 3} textAnchor="middle" fill={text} fontSize="8.5" fontWeight="700">{label}</text>
+              <text x={cx} y={cy + 10} textAnchor="middle" fill="#88888f" fontSize="8">{sub}</text>
+            </g>
+          ))}
+        </svg>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.25rem' }}>
+          <span style={{ fontSize: '10px', color: '#88888f' }}>Typical scan time: 1–100 ms (continuous cycle)</span>
+        </div>
+      </div>
+    );
+  };
+
+  // ── IEC 61131-3 Languages Overview ──
+  const LanguagesPanel = () => {
+    const langs = [
+      {
+        id: 'LD',
+        name: 'Ladder Diagram',
+        type: 'Graphical',
+        desc: 'Mimics relay ladder logic. Most widely used in North America for discrete I/O control.',
+        snippet: `|---[ I0.0 ]---( Q0.0 )---|
+|---[ I0.1 ]---( Q0.1 )---|
+|---[/I0.2 ]---( Q0.2 )---|`,
+        color: '#1b5c22', textCol: '#4ade80',
+      },
+      {
+        id: 'FBD',
+        name: 'Function Block Diagram',
+        type: 'Graphical',
+        desc: 'Data-flow graphical language. Ideal for process and signal-flow applications.',
+        snippet: `[AND]──┬──[OR]──(Y)
+ A ───┘        
+ B ────────────`,
+        color: '#1b4b72', textCol: '#60a5fa',
+      },
+      {
+        id: 'ST',
+        name: 'Structured Text',
+        type: 'Textual',
+        desc: 'Pascal-like high-level language. Best for complex algorithms, maths, and string handling.',
+        snippet: `IF sensor1 AND NOT stop THEN
+  speed := setpoint * 1.05;
+  motor := TRUE;
+END_IF;`,
+        color: '#4a2472', textCol: '#c084fc',
+      },
+      {
+        id: 'IL',
+        name: 'Instruction List',
+        type: 'Textual (legacy)',
+        desc: 'Assembly-style mnemonic language. Deprecated in IEC 61131-3 3rd edition (2013).',
+        snippet: `LD  I0.0
+AND I0.1
+ANDN I0.2
+ST  Q0.0`,
+        color: '#6e4814', textCol: '#fb923c',
+      },
+      {
+        id: 'SFC',
+        name: 'Sequential Function Chart',
+        type: 'Graphical',
+        desc: 'State-machine language for sequential processes. Steps connected by transitions.',
+        snippet: `[Init Step]
+     |
+  <ready?>
+     |
+ [Run Step]──→ Actions
+     |
+  <done?>`,
+        color: '#2a100a', textCol: '#F68B1F',
+      },
+    ];
+
+    const active = langs.find(l => l.id === activeLang);
+
+    return (
+      <div>
+        {/* Language selector buttons */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '0.75rem' }}>
+          {langs.map(l => (
+            <button key={l.id} onClick={() => setActiveLang(l.id)} style={{
+              padding: '4px 10px', fontSize: '10px', fontWeight: '700',
+              borderRadius: '5px', border: `1px solid ${l.color}`,
+              backgroundColor: activeLang === l.id ? l.color : 'transparent',
+              color: activeLang === l.id ? '#fff' : l.textCol,
+              cursor: 'pointer',
+            }}>
+              {l.id}
+            </button>
+          ))}
+        </div>
+
+        {active && (
+          <div style={{ backgroundColor: '#0a0a0a', borderRadius: '7px', border: `1px solid ${active.color}`, padding: '0.875rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: active.textCol }}>{active.name}</span>
+              <span style={{ fontSize: '9px', color: '#88888f', backgroundColor: '#1a1a1c', padding: '2px 7px', borderRadius: '4px', border: '1px solid #303033' }}>{active.type}</span>
+            </div>
+            <p style={{ fontSize: '11px', color: '#88888f', lineHeight: '1.55', marginBottom: '0.625rem', margin: '0 0 0.625rem' }}>{active.desc}</p>
+            <pre style={{ backgroundColor: '#0f0f0f', border: `1px solid ${active.color}55`, borderRadius: '5px', padding: '0.625rem', fontSize: '10px', color: active.textCol, fontFamily: 'monospace', lineHeight: '1.6', overflowX: 'auto', margin: 0, whiteSpace: 'pre' }}>
+              {active.snippet}
+            </pre>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: isMobileView ? 'column' : 'row', minHeight: '100vh' }}>
+
+      {/* ═══════════ LEFT COLUMN ═══════════ */}
+      <div style={{ width: isMobileView ? '100%' : '58%', padding: isMobileView ? '1.5rem 1rem' : '3rem', boxSizing: 'border-box' }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1rem' }}>
+            <span style={{ backgroundColor: '#60a5fa', padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', color: '#000', letterSpacing: '0.04em' }}>CONTROL</span>
+            <span style={{ fontSize: '11px', color: '#88888f' }}>IEC 61131 · ISA-95 L1 · Fieldbus</span>
+          </div>
+          <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', lineHeight: '1.2' }}>
+            Programmable Logic Controllers
+          </h1>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1.5rem' }}>
+            A Programmable Logic Controller (PLC) is a ruggedised digital industrial computer designed to continuously monitor inputs and make decisions to control outputs in real time. PLCs are the backbone of ISA-95 Level 1 control — found in virtually every automated production facility worldwide.
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.625rem' }}>
+            <Chip label="IEC 61131-3 Standard"        icon={<CodeIcon size={12}/>}   accent="#c084fc"/>
+            <Chip label="Scan-cycle Architecture"     icon={<CpuIcon size={12}/>}    accent="#60a5fa"/>
+            <Chip label="5 Programming Languages"     icon={<LayersIcon size={12}/>} accent="#4ade80"/>
+          </div>
+        </div>
+
+        {/* What is a PLC */}
+        {sectionTitle('What Is a PLC?')}
+        <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+          A PLC is a solid-state industrial control system that executes a stored program to control industrial machinery and processes. Unlike a general-purpose PC, it is designed for harsh industrial environments: extreme temperatures, electrical noise, vibration, and humidity. The PLC continuously executes a <strong style={{ color: '#e3e3e8' }}>scan cycle</strong> — reading inputs, executing the control program, and updating outputs — hundreds of times per second.
+        </p>
+        <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+          PLCs replaced electromechanical relay panels starting in the late 1960s. They offer the same ladder-logic programming paradigm but with the ability to reprogram without rewiring, self-diagnostics, and communication capabilities.
+        </p>
+
+        {/* History */}
+        {sectionTitle('Brief History')}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginBottom: '1.5rem' }}>
+          {[
+            { year: '1968', event: 'Dick Morley (Bedford Associates) invents the first PLC — Modicon 084 — for General Motors. Replaces relay cabinets.' },
+            { year: '1973', event: 'Modicon introduces Modbus protocol, the first industrial communication standard for PLCs.' },
+            { year: '1979', event: 'Allen-Bradley introduces the PLC-3 with remote I/O capability; Siemens releases the SIMATIC S5 series.' },
+            { year: '1993', event: 'IEC 61131-3 published — standardises 5 PLC programming languages (LD, FBD, ST, IL, SFC).' },
+            { year: '2003', event: 'Ethernet-based fieldbuses (PROFINET, EtherNet/IP) begin displacing serial fieldbus protocols.' },
+            { year: '2013', event: 'IEC 61131-3 3rd edition adds object-oriented extensions; IL language deprecated.' },
+            { year: '2020s', event: 'Software PLCs, cloud-connected edge PLCs, and AI-assisted programming tools emerge (IIoT era).' },
+          ].map(({ year, event }, i, arr) => (
+            <div key={year} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#F68B1F', marginTop: '5px', flexShrink: 0 }}/>
+                {i < arr.length - 1 && <div style={{ width: '1px', height: '100%', minHeight: '36px', backgroundColor: '#303033' }}/>}
+              </div>
+              <div style={{ paddingBottom: '0.75rem' }}>
+                <span style={{ fontSize: '11px', fontWeight: '800', color: '#F68B1F', fontFamily: 'monospace' }}>{year}</span>
+                <p style={{ fontSize: '12px', color: '#adadb8', margin: '3px 0 0', lineHeight: '1.55' }}>{event}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Hardware Architecture */}
+        {sectionTitle('Hardware Architecture')}
+        <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+          A modern PLC is a modular system. The core modules communicate over a high-speed internal <strong style={{ color: '#e3e3e8' }}>backplane bus</strong>. This modularity allows systems to be sized from a few I/O points (nano PLCs) to thousands of I/O points (rack-based systems).
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          {[
+            { mod: 'Power Supply (PSU)', desc: 'Converts mains AC (120/240 V) or 24 VDC supply into regulated 5 VDC backplane power and 24 VDC for field sensors. Includes short-circuit and overcurrent protection.', color: '#6e2418', text: '#F68B1F' },
+            { mod: 'CPU Module', desc: 'The brain of the PLC. Contains the microprocessor (RISC/CISC), program memory (flash/EEPROM), data memory (RAM/NVRAM), real-time clock, and the operating system that executes the scan cycle.', color: '#1b4b72', text: '#60a5fa' },
+            { mod: 'Digital Input (DI)', desc: 'Reads discrete ON/OFF signals from field devices: push buttons, proximity switches, limit switches, reed contacts. Typical voltage: 24 VDC or 120/240 VAC. Provides galvanic isolation.', color: '#1b5c22', text: '#4ade80' },
+            { mod: 'Digital Output (DO)', desc: 'Switches discrete field devices: solenoids, contactor coils, indicator lamps, small relays. Output types: transistor (PNP/NPN), relay, or triac.', color: '#6e2418', text: '#f87171' },
+            { mod: 'Analog Input (AI)', desc: 'Converts continuous signals to digital values. Accepts: 4–20 mA, 0–10 V, RTD (Pt100/Pt1000), thermocouple (J/K/T types). Typical resolution: 12–16 bit.', color: '#1b4b72', text: '#60a5fa' },
+            { mod: 'Analog Output (AO)', desc: 'Generates continuous control signals: 4–20 mA or 0–10 V for controlling variable-speed drives, control valves, proportional actuators.', color: '#4a2472', text: '#c084fc' },
+            { mod: 'Communications Module', desc: 'Provides fieldbus (PROFIBUS, DeviceNet), Industrial Ethernet (PROFINET, EtherNet/IP), serial (RS-232/RS-485/Modbus RTU), and USB/OPC-UA connectivity.', color: '#4a2472', text: '#c084fc' },
+          ].map(({ mod, desc, color, text }) => (
+            <div key={mod} style={{ backgroundColor: '#1a1a1c', border: `1px solid ${color}`, borderLeft: `3px solid ${text}`, borderRadius: '7px', padding: '10px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: text, marginBottom: '4px' }}>{mod}</div>
+              <div style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>{desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* IEC 61131-3 Languages */}
+        {sectionTitle('IEC 61131-3 Programming Languages')}
+        <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+          The <strong style={{ color: '#e3e3e8' }}>IEC 61131-3</strong> standard (1993, revised 2013) defines five programming languages for PLCs, enabling code portability across vendors. All five languages can coexist within a single project, each used where it is most appropriate.
+        </p>
+        <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #303033' }}>
+                {['Language', 'Type', 'Best For', 'Status'].map(h => (
+                  <th key={h} style={{ padding: '8px 10px', textAlign: 'left', color: '#88888f', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['Ladder Diagram (LD)',            'Graphical', 'Discrete I/O, relay replacement, North American industry', 'Active'],
+                ['Function Block Diagram (FBD)',   'Graphical', 'Process control, signal flow, continuous systems', 'Active'],
+                ['Structured Text (ST)',           'Textual',   'Complex algorithms, data processing, strings, maths', 'Active'],
+                ['Sequential Function Chart (SFC)','Graphical', 'Sequential batch processes, state machines', 'Active'],
+                ['Instruction List (IL)',          'Textual',   'Low-level mnemonic (legacy only)', 'Deprecated'],
+              ].map(([lang, type, best, status], i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #1e1e20', backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
+                  <td style={{ padding: '7px 10px', color: '#e3e3e8', fontWeight: '600' }}>{lang}</td>
+                  <td style={{ padding: '7px 10px', color: '#adadb8' }}>{type}</td>
+                  <td style={{ padding: '7px 10px', color: '#adadb8' }}>{best}</td>
+                  <td style={{ padding: '7px 10px' }}>
+                    <span style={{ color: status === 'Active' ? '#4ade80' : '#fb923c', fontSize: '11px', fontFamily: 'monospace', fontWeight: '600' }}>{status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Scan Cycle */}
+        {sectionTitle('The PLC Scan Cycle')}
+        <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+          The PLC executes its program in a continuous, deterministic loop called the <strong style={{ color: '#e3e3e8' }}>scan cycle</strong>. Unlike event-driven computing, the PLC processes its entire program every cycle, regardless of whether inputs have changed. This guarantees deterministic behaviour critical for safety and process control.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1.5rem' }}>
+          {[
+            { step: '1', name: 'Read Inputs', desc: 'All physical input states are copied to the Process Image Input (PII) table in RAM. The program works from this snapshot throughout the cycle.' },
+            { step: '2', name: 'Execute Program', desc: 'The CPU processes all program instructions (ladder rungs, function blocks, ST statements) sequentially, reading from PII and writing results to Process Image Output (PIQ).' },
+            { step: '3', name: 'Write Outputs', desc: 'The PIQ table is transferred to the physical output modules, activating solenoids, drives, and other actuators.' },
+            { step: '4', name: 'Service Communications', desc: 'The CPU processes pending communication requests: HMI data exchange, fieldbus messages, remote I/O updates, peer-to-peer messaging.' },
+            { step: '5', name: 'System Diagnostics', desc: 'The OS checks memory integrity, watchdog timer, module health, and system housekeeping. If a fault is detected, the PLC halts and generates an alarm.' },
+          ].map(({ step, name, desc }) => (
+            <div key={step} style={{ display: 'flex', gap: '12px', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '7px', padding: '10px 14px' }}>
+              <span style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '800', fontFamily: 'monospace', flexShrink: 0, minWidth: '16px' }}>{step}</span>
+              <div>
+                <span style={{ color: '#e3e3e8', fontSize: '12px', fontWeight: '700' }}>{name}</span>
+                <p style={{ color: '#88888f', fontSize: '12px', margin: '3px 0 0', lineHeight: '1.55' }}>{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Manufacturers */}
+        {sectionTitle('Major PLC Manufacturers')}
+        <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #303033' }}>
+                {['Vendor', 'Product Family', 'Protocol Ecosystem', 'Market Strength'].map(h => (
+                  <th key={h} style={{ padding: '8px 10px', textAlign: 'left', color: '#88888f', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['Siemens',            'SIMATIC S7-1200 / S7-1500',  'PROFINET · PROFIBUS · OPC-UA', 'Europe, Automotive, Process'],
+                ['Rockwell Automation','Allen-Bradley ControlLogix / CompactLogix', 'EtherNet/IP · DeviceNet', 'North America, Discrete Mfg.'],
+                ['Mitsubishi Electric','MELSEC iQ-R / Q / L series', 'CC-Link IE · SLMP',             'Asia-Pacific, Automotive'],
+                ['Omron',              'SYSMAC NX / NJ / CP series', 'EtherCAT · EtherNet/IP',       'Asia, Packaging, Robotics'],
+                ['ABB',                'AC500 / AC500-S (Safety)',    'PROFINET · Modbus · OPC-UA',   'Energy, Marine, Process'],
+                ['Schneider Electric', 'Modicon M340 / M580',        'EtherNet/IP · Modbus TCP',     'EMEA, Buildings, Water'],
+                ['Beckhoff',           'CX / EK / TwinCAT Software PLC', 'EtherCAT · OPC-UA',        'Machine builders, IIoT'],
+                ['B&R Automation',     'X20 / X90 / Power Panel',   'POWERLINK · OPC-UA',           'Motion, Plastics (ABB Group)'],
+              ].map(([vendor, family, proto, market], i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #1e1e20', backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
+                  <td style={{ padding: '7px 10px', color: '#e3e3e8', fontWeight: '700' }}>{vendor}</td>
+                  <td style={{ padding: '7px 10px' }}><code style={{ color: '#F68B1F', fontFamily: 'monospace', fontSize: '10.5px' }}>{family}</code></td>
+                  <td style={{ padding: '7px 10px', color: '#79c0ff', fontSize: '11px' }}>{proto}</td>
+                  <td style={{ padding: '7px 10px', color: '#88888f' }}>{market}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* PLC vs DCS vs SCADA */}
+        {sectionTitle('PLC vs DCS vs SCADA — Key Differences')}
+        <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #303033' }}>
+                {['Feature', 'PLC', 'DCS', 'SCADA'].map(h => (
+                  <th key={h} style={{ padding: '8px 10px', textAlign: 'left', color: '#88888f', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['Primary Use',     'Discrete / sequential control',       'Continuous process control',          'Supervisory monitoring & control'],
+                ['Response Time',   '1–100 ms',                            '100 ms–1 s',                          '1–60 s (operator-driven)'],
+                ['Architecture',    'Centralised or distributed',          'Distributed control stations',        'Central server with remote RTUs/PLCs'],
+                ['Programming',     'IEC 61131-3 (LD/FBD/ST)',            'Proprietary + IEC 61131-3',           'Graphical scripting (VBA/Python)'],
+                ['I/O Scale',       'Tens to thousands of I/O',           'Hundreds to tens of thousands',       'Thousands via remote RTUs'],
+                ['Cost',            'Low–Medium',                          'High',                                'Medium–High (software)'],
+                ['Redundancy',      'Optional (hot-standby)',              'Built-in by design',                  'Software/server redundancy'],
+                ['Industry',        'Manufacturing, machine OEM',          'Oil & Gas, Chemical, Power',          'Water/Wastewater, Pipeline, Utilities'],
+              ].map(([feat, plc, dcs, scada], i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #1e1e20', backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
+                  <td style={{ padding: '7px 10px', color: '#e3e3e8', fontWeight: '600' }}>{feat}</td>
+                  <td style={{ padding: '7px 10px', color: '#60a5fa' }}>{plc}</td>
+                  <td style={{ padding: '7px 10px', color: '#4ade80' }}>{dcs}</td>
+                  <td style={{ padding: '7px 10px', color: '#c084fc' }}>{scada}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Applications */}
+        {sectionTitle('Typical PLC Applications')}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobileView ? '1fr 1fr' : '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          {[
+            { label: 'Conveyor Systems',      desc: 'Motor sequencing, speed, jam detection' },
+            { label: 'Packaging Lines',       desc: 'Fill, seal, label, palletise' },
+            { label: 'Automotive Assembly',   desc: 'Robotic welding, paint, press lines' },
+            { label: 'Water Treatment',       desc: 'Pump control, dosing, filtration' },
+            { label: 'Building Automation',   desc: 'HVAC, lifts, fire suppression' },
+            { label: 'Food & Beverage',       desc: 'CIP, batch cooking, filling' },
+            { label: 'Power Generation',      desc: 'Turbine control, switchgear, BOP' },
+            { label: 'Oil & Gas',             desc: 'Pipeline monitoring, compressors' },
+            { label: 'Semiconductor',         desc: 'Cleanroom equipment, wafer handling' },
+          ].map(({ label, desc }) => (
+            <div key={label} style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '7px', padding: '10px' }}>
+              <div style={{ fontSize: '11px', fontWeight: '700', color: '#F68B1F', marginBottom: '3px' }}>{label}</div>
+              <div style={{ fontSize: '10.5px', color: '#88888f', lineHeight: '1.45' }}>{desc}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Feedback */}
+        <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+          {!feedback ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+              <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this page helpful?</span>
+              <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+              <button onClick={() => setFeedback('no')}  style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+            </div>
+          ) : (
+            <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '6px', display: 'inline-block', border: '1px solid #303033' }}>
+              {feedback === 'yes' ? '✨ Thanks! Glad this was useful.' : '🙏 Thank you — we will improve this page.'}
+            </p>
+          )}
+          <div style={{ paddingBottom: '6rem' }}/>
+        </div>
+      </div>
+
+      {/* ═══════════ RIGHT COLUMN ═══════════ */}
+      <div style={{
+        width: isMobileView ? '100%' : '42%',
+        backgroundColor: 'rgba(0,0,0,0.02)',
+        padding: isMobileView ? '1.5rem 1rem' : '3rem',
+        borderLeft: isMobileView ? 'none' : '1px solid #1e1e20',
+        borderTop: isMobileView ? '1px solid #1e1e20' : 'none',
+        boxSizing: 'border-box',
+      }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+          {/* Tab bar */}
+          <div style={{ display: 'flex', gap: '4px', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '10px', padding: '4px' }}>
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+                flex: 1, padding: '7px 0', fontSize: '12px', fontWeight: '600', borderRadius: '7px',
+                border: 'none', cursor: 'pointer',
+                backgroundColor: activeTab === t.id ? '#60a5fa' : 'transparent',
+                color: activeTab === t.id ? '#000' : '#88888f',
+                transition: 'all 0.15s',
+              }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Diagram card */}
+          <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '10px', padding: '1.25rem' }}>
+            <h3 style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#88888f', margin: '0 0 1rem' }}>
+              {activeTab === 'hardware' ? 'PLC Hardware Architecture'
+                : activeTab === 'scan' ? 'PLC Scan Cycle'
+                : 'IEC 61131-3 Programming Languages'}
+            </h3>
+            {activeTab === 'hardware' && <HardwareDiagram />}
+            {activeTab === 'scan'     && <ScanCycle />}
+            {activeTab === 'langs'    && <LanguagesPanel />}
+          </div>
+
+          {/* Info tip card */}
+          <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderLeft: '4px solid #60a5fa', borderRadius: '8px', padding: '1.25rem' }}>
+            <h3 style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#88888f', margin: '0 0 0.625rem' }}>
+              {activeTab === 'hardware' ? 'Modular Design'
+                : activeTab === 'scan' ? 'Watchdog Timer'
+                : 'Language Selection Guide'}
+            </h3>
+            <p style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.65', margin: 0 }}>
+              {activeTab === 'hardware'
+                ? 'Modular PLCs allow hot-swap of I/O modules in some product families (e.g. Siemens S7-1500 with I-Device). Safety-rated modules carry TÜV certification and integrate seamlessly with standard modules on the same backplane.'
+                : activeTab === 'scan'
+                ? 'Every PLC CPU has a hardware watchdog timer. If the scan cycle exceeds the maximum allowed time (watchdog time), the CPU halts and moves to STOP mode, deenergising all outputs — a critical safety mechanism.'
+                : 'Use LD for relay replacement and simple I/O; FBD for process loops and signal chains; ST for complex maths and data handling; SFC for batch sequences; IL only when maintaining legacy code. Mix languages freely within one project.'}
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<PlcPage />
