@@ -538,68 +538,67 @@ ST  Q0.0`,
             style={{ width: '100%', borderRadius: '8px', border: '1px solid #303033', marginBottom: '1.25rem', display: 'block' }}
           />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {[
-              {
-                title: 'VFD (Variable Frequency Drive)',
-                color: '#1b4b72', text: '#60a5fa',
-                items: [
-                  { label: 'Purpose', desc: 'Regulates motor speed and torque by adjusting the power supply frequency.' },
-                ],
-              },
-              {
-                title: 'Safety Remote I/O / Interface Module (Red unit labeled "PLC")',
-                color: '#6e2418', text: '#f87171',
-                items: [
-                  { label: 'Purpose', desc: 'A specialized interface for Safety-related components (e.g., Emergency Stop, light curtains). It monitors safety circuit integrity and transmits data to the main controller via PROFINET.' },
-                  { label: 'Note', desc: 'The red color signifies its role in the Failsafe system for operator protection.' },
-                ],
-              },
-              {
-                title: 'Industrial Ethernet Switch (Unit SW1)',
-                color: '#4a2472', text: '#c084fc',
-                items: [
-                  { label: 'Purpose', desc: 'Acts as a network "distributor" (likely a Siemens SCALANCE series). It links the main controller with other cabinet devices or the plant-wide network.' },
-                ],
-              },
-              {
-                title: 'PLC CPU (S7-1200) (Unit E1)',
-                color: '#1b5c22', text: '#4ade80',
-                items: [
-                  { label: 'Purpose', desc: 'The central processing unit (the "brain") that executes the logic for both standard and safety-related tasks.' },
-                ],
-              },
-              {
-                title: 'Signal Module (Unit E2)',
-                color: '#6e4814', text: '#fb923c',
-                items: [
-                  { label: 'Purpose', desc: 'Expansion block providing additional Digital or Analog I/O channels for standard sensors and actuators.' },
-                ],
-              },
-              {
-                title: 'Safety Relay (Red unit XPS)',
-                color: '#6e2418', text: '#f87171',
-                items: [
-                  { label: 'Purpose', desc: 'Hardwired safety monitoring that ensures a direct, reliable power cut-off to hazardous equipment during an emergency.' },
-                ],
-              },
-              {
-                title: 'Terminal Blocks (Bottom strip X0–X4)',
-                color: '#1b4b72', text: '#60a5fa',
-                items: [
-                  { label: 'Purpose', desc: 'Physical termination points for field wiring from sensors, utilizing screw clamp terminal bases for secure connections.' },
-                ],
-              },
-            ].map(({ title, color, text, items }) => (
-              <div key={title} style={{ backgroundColor: '#1a1a1c', border: `1px solid ${color}`, borderLeft: `3px solid ${text}`, borderRadius: '7px', padding: '10px 14px' }}>
-                <div style={{ fontSize: '12px', fontWeight: '700', color: text, marginBottom: '6px' }}>{title}</div>
-                {items.map(({ label, desc }) => (
-                  <div key={label} style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>{label}:</span>
-                    <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>{desc}</span>
-                  </div>
-                ))}
+
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #1b4b72', borderLeft: '3px solid #60a5fa', borderRadius: '7px', padding: '10px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#60a5fa', marginBottom: '6px' }}>VFD (Variable Frequency Drive)</div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>Purpose:</span>
+                <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>Regulates motor speed and torque by adjusting the power supply frequency.</span>
               </div>
-            ))}
+            </div>
+
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #6e2418', borderLeft: '3px solid #f87171', borderRadius: '7px', padding: '10px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#f87171', marginBottom: '6px' }}>Fail-Safe Remote I/O / Safety Gateway (Red unit labeled "PLC")</div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>Purpose:</span>
+                <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>A specialized safety module dedicated to managing safety-related functions (e.g., emergency stop circuits or light curtains). Despite the "PLC" label, it acts as an interface that communicates critical safety data to the main controller via green PROFINET cables. Its distinct red color indicates its role in personnel protection.</span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #4a2472', borderLeft: '3px solid #c084fc', borderRadius: '7px', padding: '10px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#c084fc', marginBottom: '6px' }}>Industrial Ethernet Switch (Unit SW1)</div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>Purpose:</span>
+                <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>A PROFINET industrial switch that acts as a network distributor. It links the main controller with other cabinet devices and the external network.</span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #1b5c22', borderLeft: '3px solid #4ade80', borderRadius: '7px', padding: '10px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#4ade80', marginBottom: '6px' }}>PLC CPU S7-1200 (Unit E1)</div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>Purpose:</span>
+                <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>The central processing unit equipped with integrated I/O cards. It executes the control logic for both standard and safety tasks.</span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #6e4814', borderLeft: '3px solid #fb923c', borderRadius: '7px', padding: '10px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#fb923c', marginBottom: '6px' }}>Extension Module SM 1223 (Unit E2)</div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>Purpose:</span>
+                <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>A specific expansion module (SM 1223) providing additional digital input and output channels for sensors and actuators.</span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #6e2418', borderLeft: '3px solid #f87171', borderRadius: '7px', padding: '10px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#f87171', marginBottom: '6px' }}>XPS1 Safety Relay (Red unit)</div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>Purpose:</span>
+                <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>Hardwired safety monitoring that ensures a direct power cut-off during emergencies.</span>
+              </div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>Connectivity:</span>
+                <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>The XPS1 is physically connected to the emergency stop and the grey/black door interlock (which currently has the key inserted).</span>
+              </div>
+            </div>
+
+            <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #1b4b72', borderLeft: '3px solid #60a5fa', borderRadius: '7px', padding: '10px 14px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: '#60a5fa', marginBottom: '6px' }}>Terminal Blocks (Bottom strip X0–X4)</div>
+              <div style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>Purpose:</span>
+                <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>Physical termination points for field wiring, using screw clamp terminal bases to ensure secure electrical connections.</span>
+              </div>
+            </div>
+
           </div>
         </div>
 
