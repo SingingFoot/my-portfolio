@@ -1,0 +1,740 @@
+openapi: "3.1.1"
+
+info:
+  title: TechWriter API
+  version: "v1"
+  summary: REST API for the TechWriter publishing platform
+  description: |
+    The TechWriter API is organized around **REST**. All endpoints accept
+    JSON-encoded request bodies, return JSON-encoded responses, and use
+    standard HTTP response codes, authentication, and verbs.
+
+    ## Base URL
+
+    ```
+    https://api.techwriter.io
+    ```
+
+    ## Authentication
+
+    All requests must be authenticated using a **Bearer token**:
+
+    ```
+    Authorization: Bearer tw_live_…
+    ```
+
+    Test keys (`tw_test_…`) operate against sandbox data and do not affect
+    production. Live keys (`tw_live_…`) operate against production data.
+    Keep your keys secure — never expose them in client-side code or public
+    repositories.
+
+    ## Date Format
+
+    All timestamps use **ISO 8601 (UTC)**, for example `2026-04-08T14:20:11Z`.
+
+    ## Rate Limits
+
+    Each workspace is limited to **60 requests per minute**. Exceeding this
+    limit returns `429 Too Many Requests` with a `retryAfterSeconds` field
+    in the response body.
+
+    ## Errors
+
+    All error responses follow a standard JSON envelope:
+
+    ```json
+    {
+      "error": {
+        "code":    "machine_readable_code",
+        "message": "Human-readable description."
+      },
+      "success": false
+    }
+    ```
+
+servers:
+  - url: https://api.techwriter.io
+    description: Production
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Users
+    description: Retrieve and manage workspace users.
+  - name: Roles
+    description: Create and manage workspace roles and their privilege sets.
+  - name: Template Folders
+    description: Organise templates using folder structures in the Template Library.
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Paths
+# ──────────────────────────────────────────────────────────────────────────────
+paths:
+
+  /api/public/users:
+    get:
+      operationId: listUsers
+      summary: List all users
+      description: |
+        Retrieves a paginated list of users from the TechWriter Platform.
+
+        Use the query parameters to paginate, sort, filter, and shape the
+        response. Combine `count=true` with `top` and `skip` to drive
+        paginated tables — divide `data.totalCount` by your page size to
+        calculate the total page count.
+      tags:
+        - Users
+      parameters:
+        - name: filter
+          in: query
+          required: false
+          description: |
+            Filter expression that narrows the returned users.
+
+            Follows the format `field op 'value'`.
+
+            **Example:** `email eq 'admin@techwriter.io'`
+          schema:
+            type: string
+          example: "email eq 'admin@techwriter.io'"
+
+        - name: select
+          in: query
+          required: false
+          description: |
+            Comma-separated list of response properties to include.
+            Omit this parameter to receive all fields.
+          schema:
+            type: string
+          example: "firstName,lastName,email"
+
+        - name: top
+          in: query
+          required: false
+          description: Maximum number of users to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          example: 20
+
+        - name: skip
+          in: query
+          required: false
+          description: |
+            Number of users to skip before returning results.
+            Use together with `top` for offset-based pagination.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+
+        - name: orderby
+          in: query
+          required: false
+          description: |
+            Sort expression. Specify a field name followed by `asc` or `desc`.
+
+            **Example:** `lastName asc`
+          schema:
+            type: string
+          example: "lastName asc"
+
+        - name: count
+          in: query
+          required: false
+          description: |
+            When `true`, the response includes `data.totalCount` — the total
+            number of users that match the query before pagination is applied.
+          schema:
+            type: boolean
+            default: false
+          example: true
+
+      responses:
+        "200":
+          description: Users retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+              example:
+                data:
+                  totalCount: 150
+                  items:
+                    - userId: "u123-abc-456"
+                      email: "john.doe@techwriter.io"
+                      firstName: "John"
+                      lastName: "Doe"
+                      isActive: true
+                      role: "admin"
+                      createdAt: "2024-01-15T09:00:00Z"
+                      lastLogin: "2026-04-08T14:20:11Z"
+                    - userId: "u789-def-012"
+                      email: "jane.smith@techwriter.io"
+                      firstName: "Jane"
+                      lastName: "Smith"
+                      isActive: true
+                      role: "editor"
+                      createdAt: "2024-02-10T11:30:45Z"
+                      lastLogin: null
+                success: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /api/public/roles:
+    post:
+      operationId: createRole
+      summary: Create a role
+      description: |
+        Defines a new role inside your TechWriter workspace.
+
+        Provide a display `name` and an array of numeric `privileges`
+        describing what users assigned to this role can do — for example,
+        edit templates, manage users, or download published articles.
+
+        > **Tip:** Start narrow — grant only the privileges a role needs
+        > today and add more later. Pair *Workspace: Read All Content*
+        > (`id: 1`) with task-specific privileges to give read-only
+        > auditors a useful view.
+      tags:
+        - Roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+            example:
+              name: "Editorial Reviewer"
+              privileges: [3, 11, 16]
+      responses:
+        "201":
+          description: Role was created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateRoleResponse"
+              example:
+                data: "8e1c2f6a-7b40-4e2d-91c4-2cf03b9aa17e"
+                success: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /api/public/template-folders:
+    post:
+      operationId: createTemplateFolder
+      summary: Create a template folder
+      description: |
+        Creates a new folder inside the TechWriter Template Library.
+
+        Provide a folder `name` and, optionally, the user groups and
+        individual users who should have access. Folder names must be unique
+        among root-level folders. Use `groupIds` for team-wide access and
+        `userIds` for individual exceptions — both arrays may be omitted if
+        the folder should remain private to the creator.
+      tags:
+        - Template Folders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTemplateFolderRequest"
+            example:
+              name: "Onboarding Templates"
+              groupIds:
+                - "b81eceff-d8db-4e10-a10d-01010f294fe9"
+              userIds:
+                - "08bc7305-5d85-424b-b6ab-0007d35d501f"
+                - "1a66d10c-dcba-4d86-8bf0-000c5b7086c2"
+      responses:
+        "201":
+          description: Template folder was created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateTemplateFolderResponse"
+              example:
+                data:
+                  folderId: "8a921f63-e90b-4296-83b5-2a793817e778"
+                  name: "Onboarding Templates"
+                  createdDate: "2026-01-30T08:53:05Z"
+                success: true
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Components
+# ──────────────────────────────────────────────────────────────────────────────
+components:
+
+  # ── Security Schemes ────────────────────────────────────────────────────────
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Authenticate using your TechWriter API key as a Bearer token.
+
+        - Test keys start with `tw_test_` and operate against sandbox data.
+        - Live keys start with `tw_live_` and operate against production data.
+
+        Never expose secret keys in client-side code or public repositories.
+
+  # ── Schemas ─────────────────────────────────────────────────────────────────
+  schemas:
+
+    # ── User ──────────────────────────────────────────────────────────────────
+    User:
+      type: object
+      description: A TechWriter platform user.
+      required:
+        - userId
+        - email
+        - firstName
+        - lastName
+        - isActive
+        - role
+        - createdAt
+      properties:
+        userId:
+          type: string
+          description: Unique identifier of the user.
+          example: "u123-abc-456"
+        email:
+          type: string
+          format: email
+          description: User's email address.
+          example: "john.doe@techwriter.io"
+        firstName:
+          type: string
+          description: User's first name.
+          example: "John"
+        lastName:
+          type: string
+          description: User's last name.
+          example: "Doe"
+        isActive:
+          type: boolean
+          description: Indicates whether the account is active.
+          example: true
+        role:
+          type: string
+          description: System role assigned to the user.
+          enum:
+            - admin
+            - editor
+            - viewer
+          example: "admin"
+        createdAt:
+          type: string
+          format: date-time
+          description: User creation timestamp in ISO 8601 format (UTC).
+          example: "2024-01-15T09:00:00Z"
+        lastLogin:
+          # OAS 3.1 nullable pattern — type array replaces nullable: true
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: |
+            Timestamp of the most recent login in ISO 8601 format.
+            Returns `null` if the user has never logged in.
+          example: "2026-04-08T14:20:11Z"
+
+    UserListData:
+      type: object
+      description: Paginated container returned by GET /api/public/users.
+      required:
+        - items
+      properties:
+        totalCount:
+          type: integer
+          description: |
+            Total number of users matching the query before pagination.
+            Present only when `count=true` is set on the request.
+          example: 150
+        items:
+          type: array
+          description: List of returned users for the current page.
+          items:
+            $ref: "#/components/schemas/User"
+
+    UserListResponse:
+      type: object
+      description: Top-level envelope for a successful GET /api/public/users response.
+      required:
+        - data
+        - success
+      properties:
+        data:
+          $ref: "#/components/schemas/UserListData"
+        success:
+          type: boolean
+          description: Always `true` for successful responses.
+          example: true
+
+    # ── Role ──────────────────────────────────────────────────────────────────
+    CreateRoleRequest:
+      type: object
+      description: Request body for POST /api/public/roles.
+      required:
+        - name
+        - privileges
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: |
+            Display name shown on the **Administration → Roles** screen.
+            Must be unique within the workspace.
+          example: "Editorial Reviewer"
+        privileges:
+          type: array
+          minItems: 1
+          description: |
+            Array of numeric privilege IDs to assign to the role. Must contain
+            at least one value. See the privilege ID reference in the
+            POST Create Role documentation.
+          items:
+            type: integer
+            minimum: 0
+          example: [3, 11, 16]
+
+    CreateRoleResponse:
+      type: object
+      description: Top-level envelope for a successful POST /api/public/roles response.
+      required:
+        - data
+        - success
+      properties:
+        data:
+          type: string
+          format: uuid
+          description: Unique identifier of the newly created role.
+          example: "8e1c2f6a-7b40-4e2d-91c4-2cf03b9aa17e"
+        success:
+          type: boolean
+          description: Always `true` for successful responses.
+          example: true
+
+    # ── Template Folder ───────────────────────────────────────────────────────
+    CreateTemplateFolderRequest:
+      type: object
+      description: Request body for POST /api/public/template-folders.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: |
+            Display name of the new folder. Must be unique among root-level
+            folders in the workspace.
+          example: "Onboarding Templates"
+        groupIds:
+          type: array
+          description: |
+            Optional list of user-group UUIDs that receive access to the folder.
+            Omit or send an empty array to keep access group-private.
+          items:
+            type: string
+            format: uuid
+          example:
+            - "b81eceff-d8db-4e10-a10d-01010f294fe9"
+        userIds:
+          type: array
+          description: |
+            Optional list of user UUIDs that receive direct access to the folder.
+            Omit or send an empty array to keep access user-private.
+          items:
+            type: string
+            format: uuid
+          example:
+            - "08bc7305-5d85-424b-b6ab-0007d35d501f"
+            - "1a66d10c-dcba-4d86-8bf0-000c5b7086c2"
+
+    TemplateFolderData:
+      type: object
+      description: Newly created folder data returned in a 201 response.
+      required:
+        - folderId
+        - name
+        - createdDate
+      properties:
+        folderId:
+          type: string
+          format: uuid
+          description: Unique identifier of the newly created template folder.
+          example: "8a921f63-e90b-4296-83b5-2a793817e778"
+        name:
+          type: string
+          description: Display name of the folder, echoed back from the request.
+          example: "Onboarding Templates"
+        createdDate:
+          type: string
+          format: date-time
+          description: Folder creation timestamp in ISO 8601 format.
+          example: "2026-01-30T08:53:05Z"
+
+    CreateTemplateFolderResponse:
+      type: object
+      description: >
+        Top-level envelope for a successful POST /api/public/template-folders
+        response.
+      required:
+        - data
+        - success
+      properties:
+        data:
+          $ref: "#/components/schemas/TemplateFolderData"
+        success:
+          type: boolean
+          description: Always `true` for successful responses.
+          example: true
+
+    # ── Error Schemas ─────────────────────────────────────────────────────────
+    ErrorDetail:
+      type: object
+      description: Structured error detail returned inside every error envelope.
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+          example: "invalid_request"
+        message:
+          type: string
+          description: Human-readable description of what went wrong.
+          example: "The 'orderby' parameter must reference a valid field."
+        param:
+          type:
+            - string
+            - "null"
+          description: The request parameter that caused the error, if applicable.
+          example: "orderby"
+
+    ErrorResponse:
+      type: object
+      description: Standard error envelope returned for all 4xx and 5xx responses.
+      required:
+        - error
+        - success
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorDetail"
+        success:
+          type: boolean
+          description: Always `false` for error responses.
+          example: false
+
+    RateLimitErrorDetail:
+      allOf:
+        - $ref: "#/components/schemas/ErrorDetail"
+        - type: object
+          properties:
+            retryAfterSeconds:
+              type: integer
+              description: Number of seconds the client should wait before retrying.
+              example: 30
+
+    RateLimitErrorResponse:
+      type: object
+      description: Error envelope for 429 Too Many Requests and 503 Service Unavailable.
+      required:
+        - error
+        - success
+      properties:
+        error:
+          $ref: "#/components/schemas/RateLimitErrorDetail"
+        success:
+          type: boolean
+          example: false
+
+  # ── Reusable Responses ────────────────────────────────────────────────────
+  responses:
+
+    BadRequest:
+      description: >
+        The request is malformed or contains an invalid query parameter or
+        request body field.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "invalid_request"
+              message: >
+                The 'orderby' parameter must reference a valid field.
+                Received: 'unknownField asc'.
+              param: "orderby"
+            success: false
+
+    Unauthorized:
+      description: >
+        Authentication failed — the bearer token is missing, invalid, or
+        expired.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "unauthorized"
+              message: "Authentication credentials are missing or invalid."
+            success: false
+
+    Forbidden:
+      description: >
+        The token is valid but the associated API key lacks the required scope
+        for this operation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "forbidden"
+              message: "Your API key does not have the required scope."
+            success: false
+
+    NotFound:
+      description: The requested resource or endpoint does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "not_found"
+              message: "Resource not found at /api/public/users."
+            success: false
+
+    Conflict:
+      description: >
+        A resource with the same unique identifier (e.g. name) already exists
+        in the workspace.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "conflict"
+              message: "A resource with this name already exists."
+              param: "name"
+            success: false
+
+    UnprocessableEntity:
+      description: >
+        The request is syntactically valid but semantically incorrect — for
+        example, an unparseable filter expression or an unrecognised privilege
+        ID.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "unprocessable_entity"
+              message: "Filter expression is syntactically invalid."
+              param: "filter"
+            success: false
+
+    TooManyRequests:
+      description: >
+        The workspace has exceeded the rate limit of 60 requests per minute.
+        Retry after the number of seconds indicated in `retryAfterSeconds`.
+      headers:
+        Retry-After:
+          description: Number of seconds to wait before retrying.
+          schema:
+            type: integer
+          example: 30
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RateLimitErrorResponse"
+          example:
+            error:
+              code: "rate_limited"
+              message: "Too many requests. Please retry after the cool-down period."
+              retryAfterSeconds: 30
+            success: false
+
+    InternalServerError:
+      description: >
+        An unexpected error occurred on the TechWriter side. The team has been
+        notified automatically.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error:
+              code: "internal_error"
+              message: "An unexpected error occurred. Our team has been notified."
+            success: false
+
+    ServiceUnavailable:
+      description: >
+        The service is temporarily unavailable for maintenance or is
+        overloaded. Retry after the indicated delay.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/RateLimitErrorResponse"
+          example:
+            error:
+              code: "service_unavailable"
+              message: "The service is temporarily unavailable. Try again in a few moments."
+              retryAfterSeconds: 60
+            success: false

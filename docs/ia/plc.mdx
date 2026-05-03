@@ -529,6 +529,80 @@ ST  Q0.0`,
           ))}
         </div>
 
+        {/* Industrial Control Panel Schematic */}
+        {sectionTitle('Industrial Control Panel Schematic (Technical Descriptions)')}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <img
+            src={require('./plc.png').default}
+            alt="Industrial Control Panel Schematic"
+            style={{ width: '100%', borderRadius: '8px', border: '1px solid #303033', marginBottom: '1.25rem', display: 'block' }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {[
+              {
+                title: 'VFD (Variable Frequency Drive)',
+                color: '#1b4b72', text: '#60a5fa',
+                items: [
+                  { label: 'Purpose', desc: 'Regulates motor speed and torque by adjusting the power supply frequency.' },
+                ],
+              },
+              {
+                title: 'Safety Remote I/O / Interface Module (Red unit labeled "PLC")',
+                color: '#6e2418', text: '#f87171',
+                items: [
+                  { label: 'Purpose', desc: 'A specialized interface for Safety-related components (e.g., Emergency Stop, light curtains). It monitors safety circuit integrity and transmits data to the main controller via PROFINET.' },
+                  { label: 'Note', desc: 'The red color signifies its role in the Failsafe system for operator protection.' },
+                ],
+              },
+              {
+                title: 'Industrial Ethernet Switch (Unit SW1)',
+                color: '#4a2472', text: '#c084fc',
+                items: [
+                  { label: 'Purpose', desc: 'Acts as a network "distributor" (likely a Siemens SCALANCE series). It links the main controller with other cabinet devices or the plant-wide network.' },
+                ],
+              },
+              {
+                title: 'PLC CPU (S7-1200) (Unit E1)',
+                color: '#1b5c22', text: '#4ade80',
+                items: [
+                  { label: 'Purpose', desc: 'The central processing unit (the "brain") that executes the logic for both standard and safety-related tasks.' },
+                ],
+              },
+              {
+                title: 'Signal Module (Unit E2)',
+                color: '#6e4814', text: '#fb923c',
+                items: [
+                  { label: 'Purpose', desc: 'Expansion block providing additional Digital or Analog I/O channels for standard sensors and actuators.' },
+                ],
+              },
+              {
+                title: 'Safety Relay (Red unit XPS)',
+                color: '#6e2418', text: '#f87171',
+                items: [
+                  { label: 'Purpose', desc: 'Hardwired safety monitoring that ensures a direct, reliable power cut-off to hazardous equipment during an emergency.' },
+                ],
+              },
+              {
+                title: 'Terminal Blocks (Bottom strip X0–X4)',
+                color: '#1b4b72', text: '#60a5fa',
+                items: [
+                  { label: 'Purpose', desc: 'Physical termination points for field wiring from sensors, utilizing screw clamp terminal bases for secure connections.' },
+                ],
+              },
+            ].map(({ title, color, text, items }) => (
+              <div key={title} style={{ backgroundColor: '#1a1a1c', border: `1px solid ${color}`, borderLeft: `3px solid ${text}`, borderRadius: '7px', padding: '10px 14px' }}>
+                <div style={{ fontSize: '12px', fontWeight: '700', color: text, marginBottom: '6px' }}>{title}</div>
+                {items.map(({ label, desc }) => (
+                  <div key={label} style={{ display: 'flex', gap: '6px', marginBottom: '3px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: '700', color: '#e3e3e8', flexShrink: 0 }}>{label}:</span>
+                    <span style={{ fontSize: '12px', color: '#88888f', lineHeight: '1.55' }}>{desc}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Feedback */}
         <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
           {!feedback ? (

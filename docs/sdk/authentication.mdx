@@ -273,7 +273,7 @@ Console.WriteLine($"New token expires at: {fresh.ExpiresAt}");`
   ];
 
   const keyTypeRows = [
-    { type: 'tw_test_…', purpose: 'Test mode', desc: 'Targets the sandbox database. No real publishing happens, no rate-limit charges. Safe to commit to local fixtures.' },
+    { type: 'tw_test_…', purpose: 'Test mode', desc: 'Targets the sandbox database. No real publishing happens and usage is not rate-limited or billed. Safe to check into version control for local development fixtures.' },
     { type: 'tw_live_…', purpose: 'Live mode', desc: 'Targets production. Treat these like production database credentials — never commit, never ship in client code.' },
     { type: 'tw_restricted_…', purpose: 'Restricted', desc: 'Live key with a custom subset of scopes. Use these to give read-only dashboards or scoped automation just enough access.' }
   ];
@@ -303,7 +303,7 @@ Console.WriteLine($"New token expires at: {fresh.ExpiresAt}");`
     { code: '401', err: 'token_revoked', cause: 'Key was rotated or revoked in the dashboard.', fix: 'Re-authenticate with the new credentials.' },
     { code: '403', err: 'forbidden', cause: 'Token is valid but the scope does not cover this endpoint.', fix: 'Check the requiredScope field in the error body and grant it on the key.' },
     { code: '403', err: 'ip_restricted', cause: 'Request came from an IP outside the key’s allowlist.', fix: 'Update the key’s IP allowlist or call from an approved range.' },
-    { code: '419', err: 'authentication_timeout', cause: 'The session reached the idle timeout for interactive flows.', fix: 'Restart the OAuth flow to obtain new tokens.' },
+    { code: '401', err: 'authentication_timeout', cause: 'The session reached the idle timeout for interactive OAuth flows.', fix: 'Restart the OAuth authorization flow to obtain fresh tokens.' },
     { code: '429', err: 'rate_limited', cause: 'Too many auth attempts in a short window.', fix: 'Honor the Retry-After header. The SDK does this automatically.' }
   ];
 

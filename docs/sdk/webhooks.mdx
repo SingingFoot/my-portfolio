@@ -313,14 +313,14 @@ public async Task<IActionResult> HandleWebhook()
 {
   "id": "evt_01HW8N4Z3R8C9X",
   "type": "document.published",
-  "created": 1714387200,
+  "created": 1746518400,
   "data": {
     "object": {
       "id": "doc_4fR29s",
       "title": "API Reference",
       "project_id": "proj_8fK29s",
       "version": 7,
-      "published_at": "2024-04-29T10:00:00Z"
+      "published_at": "2026-05-06T10:00:00Z"
     }
   }
 }`,
@@ -494,7 +494,7 @@ end`,
     { header: 'X-TechWriter-Signature', format: 't=<unix>,v1=<hex>',         desc: 'Timestamp and HMAC-SHA256 of the raw payload. Always verify this before processing.' },
     { header: 'X-TechWriter-Event',     format: 'document.published',         desc: 'The event type string. Identical to event.type in the body — useful for routing in proxies.' },
     { header: 'X-TechWriter-Delivery',  format: 'evt_01HW8N4Z3R8C9X',        desc: 'Unique delivery ID for this attempt. Stable across retries — use it for idempotency checks.' },
-    { header: 'X-TechWriter-Version',   format: '2024-04-01',                 desc: 'Payload schema version. Pin to this in your handler to avoid surprise breaks on schema updates.' },
+    { header: 'X-TechWriter-Version',   format: '2026-04-01',                 desc: 'Payload schema version. Pin to this in your handler to avoid surprise breaks on schema updates.' },
     { header: 'Content-Type',           format: 'application/json',           desc: 'Always JSON. Read the raw body bytes before parsing — signature verification requires the raw form.' },
     { header: 'User-Agent',             format: 'TechWriter-Webhook/1.0',     desc: 'Identifies TechWriter as the sender. Use in firewall rules to allow-list inbound requests.' }
   ];

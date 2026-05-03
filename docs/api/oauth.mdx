@@ -97,9 +97,9 @@ export const AuthenticationPage = () => {
 
   const codeSnippets = {
     'cURL': {
-      init: `curl https://api.techwriter.io/v1/groups \\
-  -u tw_test_51H59ow...Dm2DtMWD :`,
-      note: `# The colon prevents curl from asking for a password.`
+      init: `curl https://api.techwriter.io/api/public/users \\
+  -H "Authorization: Bearer tw_test_51H59ow...Dm2DtMWD"`,
+      note: `# Alternatively, pass your key via HTTP Basic Auth:\n# curl ... -u tw_test_51H59ow...Dm2DtMWD :\n# The trailing colon tells curl not to prompt for a password.`
     },
     'Node.js': {
       init: `import TechWriter from 'techwriter';\nconst tw = new TechWriter('tw_test_51H59...');`,
@@ -226,7 +226,7 @@ export const AuthenticationPage = () => {
             </p>
 
             <p>
-              Authentication to the API is performed via <span style={{ color: '#F68B1F', fontWeight: '500', cursor: 'pointer' }}>HTTP Basic Auth</span>. Provide your API key as the basic auth username value. You do not need to provide a password.
+              Authentication to the API is performed via an <span style={{ color: '#F68B1F', fontWeight: '500', cursor: 'pointer' }}>Authorization: Bearer</span> header. Pass your API key as the Bearer token value on every request. The cURL shorthand uses HTTP Basic Auth with your key as the username and an empty password — both methods produce the same <code style={{ backgroundColor: '#1e1e20', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', fontFamily: 'monospace', color: '#e3e3e8' }}>Authorization</code> header.
             </p>
 
             <p>
@@ -323,7 +323,7 @@ export const AuthenticationPage = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
             {language === 'cURL' ? (
               <div>
-                <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '18px', fontWeight: 'bold', marginBottom: '1rem', letterSpacing: '-0.025em' }}>Terminal Request</h3>
+                <h3 style={{ color: 'var(--ifm-font-color-base)', fontSize: '18px', fontWeight: 'bold', marginBottom: '1rem', letterSpacing: '-0.025em' }}>Bearer Token Request</h3>
                 {renderCode(codeSnippets['cURL'].init, 'init')}
                 <p style={{ fontSize: '13px', color: '#6b6b7b', marginTop: '1rem', fontStyle: 'italic', padding: '0.75rem 1rem', backgroundColor: '#1a1a1c', borderRadius: '0.5rem', border: '1px solid #303033', borderLeft: '4px solid #8b949e' }}>
                   {codeSnippets['cURL'].note}

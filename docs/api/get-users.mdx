@@ -369,12 +369,12 @@ var users = client.V1.Users.List(options);`
   });
 
   const paramRows = [
-    { name: 'filter', example: "email eq 'admin@techwriter.io'", desc: 'Optional filter expression used to narrow the returned users.' },
-    { name: 'select', example: 'firstName,lastName,email', desc: 'Optional list of properties to include in the response.' },
-    { name: 'top', example: '20', desc: 'Maximum number of users to return.' },
-    { name: 'skip', example: '0', desc: 'Number of users to skip. Commonly used for pagination.' },
-    { name: 'orderby', example: 'lastName asc', desc: 'Specifies the sort order of the returned users.' },
-    { name: 'count', example: 'true', desc: 'When true, the response includes data.totalCount.' }
+    { name: 'filter',  in: 'query', type: 'string',  required: false, example: "email eq 'admin@techwriter.io'", desc: "Filter expression that narrows the returned users. Format: field op 'value'." },
+    { name: 'select',  in: 'query', type: 'string',  required: false, example: 'firstName,lastName,email',       desc: 'Comma-separated list of response properties to include. Omit to receive all fields.' },
+    { name: 'top',     in: 'query', type: 'integer', required: false, example: '20',                             desc: 'Maximum number of users to return.' },
+    { name: 'skip',    in: 'query', type: 'integer', required: false, example: '0',                              desc: 'Number of users to skip before returning results. Use with top for offset pagination.' },
+    { name: 'orderby', in: 'query', type: 'string',  required: false, example: 'lastName asc',                  desc: 'Sort expression: a field name followed by asc or desc.' },
+    { name: 'count',   in: 'query', type: 'boolean', required: false, example: 'true',                           desc: 'When true, the response includes data.totalCount — the total matching users before pagination.' }
   ];
 
   const headerRows = [
@@ -392,7 +392,7 @@ var users = client.V1.Users.List(options);`
     { name: 'data.items[].isActive', type: 'boolean', desc: 'Indicates whether the account is active.' },
     { name: 'data.items[].role', type: 'string', desc: 'System role (admin, editor, viewer).' },
     { name: 'data.items[].createdAt', type: 'string', desc: 'User creation timestamp in ISO 8601 format.' },
-    { name: 'data.items[].lastLogin', type: 'string | null', desc: 'Timestamp of the most recent login.' },
+    { name: 'data.items[].lastLogin', type: 'string | null', desc: 'Timestamp of the most recent login in ISO 8601 format, or null if the user has never logged in.' },
     { name: 'success', type: 'boolean', desc: 'Indicates whether the request completed successfully.' }
   ];
 
@@ -444,14 +444,18 @@ var users = client.V1.Users.List(options);`
           {/* Query Parameters */}
           <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Query parameters</h2>
           <div style={cardTableStyle}>
-            <div style={headerCellsStyle('170px 1fr 1.4fr')}>
+            <div style={headerCellsStyle('160px 80px 90px 1fr 1.4fr')}>
               <span>Parameter</span>
+              <span>Type</span>
+              <span>Required</span>
               <span>Example</span>
               <span>Description</span>
             </div>
             {paramRows.map((p, idx) => (
-              <div key={p.name} style={bodyRowStyle('170px 1fr 1.4fr', idx === paramRows.length - 1)}>
+              <div key={p.name} style={bodyRowStyle('160px 80px 90px 1fr 1.4fr', idx === paramRows.length - 1)}>
                 <code style={{ fontFamily: 'monospace', color: '#F68B1F', fontWeight: '600', fontSize: '13px' }}>{p.name}</code>
+                <span style={{ fontFamily: 'monospace', color: '#79c0ff', fontSize: '12px' }}>{p.type}</span>
+                <span style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: p.required ? '#f85149' : '#6b6b7b' }}>{p.required ? 'required' : 'optional'}</span>
                 <code style={{ fontFamily: 'monospace', color: '#e3e3e8', fontSize: '12px' }}>{p.example}</code>
                 <span style={{ color: '#adadb8', lineHeight: '1.5' }}>{p.desc}</span>
               </div>

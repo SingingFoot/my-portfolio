@@ -106,7 +106,7 @@ export const SdkApiEndpointsPage = () => {
     listProjects: `// Paginated, filterable list of projects in your workspace
 const page = await client.projects.list({
   top: 25,
-  filter: 'status eq active',
+  filter: "status eq 'active'",
   orderBy: 'updatedAt desc'
 });
 
@@ -378,7 +378,7 @@ const hook = await client.webhooks.create({
   const baseRows = [
     { env: 'Production', url: 'https://api.techwriter.io/v1', notes: 'Primary multi-region endpoint. Latency-routed to the nearest data center.' },
     { env: 'EU residency', url: 'https://eu.api.techwriter.io/v1', notes: 'Data stays in Frankfurt. Required for GDPR-scoped workspaces.' },
-    { env: 'Sandbox', url: 'https://sandbox.api.techwriter.io/v1', notes: 'Test workspace. Resets nightly. Ignored by billing and rate limits.' },
+    { env: 'Sandbox', url: 'https://sandbox.api.techwriter.io/v1', notes: 'Test workspace. Resets nightly. Usage is excluded from billing and does not count against rate limits.' },
     { env: 'Self-hosted', url: 'https://{your-domain}/api/v1', notes: 'Pass via the baseURL client option. Mirrors the public surface 1:1.' }
   ];
 
@@ -420,13 +420,13 @@ const hook = await client.webhooks.create({
     { code: '409', label: 'Conflict',              desc: 'Concurrency conflict — your lastSeenVersion is stale. Re-read and retry.' },
     { code: '422', label: 'Unprocessable Entity',  desc: 'Validation failed. The error body lists which fields broke which rule.' },
     { code: '429', label: 'Too Many Requests',     desc: 'Rate limit exceeded. Honor the Retry-After header before retrying.' },
-    { code: '500', label: 'Server Error',          desc: 'Something on our side. Safe to retry — the SDK does this for you by default.' }
+    { code: '500', label: 'Server Error',          desc: 'An unexpected server-side error. Safe to retry — the SDK does this automatically by default.' }
   ];
 
   const queryRows = [
     { name: 'top',     example: 'top=25',                 desc: 'Number of items per page. Default 25, max 200 across every list endpoint.' },
     { name: 'cursor',  example: 'cursor=eyJ0IjoxNzE0...', desc: 'Opaque continuation token returned as nextCursor. Pass back verbatim.' },
-    { name: 'filter',  example: 'filter=status eq draft', desc: 'OData-style filter. Supports eq, ne, gt, lt, in, contains, and/or.' },
+    { name: 'filter',  example: "filter=status eq 'draft'", desc: 'OData-style filter. Supports eq, ne, gt, lt, in, contains, and, or.' },
     { name: 'orderBy', example: 'orderBy=updatedAt desc', desc: 'Field plus direction. Sortable fields are listed on each resource page.' },
     { name: 'fields',  example: 'fields=id,title,status', desc: 'Sparse fieldsets — return only the columns you need to cut payload size.' },
     { name: 'expand',  example: 'expand=template,owner',  desc: 'Inline a related resource so you don\'t need a follow-up GET.' },

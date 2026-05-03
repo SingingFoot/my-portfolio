@@ -324,7 +324,7 @@ client.on('response', (ctx) => tracer.endSpan(ctx.spanId, { status: ctx.status }
 
   const exceptionRows = [
     { name: 'TechWriterError',     ext: 'Error',             notes: 'Base class for every SDK error. Carries code, status, requestId, retryable.' },
-    { name: 'AuthenticationError', ext: 'TechWriterError',   notes: 'Raised on 401. Inspect err.code for unauthorized, expired_token, or revoked_key.' },
+    { name: 'AuthenticationError', ext: 'TechWriterError',   notes: 'Raised on 401. Inspect err.code for unauthorized, token_expired, or token_revoked.' },
     { name: 'PermissionError',     ext: 'TechWriterError',   notes: 'Raised on 403. err.requiredScope tells you which scope the key was missing.' },
     { name: 'NotFoundError',       ext: 'TechWriterError',   notes: 'Raised on 404. Use it as a clean signal for "absent" rather than a hard failure.' },
     { name: 'ValidationError',     ext: 'TechWriterError',   notes: 'Raised on 422. err.details is an array of { field, rule, expected }.' },

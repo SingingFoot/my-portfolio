@@ -193,70 +193,70 @@ var client = new TechWriterClient(new TechWriterOptions {
   };
 
   const exampleSnippets = {
-    npm:      `// List the first page of articles in your workspace
-async function listArticles() {
+    npm:      `// List the first page of projects in your workspace
+async function listProjects() {
   try {
-    const page = await client.articles.list({ top: 20 });
-    console.log(\`Found \${page.totalCount} articles.\`);
-    page.items.forEach((a) =>
-      console.log(\`- \${a.title} (\${a.id})\`)
+    const page = await client.projects.list({ top: 20 });
+    console.log(\`Found \${page.totalCount} projects.\`);
+    page.items.forEach((p) =>
+      console.log(\`- \${p.name} (\${p.id})\`)
     );
   } catch (err) {
     console.error('Request failed:', err.code, err.message);
   }
 }
 
-listArticles();`,
-    yarn:     `async function listArticles() {
-  const page = await client.articles.list({ top: 20 });
-  console.log(\`Found \${page.totalCount} articles.\`);
-  page.items.forEach((a) =>
-    console.log(\`- \${a.title} (\${a.id})\`)
+listProjects();`,
+    yarn:     `async function listProjects() {
+  const page = await client.projects.list({ top: 20 });
+  console.log(\`Found \${page.totalCount} projects.\`);
+  page.items.forEach((p) =>
+    console.log(\`- \${p.name} (\${p.id})\`)
   );
 }
-listArticles();`,
-    pnpm:     `async function listArticles() {
-  const page = await client.articles.list({ top: 20 });
-  console.log(\`Found \${page.totalCount} articles.\`);
-  page.items.forEach((a) =>
-    console.log(\`- \${a.title} (\${a.id})\`)
+listProjects();`,
+    pnpm:     `async function listProjects() {
+  const page = await client.projects.list({ top: 20 });
+  console.log(\`Found \${page.totalCount} projects.\`);
+  page.items.forEach((p) =>
+    console.log(\`- \${p.name} (\${p.id})\`)
   );
 }
-listArticles();`,
-    pip:      `# List the first page of articles in your workspace
-page = client.articles.list(top=20)
-print(f"Found {page.total_count} articles.")
-for a in page.items:
-    print(f"- {a.title} ({a.id})")`,
-    gem:      `page = client.articles.list(top: 20)
-puts "Found #{page.total_count} articles."
-page.items.each do |a|
-  puts "- #{a.title} (#{a.id})"
+listProjects();`,
+    pip:      `# List the first page of projects in your workspace
+page = client.projects.list(top=20)
+print(f"Found {page.total_count} projects.")
+for p in page.items:
+    print(f"- {p.name} ({p.id})")`,
+    gem:      `page = client.projects.list(top: 20)
+puts "Found #{page.total_count} projects."
+page.items.each do |p|
+  puts "- #{p.name} (#{p.id})"
 end`,
-    composer: `$page = $client->articles->list(['top' => 20]);
-echo "Found {$page->totalCount} articles.\\n";
-foreach ($page->items as $a) {
-  echo "- {$a->title} ({$a->id})\\n";
+    composer: `$page = $client->projects->list(['top' => 20]);
+echo "Found {$page->totalCount} projects.\\n";
+foreach ($page->items as $p) {
+  echo "- {$p->name} ({$p->id})\\n";
 }`,
-    maven:    `ArticlePage page = client.articles().list(
-  ArticleListParams.builder().top(20).build()
+    maven:    `ProjectPage page = client.projects().list(
+  ProjectListParams.builder().top(20).build()
 );
-System.out.printf("Found %d articles.%n", page.totalCount());
-page.items().forEach(a ->
-  System.out.printf("- %s (%s)%n", a.title(), a.id())
+System.out.printf("Found %d projects.%n", page.totalCount());
+page.items().forEach(p ->
+  System.out.printf("- %s (%s)%n", p.name(), p.id())
 );`,
-    go:       `page, err := client.Articles.List(ctx, &techwriter.ArticleListParams{
+    go:       `page, err := client.Projects.List(ctx, &techwriter.ProjectListParams{
   Top: 20,
 })
 if err != nil { log.Fatal(err) }
-fmt.Printf("Found %d articles.\\n", page.TotalCount)
-for _, a := range page.Items {
-  fmt.Printf("- %s (%s)\\n", a.Title, a.Id)
+fmt.Printf("Found %d projects.\\n", page.TotalCount)
+for _, p := range page.Items {
+  fmt.Printf("- %s (%s)\\n", p.Name, p.Id)
 }`,
-    dotnet:   `var page = await client.Articles.ListAsync(new ArticleListOptions { Top = 20 });
-Console.WriteLine($"Found {page.TotalCount} articles.");
-foreach (var a in page.Items) {
-  Console.WriteLine($"- {a.Title} ({a.Id})");
+    dotnet:   `var page = await client.Projects.ListAsync(new ProjectListOptions { Top = 20 });
+Console.WriteLine($"Found {page.TotalCount} projects.");
+foreach (var p in page.Items) {
+  Console.WriteLine($"- {p.Name} ({p.Id})");
 }`
   };
 
@@ -305,7 +305,7 @@ foreach (var a in page.Items) {
     { opt: 'apiKey', type: 'string', required: true, desc: 'Workspace API key from Settings → Integrations. Always read this from an environment variable.' },
     { opt: 'region', type: 'string', required: false, desc: 'Data residency region: us-east-1, eu-central-1, or ap-southeast-2. Defaults to us-east-1.' },
     { opt: 'baseURL', type: 'string', required: false, desc: 'Override the API host. Useful for self-hosted deployments and integration tests.' },
-    { opt: 'timeout', type: 'number', required: false, desc: 'Per-request timeout in milliseconds. Default 30 000.' },
+    { opt: 'timeout', type: 'number', required: false, desc: 'Per-request timeout in milliseconds. Default: 30,000.' },
     { opt: 'retries', type: 'number', required: false, desc: 'How many times to retry transient errors (5xx, 429, network) with exponential backoff. Default 3.' },
     { opt: 'logger', type: 'function', required: false, desc: 'Plug in a structured logger to capture request IDs, latency, and retry counts.' },
     { opt: 'fetch', type: 'function', required: false, desc: 'Inject a custom fetch implementation for proxies, mocking, or edge runtimes.' }
@@ -313,9 +313,9 @@ foreach (var a in page.Items) {
 
   const conceptRows = [
     { c: 'Workspace', d: 'A logical container that scopes API keys, users, roles, and content. One SDK client always operates inside a single workspace.' },
-    { c: 'Article', d: 'A versioned piece of documentation. Articles move through Draft → In Review → Published with full audit history.' },
+    { c: 'Document', d: 'A versioned content unit. Documents move through Draft → In Review → Published, with full version history preserved at every stage.' },
     { c: 'Template', d: 'A reusable starting point for new articles. Templates live in Template Folders and can be shared with groups.' },
-    { c: 'Asset', d: 'Binary attachments — images, PDFs, code samples — uploaded once and referenced from articles by stable URL.' },
+    { c: 'Asset', d: 'Binary attachments — images, PDFs, and downloadable files — uploaded once and referenced from documents by a stable CDN URL.' },
     { c: 'Group & Role', d: 'Groups bundle users; roles bundle privileges. Combine the two to grant scoped access without per-user setup.' },
     { c: 'Deployment', d: 'A snapshot of one or more articles published to a portal. Every deployment is immutable and rollback-capable.' }
   ];
@@ -325,7 +325,7 @@ foreach (var a in page.Items) {
     { f: 'Cursor pagination helpers', d: 'Iterate full result sets with for-await loops or async iterators — no manual page-token bookkeeping.' },
     { f: 'Typed request & response models', d: 'TypeScript definitions, Python dataclasses, Java POJOs, .NET records — all generated from the same OpenAPI spec.' },
     { f: 'Webhook signature verification', d: 'Constant-time HMAC-SHA256 verification helper. Rejects replays older than five minutes by default.' },
-    { f: 'Request batching', d: 'Group up to 25 article writes into a single transactional request to reduce round trips.' },
+    { f: 'Request batching', d: 'Group up to 25 document writes into a single transactional request to reduce round trips.' },
     { f: 'Streaming uploads', d: 'Upload large assets directly from a stream. The SDK handles multipart, chunking, and resume on retry.' },
     { f: 'Idempotency keys', d: 'Pass an Idempotency-Key on any write to safely retry without creating duplicates.' },
     { f: 'Sandbox mode', d: 'Switch between live and test data with a single flag. Sandbox usage never counts against your rate limit or billing.' }
