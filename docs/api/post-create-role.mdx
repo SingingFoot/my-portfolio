@@ -460,7 +460,7 @@ var role = client.V1.Roles.Create(options);`
           <p style={{ fontSize: '14px', color: '#adadb8', marginBottom: '1rem' }}>Send a JSON object containing the role definition.</p>
           <div style={{ marginBottom: '3rem', borderTop: '1px solid #1e1e20' }}>
             {fieldRow('name', 'string', true, 'Display name shown across the Administration → Roles screen.')}
-            {fieldRow('privileges', 'number[]', true, 'List of privilege IDs assigned to the role. Must contain at least one value.')}
+            {fieldRow('privileges', 'integer[]', true, 'List of privilege IDs assigned to the role. Must contain at least one value. Example: [3, 11, 16].')}
           </div>
 
           {/* Privilege Mapping */}

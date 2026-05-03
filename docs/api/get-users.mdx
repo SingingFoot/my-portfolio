@@ -166,7 +166,7 @@ var users = client.V1.Users.List(options);`
     "totalCount": 150,
     "items": [
       {
-        "userId": "u123-abc-456",
+        "userId": 12734,
         "email": "john.doe@techwriter.io",
         "firstName": "John",
         "lastName": "Doe",
@@ -176,7 +176,7 @@ var users = client.V1.Users.List(options);`
         "lastLogin": "2026-04-08T14:20:11+00:00"
       },
       {
-        "userId": "u789-def-012",
+        "userId": 5892,
         "email": "jane.smith@techwriter.io",
         "firstName": "Jane",
         "lastName": "Smith",
@@ -244,7 +244,7 @@ var users = client.V1.Users.List(options);`
     "code": "unprocessable_entity",
     "message": "Filter expression is syntactically invalid.",
     "param": "filter",
-    "hint": "Use the format: field op 'value' (e.g. email eq 'a@b.io')."
+    "hint": "Use the format: field op 'value', where op is the operator (e.g. eq for equals, ne for not equals). Example: email eq 'a@b.io'."
   },
   "success": false
 }`
@@ -369,7 +369,7 @@ var users = client.V1.Users.List(options);`
   });
 
   const paramRows = [
-    { name: 'filter',  in: 'query', type: 'string',  required: false, example: "email eq 'admin@techwriter.io'", desc: "Filter expression that narrows the returned users. Format: field op 'value'." },
+    { name: 'filter',  in: 'query', type: 'string',  required: false, example: "email eq 'admin@techwriter.io'", desc: "Filter expression that narrows the returned users. Format: field op 'value', where op is the operator. Supported operators: eq (equals), ne (not equals), lt (less than), gt (greater than), le (less than or equal), ge (greater than or equal), contains." },
     { name: 'select',  in: 'query', type: 'string',  required: false, example: 'firstName,lastName,email',       desc: 'Comma-separated list of response properties to include. Omit to receive all fields.' },
     { name: 'top',     in: 'query', type: 'integer', required: false, example: '20',                             desc: 'Maximum number of users to return.' },
     { name: 'skip',    in: 'query', type: 'integer', required: false, example: '0',                              desc: 'Number of users to skip before returning results. Use with top for offset pagination.' },
@@ -383,9 +383,9 @@ var users = client.V1.Users.List(options);`
   ];
 
   const fieldRows = [
-    { name: 'data.totalCount', type: 'number', desc: 'Total number of users that match the query.' },
-    { name: 'data.items', type: 'array', desc: 'List of returned users.' },
-    { name: 'data.items[].userId', type: 'string', desc: 'Unique identifier of the user.' },
+    { name: 'data.totalCount', type: 'integer', desc: 'Total number of users that match the query.' },
+    { name: 'data.items', type: 'object[]', desc: 'List of returned user objects. Optional — may be an empty array (minimum 0 items) when no users match the query.' },
+    { name: 'data.items[].userId', type: 'integer', desc: 'Unique numeric identifier of the user (employee number). Example: 12734.' },
     { name: 'data.items[].email', type: 'string', desc: "User's email address." },
     { name: 'data.items[].firstName', type: 'string', desc: "User's first name." },
     { name: 'data.items[].lastName', type: 'string', desc: "User's last name." },

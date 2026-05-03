@@ -103,10 +103,7 @@ export const PostCreateTemplateFolderPage = () => {
   -d '{
     "name": "Onboarding Templates",
     "groupIds": ["b81eceff-d8db-4e10-a10d-01010f294fe9"],
-    "userIds": [
-      "08bc7305-5d85-424b-b6ab-0007d35d501f",
-      "1a66d10c-dcba-4d86-8bf0-000c5b7086c2"
-    ]
+    "userIds": [12734, 5892]
   }'`,
     'Node.js': `import TechWriter from 'techwriter';
 const tw = new TechWriter('tw_test_51H59...');
@@ -114,10 +111,7 @@ const tw = new TechWriter('tw_test_51H59...');
 const folder = await tw.templateFolders.create({
   name: 'Onboarding Templates',
   groupIds: ['b81eceff-d8db-4e10-a10d-01010f294fe9'],
-  userIds: [
-    '08bc7305-5d85-424b-b6ab-0007d35d501f',
-    '1a66d10c-dcba-4d86-8bf0-000c5b7086c2'
-  ]
+  userIds: [12734, 5892]
 });`,
     'Python': `from techwriter import TechWriterClient
 client = TechWriterClient("tw_test_51H59...")
@@ -125,10 +119,7 @@ client = TechWriterClient("tw_test_51H59...")
 folder = client.v1.template_folders.create(
   name="Onboarding Templates",
   group_ids=["b81eceff-d8db-4e10-a10d-01010f294fe9"],
-  user_ids=[
-    "08bc7305-5d85-424b-b6ab-0007d35d501f",
-    "1a66d10c-dcba-4d86-8bf0-000c5b7086c2"
-  ]
+  user_ids=[12734, 5892]
 )`,
     'Ruby': `require 'techwriter'
 client = TechWriter::Client.new("tw_test_51H59...")
@@ -136,30 +127,21 @@ client = TechWriter::Client.new("tw_test_51H59...")
 folder = client.v1.template_folders.create(
   name: 'Onboarding Templates',
   group_ids: ['b81eceff-d8db-4e10-a10d-01010f294fe9'],
-  user_ids: [
-    '08bc7305-5d85-424b-b6ab-0007d35d501f',
-    '1a66d10c-dcba-4d86-8bf0-000c5b7086c2'
-  ]
+  user_ids: [12734, 5892]
 )`,
     'PHP': `$tw = new \\TechWriter\\Client("tw_test_51H59...");
 
 $folder = $tw->templateFolders->create([
   'name' => 'Onboarding Templates',
   'groupIds' => ['b81eceff-d8db-4e10-a10d-01010f294fe9'],
-  'userIds' => [
-    '08bc7305-5d85-424b-b6ab-0007d35d501f',
-    '1a66d10c-dcba-4d86-8bf0-000c5b7086c2'
-  ]
+  'userIds' => [12734, 5892]
 ]);`,
     'Java': `TechWriterClient client = new TechWriterClient("tw_test_51H59...");
 
 TemplateFolderParams params = TemplateFolderParams.builder()
   .setName("Onboarding Templates")
   .setGroupIds(List.of("b81eceff-d8db-4e10-a10d-01010f294fe9"))
-  .setUserIds(List.of(
-    "08bc7305-5d85-424b-b6ab-0007d35d501f",
-    "1a66d10c-dcba-4d86-8bf0-000c5b7086c2"
-  ))
+  .setUserIds(List.of(12734, 5892))
   .build();
 
 TemplateFolder folder = client.v1().templateFolders().create(params);`,
@@ -168,10 +150,7 @@ TemplateFolder folder = client.v1().templateFolders().create(params);`,
 params := &techwriter.TemplateFolderParams{
   Name: "Onboarding Templates",
   GroupIds: []string{"b81eceff-d8db-4e10-a10d-01010f294fe9"},
-  UserIds: []string{
-    "08bc7305-5d85-424b-b6ab-0007d35d501f",
-    "1a66d10c-dcba-4d86-8bf0-000c5b7086c2",
-  },
+  UserIds: []int{12734, 5892},
 }
 folder, err := twc.TemplateFolders.Create(ctx, params)`,
     '.NET': `var client = new TechWriterClient("tw_test_51H59...");
@@ -179,10 +158,7 @@ folder, err := twc.TemplateFolders.Create(ctx, params)`,
 var options = new TemplateFolderCreateOptions {
   Name = "Onboarding Templates",
   GroupIds = new List<string> { "b81eceff-d8db-4e10-a10d-01010f294fe9" },
-  UserIds = new List<string> {
-    "08bc7305-5d85-424b-b6ab-0007d35d501f",
-    "1a66d10c-dcba-4d86-8bf0-000c5b7086c2"
-  }
+  UserIds = new List<int> { 12734, 5892 }
 };
 var folder = client.V1.TemplateFolders.Create(options);`
   };
@@ -255,7 +231,7 @@ var folder = client.V1.TemplateFolders.Create(options);`
     "code": "unprocessable_entity",
     "message": "One or more provided userIds were not found in the workspace.",
     "param": "userIds",
-    "missingIds": ["1a66d10c-dcba-4d86-8bf0-000c5b7086c2"]
+    "missingIds": [5892]
   },
   "success": false
 }`
@@ -340,7 +316,7 @@ var folder = client.V1.TemplateFolders.Create(options);`
   const bodyFieldRows = [
     { name: 'name', type: 'string', required: true, desc: 'Display name of the new template folder. Must be unique among root-level folders.' },
     { name: 'groupIds', type: 'string[]', required: false, desc: 'Optional list of user-group IDs that should receive access to the folder.' },
-    { name: 'userIds', type: 'string[]', required: false, desc: 'Optional list of user IDs that should receive direct access to the folder.' }
+    { name: 'userIds', type: 'integer[]', required: false, desc: 'Optional list of user IDs (employee numbers) that should receive direct access to the folder. Example: [12734, 5892]. Minimum 0 items.' }
   ];
 
   const responseFieldRows = [
