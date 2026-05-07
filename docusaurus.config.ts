@@ -12,11 +12,12 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://singingfoot.github.io', 
+  // IMPORTANT: must match the actual deployed URL to avoid noindex injection
+  url: 'https://tw-portfolio-en.netlify.app',
   baseUrl: '/',
 
-  organizationName: 'SingingFoot', 
-  projectName: 'my-portfolio',   
+  organizationName: 'SingingFoot',
+  projectName: 'my-portfolio',
 
   onBrokenLinks: 'throw',
 
@@ -25,12 +26,143 @@ const config: Config = {
     locales: ['en'],
   },
 
-  // --- ДОДАНО ТУТ ---
   markdown: {
     mermaid: true,
   },
   themes: ['@docusaurus/theme-mermaid'],
-  // ------------------
+
+  // Site-wide SEO — injected into <head> on every page
+  headTags: [
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'keywords',
+        content: [
+          'Technical Writer',
+          'Technical Writing',
+          'Oleh Shynkarenko',
+          'Industrial Automation Engineer',
+          'API Documentation',
+          'Docs-as-Code',
+          'Markdown',
+          'GitHub',
+          'CI/CD',
+          'Docusaurus',
+          'MkDocs',
+          'Sphinx',
+          'AI Tools',
+          'XML Authoring',
+          'UML Diagrams',
+          'User Guides',
+          'Developer Docs',
+          'Release Notes',
+          'contract technical writer',
+          'freelance technical writer',
+          'documentation engineer',
+          'developer documentation',
+          'software documentation',
+          'Ukraine technical writer',
+        ].join(', '),
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'description',
+        content:
+          'Oleh Shynkarenko — Technical Writer & Industrial Automation Engineer. ' +
+          'Expert in API Documentation, Docs-as-Code, Sphinx, Docusaurus, MkDocs, ' +
+          'Markdown, GitHub, CI/CD, AI Tools, XML Authoring, UML Diagrams, ' +
+          'User Guides, Developer Docs, and Release Notes.',
+      },
+    },
+    {tagName: 'meta', attributes: {name: 'author', content: 'Oleh Shynkarenko'}},
+    // Open Graph
+    {tagName: 'meta', attributes: {property: 'og:type', content: 'website'}},
+    {tagName: 'meta', attributes: {property: 'og:locale', content: 'en_US'}},
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:title',
+        content: 'Oleh Shynkarenko — Technical Writer | API Docs | Docs-as-Code',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        property: 'og:description',
+        content:
+          'Experienced contract Technical Writer specialising in API Documentation, ' +
+          'Docs-as-Code, Sphinx, Docusaurus, MkDocs, CI/CD, AI Tools, and Developer Docs.',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {property: 'og:url', content: 'https://tw-portfolio-en.netlify.app'},
+    },
+    // Twitter card
+    {tagName: 'meta', attributes: {name: 'twitter:card', content: 'summary_large_image'}},
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'twitter:title',
+        content: 'Oleh Shynkarenko — Technical Writer | API Docs | Docs-as-Code',
+      },
+    },
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'twitter:description',
+        content:
+          'Contract Technical Writer: API Documentation, Sphinx, Docusaurus, MkDocs, ' +
+          'Docs-as-Code, CI/CD, AI Tools, UML, User Guides, Developer Docs.',
+      },
+    },
+    // JSON-LD structured data
+    {
+      tagName: 'script',
+      attributes: {type: 'application/ld+json'},
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Person',
+        name: 'Oleh Shynkarenko',
+        url: 'https://tw-portfolio-en.netlify.app',
+        jobTitle: 'Technical Writer',
+        description:
+          'Experienced contract Technical Writer and Industrial Automation Engineer ' +
+          'specialising in API Documentation, Docs-as-Code, Sphinx, Docusaurus, MkDocs, ' +
+          'CI/CD, AI Tools, XML Authoring, UML Diagrams, User Guides, and Developer Docs.',
+        knowsAbout: [
+          'Technical Writing',
+          'API Documentation',
+          'Docs-as-Code',
+          'Sphinx',
+          'Docusaurus',
+          'MkDocs',
+          'Markdown',
+          'GitHub',
+          'CI/CD',
+          'AI Tools',
+          'XML Authoring',
+          'UML Diagrams',
+          'User Guides',
+          'Developer Documentation',
+          'Release Notes',
+          'Industrial Automation',
+          'Restrukturured Text',
+        ],
+        sameAs: [
+          'https://github.com/SingingFoot',
+          'https://www.linkedin.com/in/oleh-shynkarenko-15a24b65/',
+          'https://scholar.google.com/citations?hl=en&user=1yCMKj4AAAAJ',
+          'https://orcid.org/0009-0001-1690-8967',
+          'https://medbiotech.academia.edu/OlehShynkarenko',
+          'https://www.researchgate.net/profile/Oleh-Shynkarenko',
+        ],
+        email: 'singingfoot@gmail.com',
+      }),
+    },
+  ],
 
   presets: [
     [
@@ -49,6 +181,11 @@ const config: Config = {
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
           onUntruncatedBlogPosts: 'warn',
+        },
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.8,
+          filename: 'sitemap.xml',
         },
         theme: {
           customCss: './src/css/custom.css',

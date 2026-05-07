@@ -4,6 +4,7 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
+import Head from '@docusaurus/Head';
 
 import styles from './index.module.css';
 
@@ -267,7 +268,22 @@ function HomepageContent() {
 export default function Home(): React.ReactNode {
   const {siteConfig} = useDocusaurusContext();
   return (
-    <Layout title={siteConfig.title} description={siteConfig.tagline}>
+    <Layout
+      title="Oleh Shynkarenko — Technical Writer | API Docs | Docs-as-Code"
+      description="Experienced contract Technical Writer and Industrial Automation Engineer specialising in API Documentation, Docs-as-Code, Sphinx, Docusaurus, MkDocs, CI/CD, AI Tools, XML Authoring, UML Diagrams, User Guides, Developer Docs, and Release Notes."
+    >
+      <Head>
+        <meta name="keywords" content="Technical Writer, Industrial Automation Engineer, API Documentation, Docs-as-Code, Markdown, GitHub, CI/CD, Docusaurus, MkDocs, Sphinx, AI Tools, XML Authoring, UML Diagrams, User Guides, Developer Docs, Release Notes, contract technical writer, freelance technical writer, documentation engineer, software documentation, Ukraine technical writer, Budapest technical writer, Oleh Shynkarenko" />
+        <meta name="author" content="Oleh Shynkarenko" />
+        <link rel="canonical" href="https://tw-portfolio-en.netlify.app/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://tw-portfolio-en.netlify.app/" />
+        <meta property="og:title" content="Oleh Shynkarenko — Technical Writer | API Docs | Docs-as-Code" />
+        <meta property="og:description" content="Contract Technical Writer: API Documentation, Sphinx, Docusaurus, MkDocs, Docs-as-Code, CI/CD, AI Tools, UML, User Guides, Developer Docs." />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Oleh Shynkarenko — Technical Writer | API Docs | Docs-as-Code" />
+        <meta name="twitter:description" content="Contract Technical Writer: API Documentation, Sphinx, Docusaurus, MkDocs, Docs-as-Code, CI/CD, AI Tools, UML, User Guides, Developer Docs." />
+      </Head>
       <HomepageHeader />
       <main><HomepageContent /></main>
     </Layout>
