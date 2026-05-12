@@ -159,13 +159,36 @@ function HomepageContent() {
             <div style={{ borderLeft: '2px solid #ddd', paddingLeft: '1.5rem', marginBottom: '2rem' }}>
               <h4>Senior Technical Writer</h4>
               <small>
-                <a href="https://www.globallogic.com/" target="_blank" rel="noopener noreferrer" style={{color: '#F68B1F', fontWeight: 'bold'}}>GlobalLogic</a> | Kyiv, Ukraine | Nov 2021 – Jun 2023
+                <a href="https://www.globallogic.com/" target="_blank" rel="noopener noreferrer" style={{color: '#F68B1F', fontWeight: 'bold'}}>GlobalLogic</a> (outsourcing company) | Kyiv, Ukraine | Nov 2021 – Jun 2023
               </small>
-              <ul style={{fontSize: '0.9rem', marginTop: '0.5rem'}}>
-                <li>Created documentation using Docs-as-Code (Markdown, MkDocs, GitHub)</li>
-                <li>Wrote user guides, developer documentation, and manuals</li>
-                <li>Optimized CI/CD pipelines for automated documentation deployment</li>
-              </ul>
+
+              {/* 3M */}
+              <div style={{marginTop: '0.75rem', marginBottom: '0.5rem'}}>
+                <strong style={{fontSize: '0.9rem'}}>🏢 3M — Technical Writer</strong>
+                <ul style={{fontSize: '0.9rem', marginTop: '0.35rem'}}>
+                  <li>Spearheaded creation of comprehensive internal documentation for a <strong>headless CMS</strong> architecture, enabling seamless integration for cross-functional developer teams.</li>
+                  <li>Translated complex backend structures into clear, actionable <strong>API guides</strong> and technical workflows to streamline content delivery systems.</li>
+                </ul>
+              </div>
+
+              {/* Verizon */}
+              <div style={{marginBottom: '0.5rem'}}>
+                <strong style={{fontSize: '0.9rem'}}>🏢 Verizon — Technical Writer</strong>
+                <ul style={{fontSize: '0.9rem', marginTop: '0.35rem'}}>
+                  <li>Authored and maintained detailed <strong>UI/UX documentation</strong> for native <strong>iOS and Android</strong> applications, ensuring design consistency and functional clarity across mobile platforms.</li>
+                  <li>Developed high-impact technical presentations for enterprise clients, communicating complex product features and system capabilities to stakeholders.</li>
+                </ul>
+              </div>
+
+              {/* NuvoAir */}
+              <div style={{marginBottom: 0}}>
+                <strong style={{fontSize: '0.9rem'}}>🏢 NuvoAir — Technical Writer (Medical Technology)</strong>
+                <ul style={{fontSize: '0.9rem', marginTop: '0.35rem'}}>
+                  <li>Managed the full lifecycle of technical documentation for high-stakes <strong>medical devices</strong>, catering to clinical users (doctors/patients) and software engineers.</li>
+                  <li>Authored critical <strong>regulatory and licensing documentation</strong> in compliance with government healthcare standards (FDA/CE).</li>
+                  <li>Produced precise <strong>release notes</strong> and developer manuals for integrated lung-function testing hardware and software.</li>
+                </ul>
+              </div>
             </div>
 
             {/* BJet */}
