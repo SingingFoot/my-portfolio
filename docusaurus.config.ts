@@ -195,7 +195,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/os.jpg',
     colorMode: {
       defaultMode: 'dark', 
       respectPrefersColorScheme: true,
