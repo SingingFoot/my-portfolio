@@ -1,0 +1,910 @@
+---
+sidebar_position: 3
+title: Ladder Diagram — Water Treatment
+description: Full IEC 61131-3 Ladder Diagram for a 3-pump water treatment system with analog level sensing, overload protection, and per-pump fault counters with timed reset.
+hide_table_of_contents: true
+---
+
+import React, { useState, useEffect } from 'react';
+
+export const LadderPage = () => {
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [activeRung, setActiveRung] = useState(1);
+  const [activeTab, setActiveTab] = useState('diagram');
+  const [feedback, setFeedback] = useState(null);
+  const [zoom, setZoom] = useState(1);
+  const zoomIn  = () => setZoom(z => Math.min(z + 0.25, 3));
+  const zoomOut = () => setZoom(z => Math.max(z - 0.25, 0.5));
+  const zoomReset = () => setZoom(1);
+
+  useEffect(() => {
+    const check = () => setIsMobileView(window.innerWidth < 900);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const sectionTitle = (text) => (
+    <h2 style={{ color: 'var(--ifm-font-color-base)', fontSize: '15px', fontWeight: '700', marginBottom: '1rem', marginTop: '2.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid #1e1e20', letterSpacing: '-0.01em' }}>
+      {text}
+    </h2>
+  );
+
+  const rungs = [
+    {
+      id: 1, label: 'Rung 1 — Analog Scaling',
+      color: '#1b4b72', textCol: '#60a5fa',
+      summary: 'Scales the raw sensor signal (400–20000) to engineering units (0–10 m) using MUL and DIV function blocks.',
+      why: 'The hydrostatic pressure sensor outputs a 4–20 mA current, which the PLC analog input module converts to an integer in the range 400–20000 (where 400 = 0 m, 20000 = 10 m). Using raw values in level comparisons would produce unreadable, fragile code. Scaling to metres makes each rung self-documenting and simplifies future sensor replacement.',
+      how: 'The MUL block multiplies LevelSensorAnalogSignal × 10, storing the result in the intermediate DINT variable Result. The DIV block then divides Result ÷ 20000, writing to LevelSensorScaled. Formula: (signal × 10) ÷ 20000 = signal ÷ 2000. Using DINT throughout prevents arithmetic overflow — the maximum intermediate value is 20000 × 10 = 200,000, well within the 32-bit signed integer range (±2,147,483,647).',
+      elements: ['MUL function block — multiplies input signal by 10', 'DIV function block — divides by 20000', 'DINT intermediate variable Result — holds the multiplied value', 'DINT LevelSensorScaled — final 0–10 m output'],
+    },
+    {
+      id: 2, label: 'Rung 2 — Start: Arm Pump 1',
+      color: '#1b5c22', textCol: '#4ade80',
+      summary: 'Sets Coil1Buffer ON (latches) when the SystemStart push-button is pressed.',
+      why: 'A Set (S) latch coil is used rather than a standard output coil because SystemStart is a momentary push-button — it returns to FALSE as soon as it is released. Using a standard coil would immediately de-energise the pump output the moment the button is released. The Set coil retains its TRUE state until an explicit Reset instruction (Rung 5) clears it.',
+      how: 'The NO (Normally Open) contact of SystemStart passes power to the Set coil of Coil1Buffer. On the rising edge of a button press the rung becomes TRUE, setting Coil1Buffer = 1. The flag remains 1 even after SystemStart returns to 0.',
+      elements: ['NO contact — SystemStart (momentary push-button)', 'Set coil (S) — Coil1Buffer (latching run-enable flag for Pump 1)'],
+    },
+    {
+      id: 3, label: 'Rung 3 — Start: Arm Pump 2',
+      color: '#1b5c22', textCol: '#4ade80',
+      summary: 'Sets Coil2Buffer ON when SystemStart is pressed.',
+      why: 'All three pump buffers are armed simultaneously from a single Start button press. This matches the single-button start requirement and ensures consistent behaviour — all pumps become eligible to run; the level sensor then governs which ones actually energise.',
+      how: 'Identical structure to Rung 2, targeting Coil2Buffer.',
+      elements: ['NO contact — SystemStart', 'Set coil (S) — Coil2Buffer'],
+    },
+    {
+      id: 4, label: 'Rung 4 — Start: Arm Pump 3',
+      color: '#1b5c22', textCol: '#4ade80',
+      summary: 'Sets Coil3Buffer ON when SystemStart is pressed.',
+      why: 'Completes the three-pump arm sequence from a single start event.',
+      how: 'Identical structure to Rung 2, targeting Coil3Buffer.',
+      elements: ['NO contact — SystemStart', 'Set coil (S) — Coil3Buffer'],
+    },
+    {
+      id: 5, label: 'Rung 5 — Stop/Overload: Reset Pump 1',
+      color: '#6e2418', textCol: '#f87171',
+      summary: 'Resets Coil1Buffer (stops Pump 1) when SystemStop is pressed OR when Overload1 trips.',
+      why: 'Using parallel (OR) branches satisfies two independent stop requirements in a single rung: (a) operator stop via the push-button, and (b) automatic protective stop on overload. A Reset (R) coil is used so that even if the overload input returns to FALSE before the operator acknowledges the fault, the pump stays de-armed.',
+      how: 'SystemStop and Overload1 contacts are wired in parallel (OR logic). If either is TRUE, the rung evaluates TRUE and the Reset coil of Coil1Buffer is activated, writing Coil1Buffer = 0.',
+      elements: ['NO contact — SystemStop (top branch)', 'NO contact — Overload1 (parallel/OR branch)', 'Reset coil (R) — Coil1Buffer'],
+    },
+    {
+      id: 6, label: 'Rung 6 — Stop/Overload: Reset Pump 2',
+      color: '#6e2418', textCol: '#f87171',
+      summary: 'Resets Coil2Buffer when SystemStop is pressed OR Overload2 trips.',
+      why: 'Independent per-pump overload logic: Pump 2 can trip without affecting Pump 1 or Pump 3. This satisfies requirement 7 — only the corresponding pump stops on overload.',
+      how: 'SystemStop and Overload2 contacts in parallel reset Coil2Buffer.',
+      elements: ['NO contact — SystemStop (top branch)', 'NO contact — Overload2 (parallel/OR branch)', 'Reset coil (R) — Coil2Buffer'],
+    },
+    {
+      id: 7, label: 'Rung 7 — Stop/Overload: Reset Pump 3',
+      color: '#6e2418', textCol: '#f87171',
+      summary: 'Resets Coil3Buffer when SystemStop is pressed OR Overload3 trips.',
+      why: 'Completes independent stop/overload reset logic for all three pumps.',
+      how: 'SystemStop and Overload3 contacts in parallel reset Coil3Buffer.',
+      elements: ['NO contact — SystemStop (top branch)', 'NO contact — Overload3 (parallel/OR branch)', 'Reset coil (R) — Coil3Buffer'],
+    },
+    {
+      id: 8, label: 'Rung 8 — Pump 1 Output (Level ≥ 2 m)',
+      color: '#4a2472', textCol: '#c084fc',
+      summary: 'Energises the Pump 1 contactor coil when the run buffer is set AND the water level is ≥ 2 m.',
+      why: 'The two-condition AND gate combines operator intent (Coil1Buffer) with the physical condition (level ≥ 2). Without the buffer gate, the pump would self-start whenever the level rose above 2 m, ignoring the operator\'s start/stop commands. Without the level condition, the pump could run even when the tank is nearly empty, risking dry-run damage. The threshold of 2 m (not 0) provides a hysteresis cushion above the "no pump" zone (below 1 m, requirement 1).',
+      how: 'Coil1Buffer NO contact in series with a GE (Greater-or-Equal) comparison function block (IN1=LevelSensorScaled, IN2=2) drives the output coil Coil1. The GE block outputs TRUE when LevelSensorScaled ≥ 2.',
+      elements: ['NO contact — Coil1Buffer (run-enable gate)', 'GE comparison block — LevelSensorScaled ≥ 2', 'Output coil ( ) — Coil1 → goes to Pump 1 contactor'],
+    },
+    {
+      id: 9, label: 'Rung 9 — Pump 2 Output (Level ≥ 6 m)',
+      color: '#4a2472', textCol: '#c084fc',
+      summary: 'Energises Pump 2 contactor when buffer is set AND level is ≥ 6 m.',
+      why: 'Pump 2 joins at 6 m per requirement 3. Using a separate threshold rung per pump means each pump\'s engage point can be tuned independently without touching other rungs.',
+      how: 'Coil2Buffer NO contact in series with GE (LevelSensorScaled ≥ 6) drives output coil Coil2.',
+      elements: ['NO contact — Coil2Buffer', 'GE comparison block — LevelSensorScaled ≥ 6', 'Output coil ( ) — Coil2 → Pump 2 contactor'],
+    },
+    {
+      id: 10, label: 'Rung 10 — Pump 3 Output (Level ≥ 8 m)',
+      color: '#4a2472', textCol: '#c084fc',
+      summary: 'Energises Pump 3 contactor when buffer is set AND level is ≥ 8 m.',
+      why: 'At 8 m (within the 9–10 m zone from requirement 4) all three pumps should be active. The cascading thresholds 2→6→8 implement the staggered engagement required by the specification.',
+      how: 'Coil3Buffer NO contact in series with GE (LevelSensorScaled ≥ 8) drives output coil Coil3.',
+      elements: ['NO contact — Coil3Buffer', 'GE comparison block — LevelSensorScaled ≥ 8', 'Output coil ( ) — Coil3 → Pump 3 contactor'],
+    },
+    {
+      id: 11, label: 'Rung 11 — Fault Counter: Pump 1',
+      color: '#6e4814', textCol: '#fb923c',
+      summary: 'Increments OverloadFaultCounter1 on each new Overload1 event; resets on ResetSignal.',
+      why: 'Requirement 8 mandates a per-pump fault count. A rising-edge (positive-edge, P) contact is essential — without it, the counter would increment every PLC scan cycle (100+ times) while the overload relay remains energised, producing wildly inflated counts. The P contact ensures exactly one count per fault event regardless of how long the overload stays active.',
+      how: 'The rising-edge contact on Overload1 drives the CU (Count Up) input of CTU block OverloadFaultCounter1. The ResetSignal NO contact drives the RESET input. PV=1000 is set high so the Q output (CV≥PV) is never triggered in normal operation — the counter acts as a pure accumulator. CV holds the cumulative fault count, readable on an HMI.',
+      elements: ['Rising-edge contact [P] — Overload1 (counts each new fault event)', 'CTU up-counter block — OverloadFaultCounter1 (PV=1000)', 'RESET input driven by ResetSignal', 'CV (Current Value) — cumulative fault count'],
+    },
+    {
+      id: 12, label: 'Rung 12 — Fault Counter: Pump 2',
+      color: '#6e4814', textCol: '#fb923c',
+      summary: 'Increments OverloadFaultCounter2 on each Overload2 event; resets on ResetSignal.',
+      why: 'Independent counter per pump allows maintenance staff to track each pump\'s fault history separately, identifying which pump is experiencing repeated problems.',
+      how: 'Rising-edge contact on Overload2 drives OverloadFaultCounter2 CTU. ResetSignal resets it. Identical structure to Rung 11.',
+      elements: ['Rising-edge contact [P] — Overload2', 'CTU up-counter block — OverloadFaultCounter2 (PV=1000)', 'RESET input from ResetSignal'],
+    },
+    {
+      id: 13, label: 'Rung 13 — Fault Counter: Pump 3',
+      color: '#6e4814', textCol: '#fb923c',
+      summary: 'Increments OverloadFaultCounter3 on each Overload3 event; resets on ResetSignal.',
+      why: 'Completes the per-pump fault logging for all three pumps.',
+      how: 'Rising-edge contact on Overload3 drives OverloadFaultCounter3 CTU. Identical structure to Rungs 11–12.',
+      elements: ['Rising-edge contact [P] — Overload3', 'CTU up-counter block — OverloadFaultCounter3 (PV=1000)', 'RESET input from ResetSignal'],
+    },
+    {
+      id: 14, label: 'Rung 14 — Auto-Reset Timer (60 s)',
+      color: '#1b5c22', textCol: '#4ade80',
+      summary: 'Generates a one-scan-cycle ResetSignal pulse every 60 seconds, resetting all fault counters.',
+      why: 'Requirement 9 mandates a 3-day counter reset (simulated as 1 minute). This rung creates a self-resetting monostable (one-shot) circuit without any latching coil. The NC contact of ResetSignal on the TON enable input is the key: when ResetSignal is FALSE (normal), the NC contact is closed and the timer accumulates. The moment the timer fires it sets ResetSignal TRUE — which immediately opens the NC contact, resetting the timer and dropping ResetSignal back to FALSE. The result is a single-scan-cycle pulse every 60 seconds that momentarily clears all three CTU counters.',
+      how: 'NC contact of ResetSignal connects to TON IN input (PT = t#60s). After 60 s the TON Q output goes TRUE → output coil ResetSignal = TRUE → NC contact opens → TON resets (Q = FALSE) → ResetSignal coil = FALSE → NC contact closes → timer starts again. Cycle period ≈ 60 s.',
+      elements: ['NC contact [/] — ResetSignal (self-interrupting enable)', 'TON on-delay timer block (PT = t#60s)', 'Output coil ( ) — ResetSignal (auto-clears after one scan)'],
+    },
+  ];
+
+  const active = rungs.find(r => r.id === activeRung) || rungs[0];
+
+  // ── Ladder SVG ──
+  const LadderSVG = () => {
+    const W = 540;
+    const LR = 28;   // left rail x
+    const RR = W - 28; // right rail x
+
+    // Rail line markers
+    // Spacing rules:
+    //  Single-contact rungs      → 43 px gap
+    //  Parallel-branch rungs (±18 offset + labelBelow) → 82 px gap
+    //  GE-comparison rungs       → 58 px gap
+    //  CTU parallel rungs        → 92 px gap
+    const runYs = [55, 125, 168, 211, 268, 350, 432, 496, 556, 614, 700, 792, 884, 958];
+    const runHeights = [50, 28, 28, 28, 70, 70, 70, 55, 55, 55, 70, 70, 70, 42];
+    const totalH = runYs[13] + runHeights[13] + 30;
+
+    // Contact total width = 8 (left wire) + w (rect) + 8 (right wire) = w+16
+    // small=true → w=42, total=58  (all downstream +58 refs stay correct)
+    const Contact = ({ x, y, label, type = 'NO', small, labelBelow = false }) => {
+      const w = small ? 42 : 50; const h = 20;
+      const col = type === 'NC' ? '#f87171' : type === 'PE' ? '#fb923c' : '#60a5fa';
+      const cx = x + 8 + w / 2;
+      const labelY = labelBelow ? y + h / 2 + 9 : y - h / 2 - 3;
+      return (
+        <g>
+          {/* Variable name above/below the block */}
+          <text x={cx} y={labelY} textAnchor="middle" fill={col} fontSize="6.5" fontWeight="700">{label}</text>
+          {/* Left wire */}
+          <line x1={x} y1={y} x2={x + 8} y2={y} stroke={col} strokeWidth="1.5"/>
+          {/* Contact rectangle */}
+          <rect x={x + 8} y={y - h / 2} width={w} height={h} rx="3" fill="#0a0a0a" stroke={col} strokeWidth="1.2"/>
+          {/* NO — two vertical contact bars (open-circuit symbol) */}
+          {type === 'NO' && <line x1={x+18} y1={y-7} x2={x+18} y2={y+7} stroke={col} strokeWidth="1.8"/>}
+          {type === 'NO' && <line x1={x+8+w-10} y1={y-7} x2={x+8+w-10} y2={y+7} stroke={col} strokeWidth="1.8"/>}
+          {/* NC — diagonal slash through the contact */}
+          {type === 'NC' && <line x1={x + 10} y1={y + h / 2 - 2} x2={x + 8 + w - 2} y2={y - h / 2 + 2} stroke={col} strokeWidth="1.2"/>}
+          {/* PE — rising-edge arrow */}
+          {type === 'PE' && <text x={cx} y={y + 4} textAnchor="middle" fill={col} fontSize="9" fontWeight="800">↑</text>}
+          {/* Right wire */}
+          <line x1={x + 8 + w} y1={y} x2={x + 8 + w + 8} y2={y} stroke={col} strokeWidth="1.5"/>
+        </g>
+      );
+    };
+
+    const Coil = ({ x, y, label, type = 'OUT' }) => {
+      const col = type === 'S' ? '#4ade80' : type === 'R' ? '#f87171' : '#c084fc';
+      const inner = type === 'S' ? 'S' : type === 'R' ? 'R' : '';
+      return (
+        <g>
+          <line x1={x} y1={y} x2={x + 8} y2={y} stroke={col} strokeWidth="1.5"/>
+          <ellipse cx={x + 8 + 18} cy={y} rx="18" ry="11" fill="#0a0a0a" stroke={col} strokeWidth="1.5"/>
+          {inner && <text x={x+8+18} y={y+3} textAnchor="middle" fill={col} fontSize="9" fontWeight="800">{inner}</text>}
+          <line x1={x + 8 + 36} y1={y} x2={x + 8 + 44} y2={y} stroke={col} strokeWidth="1.5"/>
+          <text x={x + 8 + 18} y={y - 16} textAnchor="middle" fill={col} fontSize="7" fontWeight="600">{label}</text>
+        </g>
+      );
+    };
+
+    const FuncBlock = ({ x, y, w = 64, h = 38, title, subtitle, col }) => (
+      <g>
+        <rect x={x} y={y - h/2} width={w} height={h} rx="4" fill="#0a0a0a" stroke={col} strokeWidth="1.5"/>
+        <text x={x + w/2} y={y - 4} textAnchor="middle" fill={col} fontSize="9" fontWeight="800">{title}</text>
+        <text x={x + w/2} y={y + 8} textAnchor="middle" fill="#88888f" fontSize="7.5">{subtitle}</text>
+        <line x1={x} y1={y} x2={x - 8} y2={y} stroke={col} strokeWidth="1.5"/>
+        <line x1={x + w} y1={y} x2={x + w + 8} y2={y} stroke={col} strokeWidth="1.5"/>
+      </g>
+    );
+
+    const RungHighlight = ({ y, h }) => (
+      <rect x={LR - 4} y={y - h/2 - 6} width={RR - LR + 8} height={h + 12} rx="4"
+        fill={`rgba(246,139,31,0.06)`} stroke="#F68B1F" strokeWidth="1" strokeDasharray="4,3"/>
+    );
+
+    const RungLabel = ({ id, y }) => (
+      <text x={LR - 10} y={y + 4} textAnchor="end" fill={id === activeRung ? '#F68B1F' : '#444'} fontSize="8" fontWeight="700" fontFamily="monospace">{id}</text>
+    );
+
+    return (
+      <svg viewBox={`0 0 ${W} ${totalH}`} xmlns="http://www.w3.org/2000/svg"
+        style={{ width: '100%', display: 'block', cursor: 'pointer' }}
+        onClick={(e) => {
+          const yClick = (e.clientY - e.currentTarget.getBoundingClientRect().top) / e.currentTarget.getBoundingClientRect().height * totalH;
+          const closest = runYs.reduce((best, ry, i) => Math.abs(ry - yClick) < Math.abs(runYs[best] - yClick) ? i : best, 0);
+          setActiveRung(closest + 1);
+        }}
+      >
+        {/* Power rails */}
+        <line x1={LR} y1="18" x2={LR} y2={totalH - 18} stroke="#F68B1F" strokeWidth="3" strokeLinecap="round"/>
+        <line x1={RR} y1="18" x2={RR} y2={totalH - 18} stroke="#F68B1F" strokeWidth="3" strokeLinecap="round"/>
+        <text x={LR} y="12" textAnchor="middle" fill="#a85010" fontSize="7" fontWeight="700">L+</text>
+        <text x={RR} y="12" textAnchor="middle" fill="#a85010" fontSize="7" fontWeight="700">N</text>
+
+        {/* ── Rung 1: Scaling ── */}
+        {activeRung === 1 && <RungHighlight y={runYs[0]} h={runHeights[0]}/>}
+        <RungLabel id={1} y={runYs[0]}/>
+        {/* Rail → MUL input */}
+        <line x1={LR} y1={runYs[0]} x2={LR+74} y2={runYs[0]} stroke="#60a5fa" strokeWidth="1.5"/>
+        {/* Input variable label — two lines to avoid overlap */}
+        <text textAnchor="start" fill="#60a5fa" fontSize="6.5" fontWeight="700">
+          <tspan x={LR+4} dy={runYs[0] - 22}>LevelSensor</tspan>
+          <tspan x={LR+4} dy="9">AnalogSignal</tspan>
+        </text>
+        <FuncBlock x={LR+82} y={runYs[0]} w={54} h={34} title="MUL" subtitle="×10" col="#60a5fa"/>
+        {/* MUL output → DIV input connecting line */}
+        <line x1={LR+82+54+8} y1={runYs[0]} x2={LR+82+54+20} y2={runYs[0]} stroke="#60a5fa" strokeWidth="1.5"/>
+        <text x={LR+82+54+14} y={runYs[0]+20} textAnchor="middle" fill="#88888f" fontSize="6.5">Result</text>
+        <FuncBlock x={LR+82+54+28} y={runYs[0]} w={54} h={34} title="DIV" subtitle="÷20000" col="#60a5fa"/>
+        {/* DIV output → right rail */}
+        <line x1={LR+82+54+28+54+8} y1={runYs[0]} x2={RR} y2={runYs[0]} stroke="#60a5fa" strokeWidth="1.5"/>
+        <text x={RR - 4} y={runYs[0] - 14} textAnchor="end" fill="#60a5fa" fontSize="6.5" fontWeight="700">LevelSensorScaled</text>
+
+        {/* ── Rung 2: Set Coil1Buffer ── */}
+        {activeRung === 2 && <RungHighlight y={runYs[1]} h={runHeights[1]}/>}
+        <RungLabel id={2} y={runYs[1]}/>
+        <line x1={LR} y1={runYs[1]} x2={LR+16} y2={runYs[1]} stroke="#4ade80" strokeWidth="1.5"/>
+        <Contact x={LR+16} y={runYs[1]} label="SystemStart" small/>
+        <line x1={LR+16+58} y1={runYs[1]} x2={RR - 56} y2={runYs[1]} stroke="#4ade80" strokeWidth="1.5"/>
+        <Coil x={RR-56} y={runYs[1]} label="Coil1Buffer" type="S"/>
+
+        {/* ── Rung 3: Set Coil2Buffer ── */}
+        {activeRung === 3 && <RungHighlight y={runYs[2]} h={runHeights[2]}/>}
+        <RungLabel id={3} y={runYs[2]}/>
+        <line x1={LR} y1={runYs[2]} x2={LR+16} y2={runYs[2]} stroke="#4ade80" strokeWidth="1.5"/>
+        <Contact x={LR+16} y={runYs[2]} label="SystemStart" small/>
+        <line x1={LR+16+58} y1={runYs[2]} x2={RR - 56} y2={runYs[2]} stroke="#4ade80" strokeWidth="1.5"/>
+        <Coil x={RR-56} y={runYs[2]} label="Coil2Buffer" type="S"/>
+
+        {/* ── Rung 4: Set Coil3Buffer ── */}
+        {activeRung === 4 && <RungHighlight y={runYs[3]} h={runHeights[3]}/>}
+        <RungLabel id={4} y={runYs[3]}/>
+        <line x1={LR} y1={runYs[3]} x2={LR+16} y2={runYs[3]} stroke="#4ade80" strokeWidth="1.5"/>
+        <Contact x={LR+16} y={runYs[3]} label="SystemStart" small/>
+        <line x1={LR+16+58} y1={runYs[3]} x2={RR - 56} y2={runYs[3]} stroke="#4ade80" strokeWidth="1.5"/>
+        <Coil x={RR-56} y={runYs[3]} label="Coil3Buffer" type="S"/>
+
+        {/* ── Rung 5: Reset Coil1Buffer (parallel, offset ±18) ── */}
+        {activeRung === 5 && <RungHighlight y={runYs[4]} h={runHeights[4]}/>}
+        <RungLabel id={5} y={runYs[4]}/>
+        <line x1={LR} y1={runYs[4]-18} x2={LR+16} y2={runYs[4]-18} stroke="#f87171" strokeWidth="1.5"/>
+        <line x1={LR} y1={runYs[4]+18} x2={LR+16} y2={runYs[4]+18} stroke="#f87171" strokeWidth="1.5"/>
+        <line x1={LR+16} y1={runYs[4]-18} x2={LR+16} y2={runYs[4]+18} stroke="#f87171" strokeWidth="1.5"/>
+        <Contact x={LR+16} y={runYs[4]-18} label="SystemStop" small/>
+        <Contact x={LR+16} y={runYs[4]+18} label="Overload1" small labelBelow={true}/>
+        <line x1={LR+16+58} y1={runYs[4]-18} x2={LR+16+58} y2={runYs[4]+18} stroke="#f87171" strokeWidth="1.5"/>
+        <line x1={LR+16+58} y1={runYs[4]} x2={RR - 56} y2={runYs[4]} stroke="#f87171" strokeWidth="1.5"/>
+        <Coil x={RR-56} y={runYs[4]} label="Coil1Buffer" type="R"/>
+
+        {/* ── Rung 6: Reset Coil2Buffer ── */}
+        {activeRung === 6 && <RungHighlight y={runYs[5]} h={runHeights[5]}/>}
+        <RungLabel id={6} y={runYs[5]}/>
+        <line x1={LR} y1={runYs[5]-18} x2={LR+16} y2={runYs[5]-18} stroke="#f87171" strokeWidth="1.5"/>
+        <line x1={LR} y1={runYs[5]+18} x2={LR+16} y2={runYs[5]+18} stroke="#f87171" strokeWidth="1.5"/>
+        <line x1={LR+16} y1={runYs[5]-18} x2={LR+16} y2={runYs[5]+18} stroke="#f87171" strokeWidth="1.5"/>
+        <Contact x={LR+16} y={runYs[5]-18} label="SystemStop" small/>
+        <Contact x={LR+16} y={runYs[5]+18} label="Overload2" small labelBelow={true}/>
+        <line x1={LR+16+58} y1={runYs[5]-18} x2={LR+16+58} y2={runYs[5]+18} stroke="#f87171" strokeWidth="1.5"/>
+        <line x1={LR+16+58} y1={runYs[5]} x2={RR - 56} y2={runYs[5]} stroke="#f87171" strokeWidth="1.5"/>
+        <Coil x={RR-56} y={runYs[5]} label="Coil2Buffer" type="R"/>
+
+        {/* ── Rung 7: Reset Coil3Buffer ── */}
+        {activeRung === 7 && <RungHighlight y={runYs[6]} h={runHeights[6]}/>}
+        <RungLabel id={7} y={runYs[6]}/>
+        <line x1={LR} y1={runYs[6]-18} x2={LR+16} y2={runYs[6]-18} stroke="#f87171" strokeWidth="1.5"/>
+        <line x1={LR} y1={runYs[6]+18} x2={LR+16} y2={runYs[6]+18} stroke="#f87171" strokeWidth="1.5"/>
+        <line x1={LR+16} y1={runYs[6]-18} x2={LR+16} y2={runYs[6]+18} stroke="#f87171" strokeWidth="1.5"/>
+        <Contact x={LR+16} y={runYs[6]-18} label="SystemStop" small/>
+        <Contact x={LR+16} y={runYs[6]+18} label="Overload3" small labelBelow={true}/>
+        <line x1={LR+16+58} y1={runYs[6]-18} x2={LR+16+58} y2={runYs[6]+18} stroke="#f87171" strokeWidth="1.5"/>
+        <line x1={LR+16+58} y1={runYs[6]} x2={RR - 56} y2={runYs[6]} stroke="#f87171" strokeWidth="1.5"/>
+        <Coil x={RR-56} y={runYs[6]} label="Coil3Buffer" type="R"/>
+
+        {/* ── Rung 8: Pump 1 output ── */}
+        {activeRung === 8 && <RungHighlight y={runYs[7]} h={runHeights[7]}/>}
+        <RungLabel id={8} y={runYs[7]}/>
+        <line x1={LR} y1={runYs[7]} x2={LR+14} y2={runYs[7]} stroke="#c084fc" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[7]} label="Coil1Buffer" small/>
+        <FuncBlock x={LR+14+58+8} y={runYs[7]} w={64} h={30} title="GE ≥" subtitle="≥ 2 m" col="#c084fc"/>
+        <text x={LR+14+58+8+32} y={runYs[7]+23} textAnchor="middle" fill="#88888f" fontSize="7">LevelSensorScaled</text>
+        <line x1={LR+14+58+8+64+8} y1={runYs[7]} x2={RR-52} y2={runYs[7]} stroke="#c084fc" strokeWidth="1.5"/>
+        <Coil x={RR-52} y={runYs[7]} label="Coil1" type="OUT"/>
+
+        {/* ── Rung 9: Pump 2 output ── */}
+        {activeRung === 9 && <RungHighlight y={runYs[8]} h={runHeights[8]}/>}
+        <RungLabel id={9} y={runYs[8]}/>
+        <line x1={LR} y1={runYs[8]} x2={LR+14} y2={runYs[8]} stroke="#c084fc" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[8]} label="Coil2Buffer" small/>
+        <FuncBlock x={LR+14+58+8} y={runYs[8]} w={64} h={30} title="GE ≥" subtitle="≥ 6 m" col="#c084fc"/>
+        <text x={LR+14+58+8+32} y={runYs[8]+23} textAnchor="middle" fill="#88888f" fontSize="7">LevelSensorScaled</text>
+        <line x1={LR+14+58+8+64+8} y1={runYs[8]} x2={RR-52} y2={runYs[8]} stroke="#c084fc" strokeWidth="1.5"/>
+        <Coil x={RR-52} y={runYs[8]} label="Coil2" type="OUT"/>
+
+        {/* ── Rung 10: Pump 3 output ── */}
+        {activeRung === 10 && <RungHighlight y={runYs[9]} h={runHeights[9]}/>}
+        <RungLabel id={10} y={runYs[9]}/>
+        <line x1={LR} y1={runYs[9]} x2={LR+14} y2={runYs[9]} stroke="#c084fc" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[9]} label="Coil3Buffer" small/>
+        <FuncBlock x={LR+14+58+8} y={runYs[9]} w={64} h={30} title="GE ≥" subtitle="≥ 8 m" col="#c084fc"/>
+        <text x={LR+14+58+8+32} y={runYs[9]+23} textAnchor="middle" fill="#88888f" fontSize="7">LevelSensorScaled</text>
+        <line x1={LR+14+58+8+64+8} y1={runYs[9]} x2={RR-52} y2={runYs[9]} stroke="#c084fc" strokeWidth="1.5"/>
+        <Coil x={RR-52} y={runYs[9]} label="Coil3" type="OUT"/>
+
+        {/* ── Rung 11: Counter 1 (offset ±18) ── */}
+        {activeRung === 11 && <RungHighlight y={runYs[10]} h={runHeights[10]}/>}
+        <RungLabel id={11} y={runYs[10]}/>
+        <line x1={LR} y1={runYs[10]-18} x2={LR+14} y2={runYs[10]-18} stroke="#fb923c" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[10]-18} label="Overload1" type="PE" small/>
+        <line x1={LR} y1={runYs[10]+18} x2={LR+14} y2={runYs[10]+18} stroke="#fb923c" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[10]+18} label="ResetSig" type="NO" small labelBelow={true}/>
+        <line x1={LR+14+58} y1={runYs[10]-18} x2={LR+14+58} y2={runYs[10]+18} stroke="#fb923c" strokeWidth="1.5"/>
+        <line x1={LR+14+58} y1={runYs[10]} x2={LR+14+58+10} y2={runYs[10]} stroke="#fb923c" strokeWidth="1.5"/>
+        <rect x={LR+14+58+10} y={runYs[10]-20} width={76} height={40} rx="4" fill="#0a0a0a" stroke="#fb923c" strokeWidth="1.5"/>
+        <text x={LR+14+58+10+38} y={runYs[10]-8} textAnchor="middle" fill="#fb923c" fontSize="8.5" fontWeight="800">CTU</text>
+        <text x={LR+14+58+10+38} y={runYs[10]+4} textAnchor="middle" fill="#88888f" fontSize="7">OFCounter1</text>
+        <text x={LR+14+58+10+38} y={runYs[10]+14} textAnchor="middle" fill="#88888f" fontSize="7">PV=1000</text>
+
+        {/* ── Rung 12: Counter 2 ── */}
+        {activeRung === 12 && <RungHighlight y={runYs[11]} h={runHeights[11]}/>}
+        <RungLabel id={12} y={runYs[11]}/>
+        <line x1={LR} y1={runYs[11]-18} x2={LR+14} y2={runYs[11]-18} stroke="#fb923c" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[11]-18} label="Overload2" type="PE" small/>
+        <line x1={LR} y1={runYs[11]+18} x2={LR+14} y2={runYs[11]+18} stroke="#fb923c" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[11]+18} label="ResetSig" type="NO" small labelBelow={true}/>
+        <line x1={LR+14+58} y1={runYs[11]-18} x2={LR+14+58} y2={runYs[11]+18} stroke="#fb923c" strokeWidth="1.5"/>
+        <line x1={LR+14+58} y1={runYs[11]} x2={LR+14+58+10} y2={runYs[11]} stroke="#fb923c" strokeWidth="1.5"/>
+        <rect x={LR+14+58+10} y={runYs[11]-20} width={76} height={40} rx="4" fill="#0a0a0a" stroke="#fb923c" strokeWidth="1.5"/>
+        <text x={LR+14+58+10+38} y={runYs[11]-8} textAnchor="middle" fill="#fb923c" fontSize="8.5" fontWeight="800">CTU</text>
+        <text x={LR+14+58+10+38} y={runYs[11]+4} textAnchor="middle" fill="#88888f" fontSize="7">OFCounter2</text>
+        <text x={LR+14+58+10+38} y={runYs[11]+14} textAnchor="middle" fill="#88888f" fontSize="7">PV=1000</text>
+
+        {/* ── Rung 13: Counter 3 ── */}
+        {activeRung === 13 && <RungHighlight y={runYs[12]} h={runHeights[12]}/>}
+        <RungLabel id={13} y={runYs[12]}/>
+        <line x1={LR} y1={runYs[12]-18} x2={LR+14} y2={runYs[12]-18} stroke="#fb923c" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[12]-18} label="Overload3" type="PE" small/>
+        <line x1={LR} y1={runYs[12]+18} x2={LR+14} y2={runYs[12]+18} stroke="#fb923c" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[12]+18} label="ResetSig" type="NO" small labelBelow={true}/>
+        <line x1={LR+14+58} y1={runYs[12]-18} x2={LR+14+58} y2={runYs[12]+18} stroke="#fb923c" strokeWidth="1.5"/>
+        <line x1={LR+14+58} y1={runYs[12]} x2={LR+14+58+10} y2={runYs[12]} stroke="#fb923c" strokeWidth="1.5"/>
+        <rect x={LR+14+58+10} y={runYs[12]-20} width={76} height={40} rx="4" fill="#0a0a0a" stroke="#fb923c" strokeWidth="1.5"/>
+        <text x={LR+14+58+10+38} y={runYs[12]-8} textAnchor="middle" fill="#fb923c" fontSize="8.5" fontWeight="800">CTU</text>
+        <text x={LR+14+58+10+38} y={runYs[12]+4} textAnchor="middle" fill="#88888f" fontSize="7">OFCounter3</text>
+        <text x={LR+14+58+10+38} y={runYs[12]+14} textAnchor="middle" fill="#88888f" fontSize="7">PV=1000</text>
+
+        {/* ── Rung 14: Reset Timer ── */}
+        {activeRung === 14 && <RungHighlight y={runYs[13]} h={runHeights[13]}/>}
+        <RungLabel id={14} y={runYs[13]}/>
+        <line x1={LR} y1={runYs[13]} x2={LR+14} y2={runYs[13]} stroke="#4ade80" strokeWidth="1.5"/>
+        <Contact x={LR+14} y={runYs[13]} label="ResetSig" type="NC" small/>
+        <line x1={LR+14+58} y1={runYs[13]} x2={LR+14+58+10} y2={runYs[13]} stroke="#4ade80" strokeWidth="1.5"/>
+        <rect x={LR+14+58+10} y={runYs[13]-20} width={76} height={40} rx="4" fill="#0a0a0a" stroke="#4ade80" strokeWidth="1.5"/>
+        <text x={LR+14+58+10+38} y={runYs[13]-8} textAnchor="middle" fill="#4ade80" fontSize="8.5" fontWeight="800">TON</text>
+        <text x={LR+14+58+10+38} y={runYs[13]+4} textAnchor="middle" fill="#88888f" fontSize="7">ResetTimer</text>
+        <text x={LR+14+58+10+38} y={runYs[13]+14} textAnchor="middle" fill="#88888f" fontSize="7">PT=t#60s</text>
+        <line x1={LR+14+58+10+76} y1={runYs[13]} x2={RR-52} y2={runYs[13]} stroke="#4ade80" strokeWidth="1.5"/>
+        <Coil x={RR-52} y={runYs[13]} label="ResetSignal" type="OUT"/>
+
+        {/* Click hint */}
+        <text x={W/2} y={totalH - 8} textAnchor="middle" fill="#444" fontSize="7.5">Click any rung to inspect</text>
+      </svg>
+    );
+  };
+
+  // ── Legend panel ──
+  const LegendPanel = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      {[
+        { sym: '—[ ]—', col: '#60a5fa', label: 'NO Contact — Normally Open. Passes power when variable is TRUE (coil energised, or input ON).' },
+        { sym: '—[/]—', col: '#f87171', label: 'NC Contact — Normally Closed. Passes power when variable is FALSE. Opens when TRUE.' },
+        { sym: '—[↑]—', col: '#fb923c', label: 'Rising-Edge (P) — passes power for exactly one scan cycle on the 0→1 transition.' },
+        { sym: '—(S)—', col: '#4ade80', label: 'Set Coil — latches output TRUE. Stays TRUE until a matching Reset coil is activated.' },
+        { sym: '—(R)—', col: '#f87171', label: 'Reset Coil — latches output FALSE. Clears a Set coil.' },
+        { sym: '—( )—', col: '#c084fc', label: 'Output Coil — standard, non-latching. TRUE when rung is TRUE; FALSE otherwise.' },
+        { sym: 'GE ≥', col: '#c084fc', label: 'Compare block — outputs TRUE when IN1 ≥ IN2. Used here for level thresholds.' },
+        { sym: 'CTU', col: '#fb923c', label: 'Count-Up counter — increments CV on each rising edge of CU; resets CV on RESET.' },
+        { sym: 'TON', col: '#4ade80', label: 'On-Delay Timer — Q goes TRUE after IN is continuously TRUE for time PT.' },
+        { sym: 'MUL/DIV', col: '#60a5fa', label: 'Arithmetic blocks — integer multiply and divide for analog signal scaling.' },
+      ].map(({ sym, col, label }) => (
+        <div key={sym} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+          <code style={{ backgroundColor: '#1a1a1c', color: col, padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '10px', border: `1px solid ${col}44`, flexShrink: 0, minWidth: '52px', textAlign: 'center' }}>{sym}</code>
+          <span style={{ fontSize: '11px', color: '#88888f', lineHeight: '1.5' }}>{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+
+  // ── Water Treatment System Schematic ──────────────────────────────────────
+  const WaterScheme = () => {
+    const TX = 90, TY = 22, TW = 340, TH = 200;
+    const pxM = TH / 10; // 20 px per metre
+    const wTop = TY + (10 - 7) * pxM; // 7m level → y=82
+    const pCx = [TX + TW/6, TX + TW/2, TX + TW*5/6]; // 147, 260, 373
+    const pCy = TY + TH - 30; // 192 — pump centre inside tank
+    return (
+      <svg viewBox="0 0 548 320" xmlns="http://www.w3.org/2000/svg"
+        style={{ width: '100%', display: 'block', borderRadius: '8px', border: '1px solid #1e1e20', marginBottom: '1.5rem', backgroundColor: '#0a0a0a' }}>
+        <defs>
+          <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.78"/>
+            <stop offset="100%" stopColor="#1d4ed8" stopOpacity="0.94"/>
+          </linearGradient>
+          <marker id="pa" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+            <polygon points="0 0, 7 2.5, 0 5" fill="#4b5563"/>
+          </marker>
+        </defs>
+
+        {/* ── Tank body ── */}
+        <rect x={TX} y={TY} width={TW} height={TH} rx="4" fill="#111827" stroke="#374151" strokeWidth="2.5"/>
+
+        {/* Level zone tints */}
+        <rect x={TX+2} y={TY+2}        width={TW-4} height={pxM}      fill="#7c3aed" opacity="0.07" rx="2"/>
+        <rect x={TX+2} y={TY+pxM*2}    width={TW-4} height={pxM*2}    fill="#f97316" opacity="0.05"/>
+        <rect x={TX+2} y={TY+pxM*4}    width={TW-4} height={pxM*4}    fill="#16a34a" opacity="0.04"/>
+        <rect x={TX+2} y={TY+pxM*9}    width={TW-4} height={pxM}      fill="#dc2626" opacity="0.04"/>
+
+        {/* Threshold dashes */}
+        {[{m:9,c:'#a78bfa'},{m:8,c:'#fb923c'},{m:6,c:'#fb923c'},{m:2,c:'#4ade80'},{m:1,c:'#f87171'}].map(({m,c}) => (
+          <line key={m} x1={TX+2} y1={TY+(10-m)*pxM} x2={TX+TW-2} y2={TY+(10-m)*pxM}
+            stroke={c} strokeWidth="0.7" strokeDasharray="6,4" opacity="0.45"/>
+        ))}
+
+        {/* ── Water fill ── */}
+        <rect x={TX+2} y={wTop} width={TW-4} height={TY+TH-wTop} fill="url(#wg)"/>
+        {/* Surface ripple */}
+        <path d={`M${TX+2},${wTop} C${TX+55},${wTop-4} ${TX+130},${wTop+3} ${TX+TW/2},${wTop-1} S${TX+TW-50},${wTop+3} ${TX+TW-2},${wTop}`}
+          fill="none" stroke="#93c5fd" strokeWidth="1.5" opacity="0.6"/>
+
+        {/* ── Level scale (right of tank) ── */}
+        {[0,1,2,4,6,8,9,10].map(m => {
+          const y = TY + (10-m)*pxM;
+          const major = [0,2,6,8,10].includes(m);
+          const c = m>=9?'#a78bfa':m>=6?'#fb923c':m>=2?'#4ade80':m>=1?'#f87171':'#4b5563';
+          return (
+            <g key={m}>
+              <line x1={TX+TW} y1={y} x2={TX+TW+(major?10:5)} y2={y} stroke={c} strokeWidth={major?1.2:0.7}/>
+              {major && <text x={TX+TW+14} y={y+4} fill={c} fontSize="9" fontWeight="700">{m} m</text>}
+            </g>
+          );
+        })}
+        <text x={TX+TW+14} y={TY+pxM*0.5+4}  fill="#a78bfa" fontSize="7" fontWeight="700">All 3 pumps</text>
+        <text x={TX+TW+14} y={TY+pxM*3+4}    fill="#fb923c" fontSize="7" fontWeight="700">Pumps 1 &amp; 2</text>
+        <text x={TX+TW+14} y={TY+pxM*6.5+4}  fill="#4ade80" fontSize="7" fontWeight="700">Pump 1 only</text>
+        <text x={TX+TW+14} y={TY+pxM*9.5+4}  fill="#f87171" fontSize="7" fontWeight="700">No pumps</text>
+
+        {/* ── Hydrostatic sensor ── */}
+        {/* Tube */}
+        <rect x={TX+20} y={TY+12} width="6" height={TH-24} rx="3" fill="#0f172a" stroke="#475569" strokeWidth="1.2"/>
+        {/* Fluid column (shows water pressure level) */}
+        <rect x={TX+22} y={wTop+4} width="2" height={TY+TH-28-wTop} rx="1" fill="#60a5fa" opacity="0.65"/>
+        {/* Diaphragm / pressure element */}
+        <circle cx={TX+23} cy={TY+TH-14} r="5.5" fill="#0f172a" stroke="#38bdf8" strokeWidth="1.5"/>
+        <circle cx={TX+23} cy={TY+TH-14} r="2.5" fill="#38bdf8" opacity="0.8"/>
+        {/* Signal cable to PLC */}
+        <polyline points={`${TX+23},${TY+12} ${TX+23},${TY+4} ${TX+4},${TY+4} ${TX-16},${TY-9}`}
+          fill="none" stroke="#64748b" strokeWidth="1" strokeDasharray="3,2"/>
+        {/* Label */}
+        <text x={TX-20} y={TY-16} textAnchor="end" fill="#94a3b8" fontSize="8.5" fontWeight="600">Hydro-static</text>
+        <text x={TX-20} y={TY-6}  textAnchor="end" fill="#94a3b8" fontSize="8.5" fontWeight="600">Level Sensor</text>
+
+        {/* ── Pumps (inside tank, near bottom) ── */}
+        {pCx.map((cx, i) => (
+          <g key={i}>
+            {/* Outlet pipe exits through tank bottom */}
+            <line x1={cx} y1={pCy+18} x2={cx} y2={TY+TH+45} stroke="#1e293b" strokeWidth="8" strokeLinecap="square"/>
+            <line x1={cx} y1={pCy+18} x2={cx} y2={TY+TH+45} stroke="#334155" strokeWidth="5" strokeLinecap="square"/>
+            {/* Inlet suction cap (top of pump) */}
+            <line x1={cx} y1={pCy-18} x2={cx} y2={pCy-26} stroke="#1e3a5f" strokeWidth="5" strokeLinecap="round"/>
+            {/* Pump volute housing */}
+            <circle cx={cx} cy={pCy} r="19" fill="#0d1b2a" stroke="#2563eb" strokeWidth="2"/>
+            {/* Impeller disc */}
+            <circle cx={cx} cy={pCy} r="9" fill="#172554" stroke="#3b82f6" strokeWidth="1"/>
+            {/* Impeller fins */}
+            {[0,60,120,180,240,300].map(a => {
+              const rad = a*Math.PI/180;
+              return <line key={a} x1={cx} y1={pCy}
+                x2={cx+Math.cos(rad)*8} y2={pCy+Math.sin(rad)*8}
+                stroke="#60a5fa" strokeWidth="0.9" opacity="0.55"/>;
+            })}
+            {/* Motor body */}
+            <rect x={cx+18} y={pCy-5} width="24" height="10" rx="2.5" fill="#172554" stroke="#2563eb" strokeWidth="1.2"/>
+            {/* Motor cooling fins */}
+            {[0,5,10,15].map(d => (
+              <line key={d} x1={cx+20+d} y1={pCy-5} x2={cx+20+d} y2={pCy+5}
+                stroke="#3b82f6" strokeWidth="0.5" opacity="0.45"/>
+            ))}
+            {/* Down arrow (flow direction) */}
+            <polygon points={`${cx-5},${TY+TH+40} ${cx+5},${TY+TH+40} ${cx},${TY+TH+55}`} fill="#4b5563"/>
+            {/* Pump label */}
+            <text x={cx} y={TY+TH+72} textAnchor="middle" fill="#60a5fa" fontSize="10" fontWeight="700">Pump {i+1}</text>
+          </g>
+        ))}
+
+        {/* Title */}
+        <text x={TX+TW/2} y={313} textAnchor="middle" fill="#374151" fontSize="8"
+          fontWeight="600" letterSpacing="0.06em">
+          WATER DEPOSIT — 10 m HEIGHT · HYDROSTATIC LEVEL CONTROL · 3 DISTRIBUTION PUMPS
+        </text>
+      </svg>
+    );
+  };
+
+  const varCode = `PROGRAM PLC_PRG
+VAR
+  // ── Operator Inputs ──────────────────────────────────
+  SystemStart          : BOOL;   // Start push-button (NO, momentary)
+  SystemStop           : BOOL;   // Stop push-button (NO, momentary)
+
+  // ── Overload Signals from Motor Protection Relays ───
+  Overload1            : BOOL;   // Pump 1 overload trip signal
+  Overload2            : BOOL;   // Pump 2 overload trip signal
+  Overload3            : BOOL;   // Pump 3 overload trip signal
+
+  // ── Output Coils → Contactors ───────────────────────
+  Coil1                : BOOL;   // Pump 1 contactor coil
+  Coil2                : BOOL;   // Pump 2 contactor coil
+  Coil3                : BOOL;   // Pump 3 contactor coil
+
+  // ── Analog Level Sensor ──────────────────────────────
+  LevelSensorAnalogSignal : DINT := 15000;
+  // Raw AI value 400–20000 (4–20 mA mapped by AI module)
+  // DINT used to prevent overflow in scaling arithmetic
+
+  Result               : DINT;  // Intermediate value: signal × 10
+  LevelSensorScaled    : DINT;  // Scaled level 0–10 m
+
+  // ── Run-Enable Buffers (SR latches) ─────────────────
+  Coil1Buffer          : BOOL;  // Pump 1 armed (Set by Start, Reset by Stop/OL)
+  Coil2Buffer          : BOOL;  // Pump 2 armed
+  Coil3Buffer          : BOOL;  // Pump 3 armed
+
+  // ── Auto-Reset ───────────────────────────────────────
+  ResetSignal          : BOOL;  // 1-scan pulse every 60 s → resets fault counters
+
+  // ── Fault Counters ───────────────────────────────────
+  OverloadFaultCounter1 : CTU;  // Pump 1 fault event count
+  OverloadFaultCounter2 : CTU;  // Pump 2 fault event count
+  OverloadFaultCounter3 : CTU;  // Pump 3 fault event count
+  ResetTimer            : TON;  // 60 s timer for periodic counter reset
+END_VAR`;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: isMobileView ? 'column' : 'row', minHeight: '100vh' }}>
+
+      {/* ═══════════ LEFT COLUMN ═══════════ */}
+      <div style={{ width: isMobileView ? '100%' : '56%', padding: isMobileView ? '1.5rem 1rem' : '3rem', boxSizing: 'border-box' }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <span style={{ backgroundColor: '#4ade80', padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', color: '#000', letterSpacing: '0.04em' }}>IEC 61131-3</span>
+            <span style={{ fontSize: '11px', color: '#88888f' }}>Ladder Diagram · CODESYS · Water Treatment</span>
+          </div>
+          <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--ifm-font-color-base)', marginBottom: '0.75rem', lineHeight: '1.2' }}>
+            Ladder Diagram — Water Treatment Pump Control
+          </h1>
+          <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1.5rem' }}>
+            A complete IEC 61131-3 Ladder Diagram program for a 10 m water deposit serviced by three distribution pumps. The program implements analog sensor scaling, level-based pump sequencing, per-pump overload protection with independent stop logic, cumulative fault counters, and a timed automatic counter reset — all in 14 rungs of Ladder Diagram code.
+          </p>
+          <WaterScheme />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.625rem' }}>
+            {[
+              { label: '14 Rungs', col: '#4ade80' },
+              { label: 'Analog Scaling', col: '#60a5fa' },
+              { label: 'SR Latch Logic', col: '#c084fc' },
+              { label: 'CTU / TON Timers', col: '#fb923c' },
+              { label: 'Independent Overloads', col: '#f87171' },
+            ].map(({ label, col }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '8px', padding: '6px 12px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: col, flexShrink: 0 }}/>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: '#e3e3e8' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* System Requirements */}
+        {sectionTitle('System Requirements')}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '1.5rem' }}>
+          {[
+            { n: '1', text: 'Level < 1 m: no pump engages.' },
+            { n: '2', text: 'Level 2–5 m: Pump 1 runs.' },
+            { n: '3', text: 'Level 6–8 m: Pumps 1 and 2 run.' },
+            { n: '4', text: 'Level 9–10 m: Pumps 1, 2, and 3 run.' },
+            { n: '5', text: 'One Start push-button and one Stop push-button.' },
+            { n: '6', text: 'Each pump motor protection relay (overload) is wired to a PLC digital input.' },
+            { n: '7', text: 'An overload trips only the corresponding pump; other pumps continue running.' },
+            { n: '8', text: 'A fault counter records the cumulative overload count per pump.' },
+            { n: '9', text: 'Counters reset every 3 days (simulated as 1 minute for testing).' },
+            { n: '10', text: 'Hydrostatic sensor signal in range 400–20000 must be scaled to 0–10 m.' },
+            { n: '11', text: 'Resolution is 1 m (integer metres only; no centimetre precision needed).' },
+          ].map(({ n, text }) => (
+            <div key={n} style={{ display: 'flex', gap: '10px', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '7px', padding: '8px 12px' }}>
+              <span style={{ color: '#F68B1F', fontSize: '11px', fontWeight: '800', fontFamily: 'monospace', flexShrink: 0, minWidth: '14px' }}>{n}</span>
+              <span style={{ fontSize: '12px', color: '#adadb8', lineHeight: '1.55' }}>{text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* VAR Declaration */}
+        {sectionTitle('Variable Declarations (VAR Block)')}
+        <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+          All variables are declared globally in the <code style={{ backgroundColor: '#1a1a1c', color: '#F68B1F', padding: '1px 6px', borderRadius: '4px', fontSize: '12px', border: '1px solid #303033' }}>PLC_PRG</code> VAR block. BOOL is used for all discrete signals; DINT (32-bit signed integer) is used for the analog signal and its scaled result to avoid arithmetic overflow during the ×10 multiplication step.
+        </p>
+        <pre style={{ backgroundColor: '#0a0a0a', border: '1px solid #1b4b72', borderRadius: '8px', padding: '1.25rem', fontSize: '11px', color: '#adadb8', fontFamily: 'monospace', lineHeight: '1.65', overflowX: 'auto', marginBottom: '1.5rem', whiteSpace: 'pre' }}>
+          <span style={{ color: '#4ade80' }}>PROGRAM</span>{' '}<span style={{ color: '#60a5fa' }}>PLC_PRG{'\n'}</span>
+          <span style={{ color: '#4ade80' }}>VAR{'\n'}</span>
+          {'  '}<span style={{ color: '#88888f' }}>// ── Operator Inputs{'\n'}</span>
+          {'  '}<span style={{ color: '#e3e3e8' }}>SystemStart</span>{'             : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Start push-button (NO, momentary)\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>SystemStop</span>{'              : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Stop push-button (NO, momentary)\n\n'}
+          {'  '}<span style={{ color: '#88888f' }}>// ── Overload Signals{'\n'}</span>
+          {'  '}<span style={{ color: '#e3e3e8' }}>Overload1</span>{'               : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Motor protection relay — Pump 1\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>Overload2</span>{'               : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Motor protection relay — Pump 2\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>Overload3</span>{'               : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Motor protection relay — Pump 3\n\n'}
+          {'  '}<span style={{ color: '#88888f' }}>// ── Output Coils → Contactors{'\n'}</span>
+          {'  '}<span style={{ color: '#e3e3e8' }}>Coil1</span>{'                   : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Pump 1 contactor coil output\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>Coil2</span>{'                   : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Pump 2 contactor coil output\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>Coil3</span>{'                   : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Pump 3 contactor coil output\n\n'}
+          {'  '}<span style={{ color: '#88888f' }}>// ── Analog Level Sensor{'\n'}</span>
+          {'  '}<span style={{ color: '#e3e3e8' }}>LevelSensorAnalogSignal</span>{' : '}<span style={{ color: '#fb923c' }}>DINT</span>{' := '}<span style={{ color: '#c084fc' }}>15000</span>;{'  // Raw AI (400–20000)\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>Result</span>{'                  : '}<span style={{ color: '#fb923c' }}>DINT</span>;{'   // Intermediate: signal × 10\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>LevelSensorScaled</span>{'       : '}<span style={{ color: '#fb923c' }}>DINT</span>;{'   // Scaled level 0–10 m\n\n'}
+          {'  '}<span style={{ color: '#88888f' }}>// ── Run-Enable Buffers (SR latches){'\n'}</span>
+          {'  '}<span style={{ color: '#e3e3e8' }}>Coil1Buffer</span>{'             : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Pump 1 armed flag\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>Coil2Buffer</span>{'             : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Pump 2 armed flag\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>Coil3Buffer</span>{'             : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // Pump 3 armed flag\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>ResetSignal</span>{'             : '}<span style={{ color: '#fb923c' }}>BOOL</span>;{'   // 1-scan pulse every 60 s\n\n'}
+          {'  '}<span style={{ color: '#88888f' }}>// ── Fault Counters{'\n'}</span>
+          {'  '}<span style={{ color: '#e3e3e8' }}>OverloadFaultCounter1</span>{'   : '}<span style={{ color: '#fb923c' }}>CTU</span>;{'   // Pump 1 cumulative faults\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>OverloadFaultCounter2</span>{'   : '}<span style={{ color: '#fb923c' }}>CTU</span>;{'   // Pump 2 cumulative faults\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>OverloadFaultCounter3</span>{'   : '}<span style={{ color: '#fb923c' }}>CTU</span>;{'   // Pump 3 cumulative faults\n'}
+          {'  '}<span style={{ color: '#e3e3e8' }}>ResetTimer</span>{'              : '}<span style={{ color: '#fb923c' }}>TON</span>;{'   // 60 s periodic reset timer\n'}
+          <span style={{ color: '#4ade80' }}>END_VAR</span>
+        </pre>
+
+        {/* Rung Explanations */}
+        {sectionTitle('Rung-by-Rung Explanation')}
+        <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1.25rem' }}>
+          Click any rung card below (or click the rung in the diagram on the right) to highlight it. The rungs are colour-coded by function group: <span style={{ color: '#60a5fa', fontWeight: '600' }}>blue = scaling</span>, <span style={{ color: '#4ade80', fontWeight: '600' }}>green = start/arm</span>, <span style={{ color: '#f87171', fontWeight: '600' }}>red = stop/reset</span>, <span style={{ color: '#c084fc', fontWeight: '600' }}>purple = level control outputs</span>, <span style={{ color: '#fb923c', fontWeight: '600' }}>orange = fault counting</span>.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+          {rungs.map(r => (
+            <div
+              key={r.id}
+              onClick={() => setActiveRung(r.id)}
+              style={{
+                backgroundColor: activeRung === r.id ? '#0a0a0a' : '#111',
+                border: `1px solid ${activeRung === r.id ? r.color : '#222'}`,
+                borderLeft: `4px solid ${r.textCol}`,
+                borderRadius: '8px', padding: '12px 16px', cursor: 'pointer',
+                transition: 'border-color 0.15s',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontSize: '12px', fontWeight: '700', color: r.textCol }}>{r.label}</span>
+                <span style={{ fontSize: '9px', color: '#555', fontFamily: 'monospace', backgroundColor: '#1a1a1c', padding: '2px 6px', borderRadius: '4px', border: '1px solid #303033' }}>RUNG {r.id}</span>
+              </div>
+              <p style={{ fontSize: '12px', color: '#adadb8', margin: '0 0 8px', lineHeight: '1.55' }}>{r.summary}</p>
+
+              {activeRung === r.id && (
+                <>
+                  <div style={{ marginBottom: '8px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#88888f', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>Why this element?</div>
+                    <p style={{ fontSize: '12px', color: '#88888f', margin: 0, lineHeight: '1.6' }}>{r.why}</p>
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#88888f', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>How it works</div>
+                    <p style={{ fontSize: '12px', color: '#88888f', margin: 0, lineHeight: '1.6' }}>{r.how}</p>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', color: '#88888f', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Elements used</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {r.elements.map(el => (
+                        <span key={el} style={{ fontSize: '11px', color: r.textCol, backgroundColor: `${r.color}22`, border: `1px solid ${r.color}55`, borderRadius: '5px', padding: '3px 8px', fontFamily: 'monospace' }}>{el}</span>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Pump Engagement Table */}
+        {sectionTitle('Pump Engagement Summary')}
+        <div style={{ overflowX: 'auto', marginBottom: '1.5rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #303033' }}>
+                {['Level Range', 'Pump 1', 'Pump 2', 'Pump 3', 'Rung'].map(h => (
+                  <th key={h} style={{ padding: '8px 10px', textAlign: 'left', color: '#88888f', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['0 – 1 m', '—', '—', '—', 'No rungs close'],
+                ['2 – 5 m', '✔ ON', '—', '—', 'Rung 8 closes'],
+                ['6 – 8 m', '✔ ON', '✔ ON', '—', 'Rungs 8 & 9 close'],
+                ['9 – 10 m', '✔ ON', '✔ ON', '✔ ON', 'Rungs 8, 9 & 10 close'],
+              ].map(([range, p1, p2, p3, note], i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #1e1e20', backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.012)' }}>
+                  <td style={{ padding: '7px 10px', color: '#60a5fa', fontWeight: '700', fontFamily: 'monospace' }}>{range}</td>
+                  <td style={{ padding: '7px 10px', color: p1 === '✔ ON' ? '#4ade80' : '#444' }}>{p1}</td>
+                  <td style={{ padding: '7px 10px', color: p2 === '✔ ON' ? '#4ade80' : '#444' }}>{p2}</td>
+                  <td style={{ padding: '7px 10px', color: p3 === '✔ ON' ? '#4ade80' : '#444' }}>{p3}</td>
+                  <td style={{ padding: '7px 10px', color: '#88888f', fontSize: '11px' }}>{note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Scaling Worked Example */}
+        {sectionTitle('Analog Scaling — Worked Example')}
+        <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+          The initial value of <code style={{ backgroundColor: '#1a1a1c', color: '#F68B1F', padding: '1px 6px', borderRadius: '4px', fontSize: '12px', border: '1px solid #303033' }}>LevelSensorAnalogSignal := 15000</code> in the VAR block is for simulation only. In production, a 4–20 mA signal from the hydrostatic sensor is wired to the PLC analog input card, which converts it to a 400–20000 integer (400 = 0 m, 20000 = 10 m, linear). The formula applied in Rung 1 is:
+        </p>
+        <div style={{ backgroundColor: '#0a0a0a', border: '1px solid #1b4b72', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', fontFamily: 'monospace', fontSize: '12px', color: '#60a5fa', lineHeight: '1.8' }}>
+          LevelSensorScaled = (LevelSensorAnalogSignal × 10) ÷ 20000<br/>
+          <span style={{ color: '#88888f' }}>// Example: signal = 15000</span><br/>
+          <span style={{ color: '#4ade80' }}>= (15000 × 10) ÷ 20000 = 150000 ÷ 20000 = 7</span><br/>
+          <span style={{ color: '#88888f' }}>// → 7 m → Pumps 1 and 2 engage (Rungs 8, 9 fire)</span>
+        </div>
+        <div style={{ backgroundColor: '#0a0a0a', border: '1px solid #1b5c22', borderRadius: '8px', padding: '1rem', marginBottom: '1.5rem', fontFamily: 'monospace', fontSize: '12px', color: '#4ade80', lineHeight: '1.8' }}>
+          <span style={{ color: '#88888f' }}>// Minimum (0 m):</span> (400 × 10) ÷ 20000 = 0<br/>
+          <span style={{ color: '#88888f' }}>// Full (10 m):</span> (20000 × 10) ÷ 20000 = 10<br/>
+          <span style={{ color: '#88888f' }}>// Note: DINT division truncates; 1 m steps match requirement 11.</span>
+        </div>
+
+        {/* Auto-reset monostable explanation */}
+        {sectionTitle('Auto-Reset Circuit — How the 60 s Monostable Works')}
+        <p style={{ fontSize: '14px', color: '#adadb8', lineHeight: '1.75', marginBottom: '1rem' }}>
+          Rung 14 is a self-resetting one-shot circuit built from a single TON timer and the NC contact of its own output variable. No additional Set/Reset coils or flags are needed. The sequence for one full cycle is:
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0', marginBottom: '1.5rem' }}>
+          {[
+            { t: '0 s', ev: 'ResetSignal = FALSE → NC contact is CLOSED → TON IN = TRUE → timer starts accumulating.' },
+            { t: '60 s', ev: 'TON ET (elapsed time) reaches PT (60 s) → TON Q = TRUE → Rung 14 output coil sets ResetSignal = TRUE.' },
+            { t: '60 s + 1 scan', ev: 'ResetSignal = TRUE → NC contact OPENS → TON IN = FALSE → TON Q resets to FALSE → ResetSignal coil = FALSE.' },
+            { t: '60 s + 2 scans', ev: 'ResetSignal = FALSE again → NC contact CLOSES → timer restarts from 0.' },
+            { t: 'During TRUE pulse', ev: 'ResetSignal drives RESET inputs of all three CTU counters (Rungs 11–13) → counters clear to CV = 0.' },
+          ].map(({ t, ev }, i, arr) => (
+            <div key={t} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#4ade80', marginTop: '5px', flexShrink: 0 }}/>
+                {i < arr.length - 1 && <div style={{ width: '1px', height: '100%', minHeight: '36px', backgroundColor: '#303033' }}/>}
+              </div>
+              <div style={{ paddingBottom: '0.75rem' }}>
+                <span style={{ fontSize: '11px', fontWeight: '800', color: '#4ade80', fontFamily: 'monospace' }}>{t}</span>
+                <p style={{ fontSize: '12px', color: '#adadb8', margin: '3px 0 0', lineHeight: '1.55' }}>{ev}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Feedback */}
+        <div style={{ marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid #1e1e20' }}>
+          {!feedback ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+              <span style={{ fontSize: '14px', fontWeight: '500', color: '#88888f' }}>Was this page helpful?</span>
+              <button onClick={() => setFeedback('yes')} style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>Yes</button>
+              <button onClick={() => setFeedback('no')}  style={{ color: '#F68B1F', fontSize: '14px', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}>No</button>
+            </div>
+          ) : (
+            <p style={{ fontSize: '14px', color: '#e3e3e8', backgroundColor: '#1a1a1c', padding: '0.75rem 1.5rem', borderRadius: '6px', display: 'inline-block', border: '1px solid #303033' }}>
+              {feedback === 'yes' ? '✨ Thanks! Glad this was useful.' : '🙏 Thank you — we will improve this page.'}
+            </p>
+          )}
+          <div style={{ paddingBottom: '6rem' }}/>
+        </div>
+      </div>
+
+      {/* ═══════════ RIGHT COLUMN ═══════════ */}
+      <div style={{
+        width: isMobileView ? '100%' : '44%',
+        backgroundColor: 'rgba(0,0,0,0.02)',
+        padding: isMobileView ? '1.5rem 1rem' : '3rem 2rem',
+        borderLeft: isMobileView ? 'none' : '1px solid #1e1e20',
+        borderTop: isMobileView ? '1px solid #1e1e20' : 'none',
+        boxSizing: 'border-box',
+      }}>
+        <div style={{ position: isMobileView ? 'static' : 'sticky', top: '3rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+          {/* Tab bar */}
+          <div style={{ display: 'flex', gap: '4px', backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '10px', padding: '4px' }}>
+            {[{ id: 'diagram', label: 'Ladder Diagram' }, { id: 'legend', label: 'Legend' }].map(t => (
+              <button key={t.id} onClick={() => setActiveTab(t.id)} style={{
+                flex: 1, padding: '7px 0', fontSize: '12px', fontWeight: '600', borderRadius: '7px',
+                border: 'none', cursor: 'pointer',
+                backgroundColor: activeTab === t.id ? '#4ade80' : 'transparent',
+                color: activeTab === t.id ? '#000' : '#88888f',
+                transition: 'all 0.15s',
+              }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Diagram card */}
+          <div style={{ backgroundColor: '#1a1a1c', border: '1px solid #303033', borderRadius: '10px', padding: '1rem' }}>
+            <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#88888f', marginBottom: '0.75rem' }}>
+              {activeTab === 'diagram' ? `PLC_PRG — Ladder Diagram (14 Rungs)` : 'Ladder Diagram Symbol Legend'}
+            </div>
+            {activeTab === 'diagram' ? (
+              <>
+                {/* Zoom controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                  <button onClick={zoomOut} disabled={zoom <= 0.5} style={{
+                    padding: '5px 12px', fontSize: '16px', lineHeight: '1', fontWeight: '700',
+                    borderRadius: '6px', border: '1px solid #303033',
+                    backgroundColor: '#1a1a1c', color: zoom <= 0.5 ? '#444' : '#e3e3e8',
+                    cursor: zoom <= 0.5 ? 'default' : 'pointer',
+                  }}>−</button>
+                  <button onClick={zoomReset} style={{
+                    padding: '4px 10px', fontSize: '11px', fontWeight: '600',
+                    borderRadius: '6px', border: '1px solid #303033',
+                    backgroundColor: zoom !== 1 ? '#F68B1F22' : '#1a1a1c',
+                    color: zoom !== 1 ? '#F68B1F' : '#88888f',
+                    cursor: 'pointer', minWidth: '48px', textAlign: 'center',
+                  }}>{Math.round(zoom * 100)}%</button>
+                  <button onClick={zoomIn} disabled={zoom >= 3} style={{
+                    padding: '5px 12px', fontSize: '16px', lineHeight: '1', fontWeight: '700',
+                    borderRadius: '6px', border: '1px solid #303033',
+                    backgroundColor: '#1a1a1c', color: zoom >= 3 ? '#444' : '#e3e3e8',
+                    cursor: zoom >= 3 ? 'default' : 'pointer',
+                  }}>+</button>
+                  <span style={{ fontSize: '10px', color: '#555', marginLeft: '4px' }}>Scroll to pan when zoomed</span>
+                </div>
+                <div style={{ overflow: 'auto', maxHeight: isMobileView ? '500px' : '60vh', borderRadius: '6px', border: '1px solid #1e1e20' }}>
+                  <div style={{ width: `${zoom * 100}%`, minWidth: '100%', transformOrigin: 'top left' }}>
+                    <LadderSVG />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <LegendPanel />
+            )}
+          </div>
+
+          {/* Active rung info card */}
+          {activeTab === 'diagram' && (
+            <div style={{ backgroundColor: '#1a1a1c', border: `1px solid ${active.color}`, borderLeft: `4px solid ${active.textCol}`, borderRadius: '8px', padding: '1rem' }}>
+              <div style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#88888f', marginBottom: '6px' }}>
+                Selected · Rung {active.id}
+              </div>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: active.textCol, marginBottom: '6px' }}>{active.label}</div>
+              <p style={{ fontSize: '11px', color: '#88888f', margin: '0 0 8px', lineHeight: '1.6' }}>{active.summary}</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {active.elements.map(el => (
+                  <span key={el} style={{ fontSize: '10px', color: active.textCol, backgroundColor: `${active.color}22`, border: `1px solid ${active.color}55`, borderRadius: '4px', padding: '2px 7px', fontFamily: 'monospace' }}>{el}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+<LadderPage />
