@@ -258,6 +258,9 @@ export const STPage = () => {
           <h1 style={{ fontSize: '22px', fontWeight: '800', color: c.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
             Motor Launch — ST Program
           </h1>
+          <p style={{ fontSize: '13px', color: c.muted, margin: '0 0 12px', lineHeight: '1.7', maxWidth: '680px' }}>
+            Structured Text (ST) is a high-level, text-based programming language defined in the IEC 61131-3 standard for programmable logic controllers. Unlike ladder logic or function block diagrams, which represent control logic graphically, ST uses Pascal-like syntax — statements, expressions, conditionals (IF/THEN/ELSE), loops, and variable assignments — making it well suited for complex calculations and algorithms that are cumbersome to express graphically. To use it on a PLC, an engineer declares input, output, and internal variables in a program organization unit within the controller's IDE (e.g., TIA Portal, CODESYS, RSLogix), then writes logic statements that read inputs, evaluate conditions, and drive outputs; the runtime scans this code cyclically each scan cycle, just as it would ladder logic.
+          </p>
           <p style={{ fontSize: '13px', color: c.muted, margin: 0, lineHeight: '1.7', maxWidth: '680px' }}>
             A two-button (OR) push-button interlock feeds into an AND gate with a fault monitor. 
             The motor runs only when at least one button is pressed <em>and</em> no fault is active. 
