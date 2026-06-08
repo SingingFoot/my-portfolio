@@ -1,0 +1,275 @@
+---
+sidebar_position: 6
+title: Structured Text — Arrays
+description: IEC 61131-3 Structured Text arrays explained through a 5-motor control problem — why ARRAY[1..5] OF BOOL beats 25 separate variables, with a full POU code example indexed on motor 4.
+hide_table_of_contents: true
+---
+
+import React, { useState } from 'react';
+
+export const STArraysPage = () => {
+  /* ── interactive state ── */
+  const [motorIdx, setMotorIdx] = useState(4);
+
+  /* ── palette (matches the rest of the IA section) ── */
+  const c = {
+    bg:        '#111113',
+    card:      '#1a1a1c',
+    border:    '#2a2a2e',
+    accent:    '#F68B1F',
+    blue:      '#3b82f6',
+    green:     '#22c55e',
+    red:       '#ef4444',
+    muted:     '#88888f',
+    text:      '#e3e3e8',
+    codeBase:  '#0d0d0f',
+    kw:        '#c792ea',
+    type:      '#82aaff',
+    str:       '#c3e88d',
+    comment:   '#546e7a',
+    num:       '#f78c6c',
+    var:       '#eeffff',
+  };
+
+  /* ── helpers ── */
+  const sectionTitle = (text) => (
+    <h2 style={{ color: c.text, fontSize: '15px', fontWeight: '700', marginBottom: '1rem', marginTop: '2.5rem', paddingBottom: '0.5rem', borderBottom: `1px solid ${c.border}`, letterSpacing: '-0.01em' }}>
+      {text}
+    </h2>
+  );
+
+  const explanationCard = (title, body, color) => (
+    <div style={{
+      backgroundColor: c.card, border: `1px solid ${c.border}`, borderLeft: `4px solid ${color}`,
+      borderRadius: '8px', padding: '1rem 1.2rem', marginTop: '0.75rem',
+    }}>
+      <div style={{ fontSize: '10px', fontWeight: '800', color: color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{title}</div>
+      <p style={{ fontSize: '12px', color: c.muted, margin: 0, lineHeight: '1.7' }}>{body}</p>
+    </div>
+  );
+
+  const tokenColor = (t) => {
+    if (t === 'kw')   return c.kw;
+    if (t === 'type') return c.type;
+    if (t === 'var')  return c.var;
+    if (t === 'num')  return c.num;
+    if (t === 'str')  return c.str;
+    return c.muted;
+  };
+
+  const CodeBlock = ({ tokens }) => (
+    <pre style={{
+      background: c.codeBase, border: `1px solid ${c.border}`, borderRadius: '8px',
+      padding: '1.2rem 1.4rem', overflowX: 'auto', margin: '0',
+      fontSize: '13px', lineHeight: '1.8', fontFamily: '"Fira Code", "Cascadia Code", monospace',
+    }}>
+      {tokens.map((tok, i) => (
+        <span key={i} style={{ color: tokenColor(tok.t), whiteSpace: 'pre' }}>{tok.s}</span>
+      ))}
+    </pre>
+  );
+
+  /* ── POU array program, indexed on motor 4 ── */
+  const arrayDecl = (name) => ([
+    { t: 'var',  s: `    ${name}` },
+    { t: 'text', s: ' : ' },
+    { t: 'kw',   s: 'ARRAY' },
+    { t: 'text', s: '[' },
+    { t: 'num',  s: '1' },
+    { t: 'text', s: '..' },
+    { t: 'num',  s: '5' },
+    { t: 'text', s: '] ' },
+    { t: 'kw',   s: 'OF ' },
+    { t: 'type', s: 'BOOL' },
+    { t: 'text', s: ';\n' },
+  ]);
+
+  const pouLines = [
+    { t: 'kw',  s: 'PROGRAM ' }, { t: 'var', s: 'POU\n' },
+    { t: 'kw',  s: 'VAR\n' },
+    ...arrayDecl('MotorOverload'),
+    ...arrayDecl('MotorOverCurrent'),
+    ...arrayDecl('MotorPBStart'),
+    ...arrayDecl('MotorPBStop'),
+    ...arrayDecl('MotorCoil'),
+    { t: 'kw',  s: 'END_VAR\n\n' },
+    { t: 'kw',  s: 'IF ' }, { t: 'var', s: 'MotorPBStart' }, { t: 'text', s: '[' }, { t: 'num', s: '4' }, { t: 'text', s: '] ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: '    MotorCoil' }, { t: 'text', s: '[' }, { t: 'num', s: '4' }, { t: 'text', s: ']' }, { t: 'text', s: ':= ' }, { t: 'num', s: '1' }, { t: 'text', s: ';\n' },
+    { t: 'kw',  s: 'ELSIF ' },
+    { t: 'var', s: 'MotorPBStop' }, { t: 'text', s: '[' }, { t: 'num', s: '4' }, { t: 'text', s: '] ' }, { t: 'kw', s: 'OR ' },
+    { t: 'var', s: 'MotorOverload' }, { t: 'text', s: '[' }, { t: 'num', s: '4' }, { t: 'text', s: '] ' }, { t: 'kw', s: 'OR ' },
+    { t: 'var', s: 'MotorOverCurrent' }, { t: 'text', s: '[' }, { t: 'num', s: '4' }, { t: 'text', s: '] ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: '    MotorCoil' }, { t: 'text', s: '[' }, { t: 'num', s: '4' }, { t: 'text', s: ']' }, { t: 'text', s: ':= ' }, { t: 'num', s: '0' }, { t: 'text', s: ';\n' },
+    { t: 'kw',  s: 'END_IF' },
+  ];
+
+  /* ── 5 motors × 5 parameters scheme ── */
+  const params = [
+    { name: 'MotorPBStart',    color: c.blue,  desc: 'Start push-button input' },
+    { name: 'MotorPBStop',     color: c.blue,  desc: 'Stop push-button input' },
+    { name: 'MotorOverload',   color: c.red,   desc: 'Thermal overload trip' },
+    { name: 'MotorOverCurrent',color: c.red,   desc: 'Over-current fault' },
+    { name: 'MotorCoil',       color: c.green, desc: 'Contactor coil output' },
+  ];
+  const motors = [1, 2, 3, 4, 5];
+
+  /* ── resolved signal row for the interactive panel ── */
+  const ResolvedChip = ({ name, color }) => (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '6px',
+      fontSize: '11px', fontFamily: 'monospace', fontWeight: '700',
+      padding: '5px 10px', borderRadius: '6px',
+      backgroundColor: `${color}12`, border: `1px solid ${color}55`, color: color,
+    }}>
+      {name}<span style={{ color: c.text }}>[{motorIdx}]</span>
+    </span>
+  );
+
+  /* ─────────────── RENDER ─────────────── */
+  return (
+    <div style={{ backgroundColor: c.bg, minHeight: '100vh', padding: '0 0 4rem' }}>
+      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '0 1.5rem' }}>
+
+        {/* ── Hero ── */}
+        <div style={{
+          backgroundColor: c.card, border: `1px solid ${c.border}`,
+          borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', marginTop: '1rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            <span style={{
+              fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em',
+              color: c.accent, background: `${c.accent}18`, border: `1px solid ${c.accent}44`,
+              borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace',
+            }}>IEC 61131-3</span>
+            <span style={{
+              fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em',
+              color: c.blue, background: `${c.blue}18`, border: `1px solid ${c.blue}44`,
+              borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace',
+            }}>ARRAYS</span>
+          </div>
+          <h1 style={{ fontSize: '22px', fontWeight: '800', color: c.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            Five Motors, One Block of Code
+          </h1>
+          <p style={{ fontSize: '13px', color: c.muted, margin: '0 0 12px', lineHeight: '1.7', maxWidth: '680px' }}>
+            Structured Text (ST) is the IEC 61131-3 text-based PLC language built on Pascal-like syntax — variable
+            declarations, IF/ELSIF/ELSE conditionals, loops, and assignments — that a controller scans cyclically each
+            scan cycle. An <strong style={{ color: c.text }}>array</strong> in ST is a single variable that holds an
+            ordered, fixed-size collection of values of the same type, declared as <code style={{ color: c.type, fontFamily: 'monospace' }}>ARRAY[lower..upper] OF &lt;type&gt;</code> and
+            accessed by an integer index in square brackets — e.g. <code style={{ color: c.type, fontFamily: 'monospace' }}>MotorCoil[4]</code>.
+            Instead of declaring <code style={{ color: c.type, fontFamily: 'monospace' }}>MotorCoil1</code>, <code style={{ color: c.type, fontFamily: 'monospace' }}>MotorCoil2</code>… as separate
+            named variables, the array bundles them under one name and lets the index pick which element you mean.
+          </p>
+          <p style={{ fontSize: '13px', color: c.muted, margin: 0, lineHeight: '1.7', maxWidth: '680px' }}>
+            The example below controls <strong style={{ color: c.text }}>five identical motors</strong>, each with the
+            same five BOOL signals (start/stop buttons, overload and over-current faults, and a coil output). Writing
+            that out signal-by-signal would mean 25 uniquely named variables and five copies of the same logic — arrays
+            collapse it to five declarations and one reusable block, indexed per motor.
+          </p>
+        </div>
+
+        {/* ── The scenario: 5 motors × 5 parameters ── */}
+        {sectionTitle('The Scenario — 5 Motors × 5 Signals Each')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          Every motor in the line needs the exact same five BOOL signals. That is a 5 × 5 grid of 25 individual values —
+          click a column below to see how a single indexed array name resolves to one cell of this grid:
+        </p>
+        <div style={{ overflowX: 'auto', border: `1px solid ${c.border}`, borderRadius: '8px', marginBottom: '0.75rem' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', backgroundColor: c.card }}>
+            <thead>
+              <tr style={{ backgroundColor: '#1e1e22', borderBottom: `1px solid ${c.border}` }}>
+                <th style={{ padding: '8px 10px', textAlign: 'left', fontFamily: 'monospace', fontSize: '10px', fontWeight: '800', letterSpacing: '0.06em', color: c.muted }}>Array</th>
+                {motors.map(m => (
+                  <th key={m}
+                    onClick={() => setMotorIdx(m)}
+                    style={{
+                      padding: '8px 10px', textAlign: 'center', fontFamily: 'monospace', fontSize: '10px', fontWeight: '800',
+                      letterSpacing: '0.06em', cursor: 'pointer', userSelect: 'none',
+                      color: motorIdx === m ? c.accent : c.muted,
+                      backgroundColor: motorIdx === m ? `${c.accent}14` : 'transparent',
+                      borderBottom: motorIdx === m ? `2px solid ${c.accent}` : '2px solid transparent',
+                      transition: 'all 0.15s',
+                    }}>Motor {m}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {params.map((p, i) => (
+                <tr key={p.name} style={{ borderBottom: `1px solid ${c.border}55` }}>
+                  <td style={{ padding: '7px 10px', fontFamily: 'monospace', fontSize: '11px', fontWeight: '700', color: p.color }}>
+                    {p.name}
+                    <div style={{ fontSize: '9px', fontWeight: '400', color: c.muted, marginTop: '2px' }}>{p.desc}</div>
+                  </td>
+                  {motors.map(m => (
+                    <td key={m} style={{
+                      padding: '7px 10px', textAlign: 'center', fontFamily: 'monospace', fontSize: '10.5px', fontWeight: '700',
+                      color: motorIdx === m ? c.text : c.muted,
+                      backgroundColor: motorIdx === m ? `${c.accent}10` : 'transparent',
+                      transition: 'background-color 0.15s',
+                    }}>{p.name}<span style={{ color: motorIdx === m ? c.accent : c.muted }}>[{m}]</span></td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p style={{ fontSize: '11px', color: c.muted, margin: '0 0 0.5rem', lineHeight: '1.6' }}>
+          Selected column: <strong style={{ color: c.accent }}>Motor {motorIdx}</strong> — its five signals resolve to:
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px 14px', backgroundColor: c.card, border: `1px solid ${c.border}`, borderRadius: '8px' }}>
+          {params.map(p => <ResolvedChip key={p.name} name={p.name} color={p.color} />)}
+        </div>
+
+        {/* ── Why arrays ── */}
+        {sectionTitle('Why Use Arrays Instead of 25 Variables?')}
+        {explanationCard(
+          'The naming explosion without arrays',
+          'Without arrays, each of the 25 cells in the grid above would need its own globally unique name — Motor1PBStart, Motor1PBStop, … Motor5OverCurrent, Motor5Coil. Every one of those names has to be declared, spelled correctly everywhere it is used, and kept in sync if the naming convention ever changes. On a line with five motors that is tedious; on a line with fifty it becomes unmanageable.',
+          c.red
+        )}
+        {explanationCard(
+          'One declaration covers a whole column',
+          'An array collapses an entire row of the grid into a single declaration: MotorCoil : ARRAY[1..5] OF BOOL replaces five separate BOOL variables with one structure of five elements, all sharing one name and one type. The POU below needs only five such declarations — 25 elements total — instead of 25 individually named variables.',
+          c.blue
+        )}
+        {explanationCard(
+          'The index turns logic into a template',
+          'Because every motor exposes the same five signals at the same relative position, one IF/ELSIF block written against an index — [4] in the program below — is structurally identical to the block you would write for any other motor. Change the literal 4 to 1, 2, 3, or 5 (or, better, drive it from a loop counter in a FOR…DO construct) and the exact same logic now controls a different motor. The code becomes a reusable template rather than five hand-copied blocks.',
+          c.green
+        )}
+
+        {/* ── Code ── */}
+        {sectionTitle('ST Program Code — POU, Indexed on Motor 4')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          This is the program organization unit (POU) exactly as written in the PLC editor — five array declarations
+          followed by the start/stop/fault logic for motor 4:
+        </p>
+        <CodeBlock tokens={pouLines} />
+        {explanationCard('Variable declaration — five arrays', 'Each VAR line declares one ARRAY[1..5] OF BOOL: MotorOverload, MotorOverCurrent, MotorPBStart, MotorPBStop, and MotorCoil. The bounds [1..5] mean the array has five elements, indexed 1 through 5 — one slot per motor on the line. All five elements of an array share the same name and the same BOOL type; only the index in square brackets distinguishes one motor’s signal from another’s.', c.type)}
+        {explanationCard('IF MotorPBStart[4] THEN — start condition', 'MotorPBStart[4] reads element 4 of the MotorPBStart array: specifically motor 4’s start push-button, and no other motor’s. When it is TRUE, the program writes TRUE into MotorCoil[4] — element 4 of the MotorCoil array — energising motor 4’s contactor. MotorCoil[1], [2], [3], and [5] are completely untouched by this statement; the index guarantees the assignment lands on exactly one motor’s output.', c.blue)}
+        {explanationCard('ELSIF …THEN — the combined stop/fault condition', 'MotorPBStop[4] OR MotorOverload[4] OR MotorOverCurrent[4] reads three different arrays, all at the same index 4: the stop button, the thermal overload trip, and the over-current fault — each for motor 4 specifically. If any one of them is TRUE, MotorCoil[4] is driven to 0 (FALSE), de-energising motor 4. Note that every array reference in this whole block uses the identical index, 4 — that consistency is what makes the block "about motor 4" as a unit.', c.kw)}
+        {explanationCard('Reusing the block for the other four motors', 'To control motor 1, 2, 3, or 5, nothing about the structure of this block changes — only the literal 4 would be replaced by 1, 2, 3, or 5 everywhere it appears (six places in this snippet). In a production program that repetition is itself usually eliminated by driving the index from a loop variable, e.g. FOR i := 1 TO 5 DO … MotorCoil[i] … END_FOR, so the entire five-motor station is governed by one block of logic that runs once per motor, per scan.', c.accent)}
+
+        {/* ── Recap ── */}
+        {sectionTitle('Recap — What the Index Buys You')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+          {[
+            { color: c.red,   label: 'Without arrays', body: '25 uniquely named BOOL variables, plus five hand-written copies of the start/stop/fault logic — one per motor, each referencing a different set of names.' },
+            { color: c.blue,  label: 'With arrays', body: 'Five ARRAY[1..5] OF BOOL declarations (25 elements total) and one block of logic, parameterised by an integer index — 4 in the example, but structurally identical for any motor.' },
+            { color: c.green, label: 'The payoff', body: 'Adding a sixth motor means widening the bounds to [1..6] and running the same block one more time — not inventing five new variable names and copy-pasting another block by hand.' },
+          ].map(card => (
+            <div key={card.label} style={{
+              backgroundColor: c.card, border: `1px solid ${c.border}`, borderLeft: `4px solid ${card.color}`,
+              borderRadius: '8px', padding: '0.9rem 1rem',
+            }}>
+              <div style={{ fontSize: '10px', fontWeight: '800', color: card.color, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '5px' }}>{card.label}</div>
+              <p style={{ fontSize: '11px', color: c.muted, margin: 0, lineHeight: '1.6' }}>{card.body}</p>
+            </div>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+<STArraysPage />
