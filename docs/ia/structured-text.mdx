@@ -1,0 +1,468 @@
+---
+sidebar_position: 4
+title: Structured Text — Motor Launch
+description: IEC 61131-3 Structured Text program for a two-button motor launch with a no-fault interlock. Interactive logic simulator, full explanation, and two versions of the ST code.
+hide_table_of_contents: true
+---
+
+import React, { useState } from 'react';
+
+export const STPage = () => {
+  /* ── simulator state ── */
+  const [pb1, setPb1]       = useState(false);
+  const [pb2, setPb2]       = useState(false);
+  const [noFault, setNoFault] = useState(true);
+  const [activeCode, setActiveCode] = useState('v1');
+
+  const orOut  = pb1 || pb2;
+  const motor  = orOut && noFault;
+
+  /* ── palette ── */
+  const c = {
+    bg:        '#111113',
+    card:      '#1a1a1c',
+    border:    '#2a2a2e',
+    accent:    '#F68B1F',
+    blue:      '#3b82f6',
+    green:     '#22c55e',
+    red:       '#ef4444',
+    muted:     '#88888f',
+    text:      '#e3e3e8',
+    codeBase:  '#0d0d0f',
+    kw:        '#c792ea',
+    type:      '#82aaff',
+    str:       '#c3e88d',
+    comment:   '#546e7a',
+    num:       '#f78c6c',
+    var:       '#eeffff',
+  };
+
+  /* ── helpers ── */
+  const sectionTitle = (text) => (
+    <h2 style={{ color: c.text, fontSize: '15px', fontWeight: '700', marginBottom: '1rem', marginTop: '2.5rem', paddingBottom: '0.5rem', borderBottom: `1px solid ${c.border}`, letterSpacing: '-0.01em' }}>
+      {text}
+    </h2>
+  );
+
+  const pill = (label, active, color) => ({
+    display: 'inline-block', padding: '2px 8px', fontSize: '10px', fontWeight: '700',
+    borderRadius: '4px', letterSpacing: '0.04em', fontFamily: 'monospace',
+    background: active ? `${color}22` : 'transparent',
+    border: `1px solid ${active ? color : c.border}`,
+    color: active ? color : c.muted,
+    transition: 'all 0.2s',
+  });
+
+  const Chip = ({ label, active, color }) => (
+    <span style={pill(label, active, color)}>{label}</span>
+  );
+
+  /* ── button component ── */
+  const Btn = ({ label, active, onClick, color, desc }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+      <span style={{ fontSize: '10px', color: c.muted, fontFamily: 'monospace', letterSpacing: '0.06em' }}>{label}</span>
+      <button
+        onClick={onClick}
+        style={{
+          width: '72px', height: '72px', borderRadius: '50%',
+          border: `3px solid ${active ? color : c.border}`,
+          backgroundColor: active ? `${color}18` : c.card,
+          color: active ? color : c.muted,
+          fontSize: '10px', fontWeight: '800', fontFamily: 'monospace', letterSpacing: '0.04em',
+          cursor: 'pointer', transition: 'all 0.2s',
+          boxShadow: active ? `0 0 18px ${color}55` : 'none',
+        }}
+      >
+        {active ? 'ON' : 'OFF'}
+      </button>
+      <span style={{ fontSize: '9px', color: c.muted, textAlign: 'center', maxWidth: '80px', lineHeight: '1.4' }}>{desc}</span>
+    </div>
+  );
+
+  /* ── logic block component ── */
+  const LogicBlock = ({ label, inputs, output, active, color }) => (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+      backgroundColor: active ? `${color}12` : c.card,
+      border: `2px solid ${active ? color : c.border}`,
+      borderRadius: '10px', padding: '12px 20px',
+      minWidth: '90px', transition: 'all 0.3s',
+      boxShadow: active ? `0 0 20px ${color}33` : 'none',
+    }}>
+      <span style={{ fontSize: '9px', color: c.muted, letterSpacing: '0.06em' }}>BLOCK</span>
+      <span style={{ fontSize: '20px', fontWeight: '900', color: active ? color : c.muted, letterSpacing: '-0.02em', fontFamily: 'monospace' }}>{label}</span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', justifyContent: 'center', marginTop: '4px' }}>
+        {inputs.map(i => <Chip key={i.label} label={i.label} active={i.active} color={color} />)}
+      </div>
+      <div style={{ width: '1px', height: '8px', backgroundColor: c.border }} />
+      <Chip label={output.label} active={output.active} color={color} />
+    </div>
+  );
+
+  /* ── wire component ── */
+  const Wire = ({ active }) => (
+    <div style={{
+      flex: '1', minWidth: '20px', height: '3px',
+      backgroundColor: active ? c.blue : c.border,
+      borderRadius: '2px', transition: 'background-color 0.3s',
+      boxShadow: active ? `0 0 8px ${c.blue}88` : 'none',
+      alignSelf: 'center',
+    }} />
+  );
+
+  /* ── motor lamp ── */
+  const MotorLamp = ({ on }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+      <span style={{ fontSize: '10px', color: c.muted, fontFamily: 'monospace', letterSpacing: '0.06em' }}>MOTOR</span>
+      <div style={{
+        width: '72px', height: '72px', borderRadius: '50%',
+        backgroundColor: on ? `${c.green}20` : c.card,
+        border: `3px solid ${on ? c.green : c.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: on ? `0 0 24px ${c.green}66` : 'none',
+        transition: 'all 0.3s',
+      }}>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={on ? c.green : c.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <polyline points="12 8 12 12 14 14"/>
+          <line x1="12" y1="3" x2="12" y2="1"/>
+          <line x1="12" y1="23" x2="12" y2="21"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </div>
+      <span style={{
+        fontSize: '10px', fontWeight: '800', letterSpacing: '0.08em',
+        color: on ? c.green : c.muted,
+        fontFamily: 'monospace',
+      }}>{on ? 'RUNNING' : 'STOPPED'}</span>
+    </div>
+  );
+
+  /* ── code highlight helper ── */
+  const stV1Lines = [
+    { t: 'kw',      s: 'PROGRAM ' },{ t: 'var',     s: 'ST_1\n' },
+    { t: 'kw',      s: 'VAR\n' },
+    { t: 'var',     s: '    PB1' },{ t: 'text',    s: ': ' },{ t: 'type',    s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'var',     s: '    PB2' },{ t: 'text',    s: ': ' },{ t: 'type',    s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'var',     s: '    MOTOR' },{ t: 'text',  s: ': ' },{ t: 'type',    s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'var',     s: '    NOFault' },{ t: 'text',s: ': ' },{ t: 'type',    s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'var',     s: '    OrOutput' },{ t: 'text',s: ': ' },{ t: 'type',   s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'kw',      s: 'END_VAR\n\n' },
+    { t: 'kw',      s: 'IF ' },{ t: 'text', s: '(' },{ t: 'var', s: 'PB1' },{ t: 'num', s: '=1' },{ t: 'kw', s: ' OR ' },{ t: 'var', s: 'PB2' },{ t: 'num', s: '=1' },{ t: 'text', s: ') ' },{ t: 'kw', s: 'THEN\n' },
+    { t: 'var',     s: '    OrOutput' },{ t: 'text', s: ':= ' },{ t: 'num', s: '1' },{ t: 'text', s: ';\n' },
+    { t: 'kw',      s: 'ELSE\n' },
+    { t: 'var',     s: '    OrOutput' },{ t: 'text', s: ':= ' },{ t: 'num', s: '0' },{ t: 'text', s: ';\n' },
+    { t: 'kw',      s: 'END_IF\n\n' },
+    { t: 'kw',      s: 'IF ' },{ t: 'text', s: '(' },{ t: 'var', s: 'OrOutput' },{ t: 'num', s: '=1' },{ t: 'kw', s: ' AND ' },{ t: 'var', s: 'NOFault' },{ t: 'num', s: '=1' },{ t: 'text', s: ') ' },{ t: 'kw', s: 'THEN\n' },
+    { t: 'var',     s: '    MOTOR' },{ t: 'text', s: ':= ' },{ t: 'num', s: '1' },{ t: 'text', s: ';\n' },
+    { t: 'kw',      s: 'ELSE\n' },
+    { t: 'var',     s: '    MOTOR' },{ t: 'text', s: ':= ' },{ t: 'num', s: '0' },{ t: 'text', s: ';\n' },
+    { t: 'kw',      s: 'END_IF' },
+  ];
+
+  const stV2Lines = [
+    { t: 'kw',      s: 'PROGRAM ' },{ t: 'var',     s: 'ST_1\n' },
+    { t: 'kw',      s: 'VAR\n' },
+    { t: 'var',     s: '    PB1' },{ t: 'text',    s: ': ' },{ t: 'type',    s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'var',     s: '    PB2' },{ t: 'text',    s: ': ' },{ t: 'type',    s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'var',     s: '    MOTOR' },{ t: 'text',  s: ': ' },{ t: 'type',    s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'var',     s: '    NOFault' },{ t: 'text',s: ': ' },{ t: 'type',    s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'var',     s: '    OrOutput' },{ t: 'text',s: ': ' },{ t: 'type',   s: 'BOOL' },{ t: 'text',    s: ';\n' },
+    { t: 'kw',      s: 'END_VAR\n\n' },
+    { t: 'kw',      s: 'IF ' },{ t: 'text', s: '((' },{ t: 'var', s: 'PB1' },{ t: 'num', s: '=1' },{ t: 'text', s: ') ' },{ t: 'kw', s: 'OR ' },{ t: 'text', s: '(' },{ t: 'var', s: 'PB2' },{ t: 'num', s: '=1' },{ t: 'text', s: ')) ' },{ t: 'kw', s: 'AND ' },{ t: 'text', s: '(' },{ t: 'var', s: 'NOFault' },{ t: 'text', s: ')) ' },{ t: 'kw', s: 'THEN\n' },
+    { t: 'var',     s: '    MOTOR' },{ t: 'text', s: ':= ' },{ t: 'num', s: '1' },{ t: 'text', s: ';\n' },
+    { t: 'kw',      s: 'ELSE\n' },
+    { t: 'var',     s: '    MOTOR' },{ t: 'text', s: ':= ' },{ t: 'num', s: '0' },{ t: 'text', s: ';\n' },
+    { t: 'kw',      s: 'END_IF' },
+  ];
+
+  const tokenColor = (t) => {
+    if (t === 'kw')   return c.kw;
+    if (t === 'type') return c.type;
+    if (t === 'var')  return c.var;
+    if (t === 'num')  return c.num;
+    if (t === 'str')  return c.str;
+    return c.muted;
+  };
+
+  const CodeBlock = ({ tokens }) => (
+    <pre style={{
+      background: c.codeBase, border: `1px solid ${c.border}`, borderRadius: '8px',
+      padding: '1.2rem 1.4rem', overflowX: 'auto', margin: '0',
+      fontSize: '13px', lineHeight: '1.8', fontFamily: '"Fira Code", "Cascadia Code", monospace',
+    }}>
+      {tokens.map((tok, i) => (
+        <span key={i} style={{ color: tokenColor(tok.t), whiteSpace: 'pre' }}>{tok.s}</span>
+      ))}
+    </pre>
+  );
+
+  const explanationCard = (title, body, color) => (
+    <div style={{
+      backgroundColor: c.card, border: `1px solid ${c.border}`, borderLeft: `4px solid ${color}`,
+      borderRadius: '8px', padding: '1rem 1.2rem', marginTop: '0.75rem',
+    }}>
+      <div style={{ fontSize: '10px', fontWeight: '800', color: color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{title}</div>
+      <p style={{ fontSize: '12px', color: c.muted, margin: 0, lineHeight: '1.7' }}>{body}</p>
+    </div>
+  );
+
+  /* ── truth table ── */
+  const rows = [
+    [false, false, false, false, false],
+    [true,  false, false, true,  false],
+    [false, true,  false, true,  false],
+    [true,  true,  false, true,  false],
+    [false, false, true,  false, false],
+    [true,  false, true,  true,  true],
+    [false, true,  true,  true,  true],
+    [true,  true,  true,  true,  true],
+  ];
+
+  const TdBool = ({ v }) => (
+    <td style={{
+      textAlign: 'center', padding: '5px 10px', fontFamily: 'monospace',
+      fontSize: '11px', fontWeight: '700',
+      color: v ? c.green : c.red,
+      background: v ? `${c.green}08` : `${c.red}08`,
+    }}>{v ? '1' : '0'}</td>
+  );
+
+  /* ─────────────── RENDER ─────────────── */
+  return (
+    <div style={{ backgroundColor: c.bg, minHeight: '100vh', padding: '0 0 4rem' }}>
+      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '0 1.5rem' }}>
+
+        {/* ── Hero ── */}
+        <div style={{
+          backgroundColor: c.card, border: `1px solid ${c.border}`,
+          borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', marginTop: '1rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            <span style={{
+              fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em',
+              color: c.accent, background: `${c.accent}18`, border: `1px solid ${c.accent}44`,
+              borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace',
+            }}>IEC 61131-3</span>
+            <span style={{
+              fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em',
+              color: c.blue, background: `${c.blue}18`, border: `1px solid ${c.blue}44`,
+              borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace',
+            }}>STRUCTURED TEXT</span>
+          </div>
+          <h1 style={{ fontSize: '22px', fontWeight: '800', color: c.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            Motor Launch — ST Program
+          </h1>
+          <p style={{ fontSize: '13px', color: c.muted, margin: 0, lineHeight: '1.7', maxWidth: '680px' }}>
+            A two-button (OR) push-button interlock feeds into an AND gate with a fault monitor. 
+            The motor runs only when at least one button is pressed <em>and</em> no fault is active. 
+            Two equivalent implementations — explicit intermediate variable vs. inline expression — demonstrate the expressive range of ST.
+          </p>
+        </div>
+
+        {/* ── Logic Explanation ── */}
+        {sectionTitle('Logic Overview')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+          {[
+            { color: c.blue,  label: 'OR Gate — PB1, PB2', body: 'Either push-button closes the OR gate. In a real panel, PB1 and PB2 could be a local and remote start button — either one arms the system.' },
+            { color: c.kw,    label: 'AND Gate — OrOut, NoFault', body: 'The OR result is gated with the NoFault signal. If the drive trips or an overload occurs, NoFault drops to FALSE and the motor is de-energised regardless of the button state.' },
+            { color: c.green, label: 'MOTOR Output', body: 'The final BOOL drives a digital output card channel that controls the motor starter contactor. TRUE = contactor closed = motor running.' },
+          ].map(card => (
+            <div key={card.label} style={{
+              backgroundColor: c.card, border: `1px solid ${c.border}`, borderLeft: `4px solid ${card.color}`,
+              borderRadius: '8px', padding: '0.9rem 1rem',
+            }}>
+              <div style={{ fontSize: '10px', fontWeight: '800', color: card.color, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '5px' }}>{card.label}</div>
+              <p style={{ fontSize: '11px', color: c.muted, margin: 0, lineHeight: '1.6' }}>{card.body}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Interactive Simulator ── */}
+        {sectionTitle('Interactive Logic Simulator')}
+        <div style={{
+          backgroundColor: c.card, border: `1px solid ${c.border}`,
+          borderRadius: '12px', padding: '1.5rem',
+        }}>
+          <p style={{ fontSize: '11px', color: c.muted, margin: '0 0 1.5rem', lineHeight: '1.6' }}>
+            Click the buttons below to toggle <strong style={{ color: c.text }}>PB1</strong>, <strong style={{ color: c.text }}>PB2</strong>, and <strong style={{ color: c.text }}>NoFault</strong>.
+            Watch how the OR and AND blocks respond and whether the motor starts.
+          </p>
+
+          {/* Inputs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            {/* PB buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+              <Btn label="PB1" active={pb1} onClick={() => setPb1(v => !v)} color={c.blue} desc="Push-button 1" />
+              <Btn label="PB2" active={pb2} onClick={() => setPb2(v => !v)} color={c.blue} desc="Push-button 2" />
+            </div>
+
+            <Wire active={pb1 || pb2} />
+
+            {/* OR block */}
+            <LogicBlock
+              label="OR"
+              inputs={[{ label: 'PB1', active: pb1 }, { label: 'PB2', active: pb2 }]}
+              output={{ label: 'OrOut', active: orOut }}
+              active={orOut}
+              color={c.blue}
+            />
+
+            <Wire active={orOut} />
+
+            {/* AND block */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+              <LogicBlock
+                label="AND"
+                inputs={[{ label: 'OrOut', active: orOut }, { label: 'NoFault', active: noFault }]}
+                output={{ label: 'MOTOR', active: motor }}
+                active={motor}
+                color={c.green}
+              />
+              <div style={{ width: '1px', height: '10px', backgroundColor: c.border }} />
+              <div style={{
+                padding: '2px 10px', borderRadius: '4px', fontSize: '9px', fontWeight: '700',
+                fontFamily: 'monospace', letterSpacing: '0.05em',
+                backgroundColor: noFault ? `${c.green}15` : `${c.red}15`,
+                border: `1px solid ${noFault ? c.green : c.red}`,
+                color: noFault ? c.green : c.red,
+                cursor: 'pointer',
+              }} onClick={() => setNoFault(v => !v)}>
+                NoFault: {noFault ? 'TRUE ✓' : 'FALSE ✗'}
+              </div>
+            </div>
+
+            <Wire active={motor} />
+
+            {/* Motor */}
+            <MotorLamp on={motor} />
+          </div>
+
+          {/* Status row */}
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '1.5rem',
+            padding: '10px 14px', backgroundColor: c.bg, borderRadius: '8px', border: `1px solid ${c.border}`,
+            alignItems: 'center',
+          }}>
+            <span style={{ fontSize: '10px', color: c.muted, fontWeight: '700', marginRight: '4px', letterSpacing: '0.06em' }}>SIGNALS</span>
+            {[
+              { label: 'PB1',     v: pb1 },
+              { label: 'PB2',     v: pb2 },
+              { label: 'OrOut',   v: orOut },
+              { label: 'NoFault', v: noFault },
+              { label: 'MOTOR',   v: motor },
+            ].map(s => (
+              <span key={s.label} style={{
+                fontSize: '10px', fontFamily: 'monospace', padding: '2px 8px',
+                borderRadius: '4px', fontWeight: '700',
+                backgroundColor: s.v ? `${c.green}15` : `${c.red}12`,
+                border: `1px solid ${s.v ? c.green : c.red}55`,
+                color: s.v ? c.green : c.red,
+              }}>{s.label}={s.v ? '1' : '0'}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Truth Table ── */}
+        {sectionTitle('Truth Table')}
+        <div style={{ overflowX: 'auto', border: `1px solid ${c.border}`, borderRadius: '8px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', backgroundColor: c.card }}>
+            <thead>
+              <tr style={{ backgroundColor: '#1e1e22', borderBottom: `1px solid ${c.border}` }}>
+                {['PB1', 'PB2', 'NoFault', 'OrOut', 'MOTOR'].map(h => (
+                  <th key={h} style={{ padding: '8px 10px', textAlign: 'center', fontFamily: 'monospace', fontSize: '10px', fontWeight: '800', letterSpacing: '0.06em', color: c.muted }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={i} style={{ borderBottom: `1px solid ${c.border}55`, backgroundColor: row[4] ? `${c.green}06` : 'transparent' }}>
+                  {row.map((v, j) => <TdBool key={j} v={v} />)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ── Code Tabs ── */}
+        {sectionTitle('ST Program Code')}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '1rem' }}>
+          {[
+            { id: 'v1', label: 'Version 1 — Explicit', desc: 'Two IF blocks' },
+            { id: 'v2', label: 'Version 2 — Compact', desc: 'Single expression' },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveCode(tab.id)} style={{
+              padding: '7px 14px', fontSize: '11px', fontWeight: '700', borderRadius: '6px',
+              border: `1px solid ${activeCode === tab.id ? c.accent : c.border}`,
+              backgroundColor: activeCode === tab.id ? `${c.accent}18` : c.card,
+              color: activeCode === tab.id ? c.accent : c.muted,
+              cursor: 'pointer', transition: 'all 0.2s',
+            }}>
+              {tab.label}
+              <span style={{ fontSize: '9px', display: 'block', fontWeight: '400', marginTop: '1px', color: c.muted }}>{tab.desc}</span>
+            </button>
+          ))}
+        </div>
+
+        {activeCode === 'v1' && (
+          <div>
+            <CodeBlock tokens={stV1Lines} />
+            {explanationCard('Variable Declaration', 'Five BOOL variables are declared: PB1 and PB2 for the push-buttons, NOFault for the fault monitor signal from the drive, OrOutput as an intermediate result, and MOTOR as the final output that energises the contactor.', c.type)}
+            {explanationCard('First IF block — OR logic', 'The condition (PB1=1 OR PB2=1) evaluates the two push-buttons. If either is TRUE the OrOutput variable is explicitly set to 1 (TRUE); otherwise it is reset to 0. Comparing BOOL variables to the integer literal 1 is legal in IEC 61131-3 ST — it is equivalent to evaluating the BOOL directly.', c.blue)}
+            {explanationCard('Second IF block — AND logic', 'The condition (OrOutput=1 AND NOFault=1) gates the intermediate result with the fault signal. Only if both conditions are TRUE is MOTOR set to 1. The ELSE branch guarantees MOTOR is de-energised in any other state — this explicit ELSE is considered best practice in safety-relevant code because it leaves no ambiguity about the FALSE case.', c.kw)}
+            {explanationCard('Why two separate blocks?', 'Separating the OR and AND logic into two IF statements maps directly to the Function Block Diagram (FBD) structure in the ladder counterpart: you can see the OR gate and AND gate as distinct reasoning steps. This makes the code easier to extend — for example, adding a third push-button only touches the first IF, not the motor logic.', c.accent)}
+          </div>
+        )}
+
+        {activeCode === 'v2' && (
+          <div>
+            <CodeBlock tokens={stV2Lines} />
+            {explanationCard('Variable Declaration', 'Identical to Version 1: five BOOL variables — PB1, PB2, NOFault, OrOutput (kept for compatibility), MOTOR. In practice the OrOutput variable becomes unused in the compact version; a strict compiler may warn about it.', c.type)}
+            {explanationCard('Single compound expression', 'The entire logic is collapsed into one condition: (((PB1=1) OR (PB2=1)) AND (NOFault)). The inner parentheses around each OR operand are not strictly required by IEC 61131-3 operator precedence — AND binds more tightly than OR — but they are included here to make the grouping unmistakeable and to match the visual structure of the FBD diagram.', c.blue)}
+            {explanationCard('Boolean shorthand for NOFault', `Notice that NOFault appears without =1. Writing AND (NOFault) is identical to AND (NOFault=1) because NOFault is already a BOOL — both forms evaluate the variable's truth value directly. Mixing the two styles in the same expression (some variables =1, others bare) is valid but inconsistent; Version 1 uses =1 throughout for uniformity.`, c.kw)}
+            {explanationCard('Trade-offs vs. Version 1', `Version 2 is more concise — useful for simple expressions. However, for complex multi-condition logic, merging everything into one IF can reduce readability and make unit-testing individual logic stages harder. Most IEC 61131-3 style guides recommend Version 1's approach when the expression has more than two conditions or when intermediate values are needed for diagnostics or HMI display.`, c.accent)}
+          </div>
+        )}
+
+        {/* ── Comparison table ── */}
+        {sectionTitle('Version Comparison')}
+        <div style={{ overflowX: 'auto', border: `1px solid ${c.border}`, borderRadius: '8px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', backgroundColor: c.card }}>
+            <thead>
+              <tr style={{ backgroundColor: '#1e1e22', borderBottom: `1px solid ${c.border}` }}>
+                {['Aspect', 'Version 1 — Explicit', 'Version 2 — Compact'].map(h => (
+                  <th key={h} style={{ padding: '9px 12px', textAlign: 'left', fontSize: '10px', fontWeight: '800', color: c.muted, letterSpacing: '0.06em' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['Lines of logic', '8 lines (2 IF blocks)', '4 lines (1 IF block)'],
+                ['Intermediate variable', 'OrOutput used and visible', 'OrOutput declared but unused'],
+                ['Readability', 'High — each gate is a step', 'Moderate — requires parsing one expression'],
+                ['Debuggability', 'OrOutput readable on HMI / watch list', 'No intermediate signal to monitor'],
+                ['Extensibility', 'Add inputs to one IF only', 'Rewrite the full condition'],
+                ['IEC 61131-3 compliance', '✓ Valid', '✓ Valid'],
+                ['Style guide preference', 'Preferred for safety code', 'Acceptable for simple combinatorics'],
+              ].map((row, i) => (
+                <tr key={i} style={{ borderBottom: `1px solid ${c.border}55` }}>
+                  <td style={{ padding: '7px 12px', color: c.muted, fontSize: '11px', fontWeight: '600' }}>{row[0]}</td>
+                  <td style={{ padding: '7px 12px', color: c.text, fontSize: '11px', fontFamily: 'monospace' }}>{row[1]}</td>
+                  <td style={{ padding: '7px 12px', color: c.text, fontSize: '11px', fontFamily: 'monospace' }}>{row[2]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+<STPage />
