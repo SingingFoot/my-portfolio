@@ -1,0 +1,603 @@
+---
+sidebar_position: 5
+title: Functional Block Diagram — Pump Activation
+description: IEC 61131-3 Functional Block Diagram (FBD) solving a combinational pump-activation problem with manual/automatic modes, sensor interlocks, and an RS latch. Interactive scheme, FBD implementation, variable declarations, and live simulation.
+hide_table_of_contents: true
+---
+
+import React, { useState, useEffect } from 'react';
+
+export const FBDPage = () => {
+  /* ── simulator state ── */
+  const [v1, setV1]               = useState(false);
+  const [v2, setV2]               = useState(false);
+  const [v3, setV3]               = useState(false);
+  const [autoManual, setAutoManual] = useState(false); // false = MANUAL, true = AUTOMATIC
+  const [pressure, setPressure]   = useState(0);
+  const [level, setLevel]         = useState(0);
+  const [emgc, setEmgc]           = useState(false);
+  const [ovld, setOvld]           = useState(false);
+  const [pump, setPump]           = useState(false);
+
+  const pressurePreset = 6;
+  const levelPreset    = 2;
+
+  const press    = pressure >= pressurePreset;
+  const levelOk  = level >= levelPreset;
+  const manPath  = v1 && v2 && v3 && !autoManual;
+  const autoPath = v1 && v2 && v3 && autoManual && press && levelOk;
+  const logicResult = manPath || autoPath;
+  const faultReset  = emgc || ovld;
+
+  /* intermediate cascade signals — used to redraw the FBD network with binary (2-input) blocks */
+  const v12        = v1 && v2;
+  const v123       = v12 && v3;
+  const v123Auto   = v123 && autoManual;
+  const sensorsOk  = press && levelOk;
+
+  /* RS latch — reset-dominant (matches the IEC "RS" function block) */
+  useEffect(() => {
+    if (faultReset) setPump(false);
+    else if (logicResult) setPump(true);
+  }, [logicResult, faultReset]);
+
+  /* ── palette (matches the Structured Text page) ── */
+  const c = {
+    bg:        '#111113',
+    card:      '#1a1a1c',
+    border:    '#2a2a2e',
+    accent:    '#F68B1F',
+    blue:      '#3b82f6',
+    green:     '#22c55e',
+    red:       '#ef4444',
+    muted:     '#88888f',
+    text:      '#e3e3e8',
+    codeBase:  '#0d0d0f',
+    kw:        '#c792ea',
+    type:      '#82aaff',
+    str:       '#c3e88d',
+    comment:   '#546e7a',
+    num:       '#f78c6c',
+    var:       '#eeffff',
+  };
+
+  /* ── helpers ── */
+  const sectionTitle = (text) => (
+    <h2 style={{ color: c.text, fontSize: '15px', fontWeight: '700', marginBottom: '1rem', marginTop: '2.5rem', paddingBottom: '0.5rem', borderBottom: `1px solid ${c.border}`, letterSpacing: '-0.01em' }}>
+      {text}
+    </h2>
+  );
+
+  const pill = (label, active, color) => ({
+    display: 'inline-block', padding: '2px 8px', fontSize: '10px', fontWeight: '700',
+    borderRadius: '4px', letterSpacing: '0.04em', fontFamily: 'monospace',
+    background: active ? `${color}22` : 'transparent',
+    border: `1px solid ${active ? color : c.border}`,
+    color: active ? color : c.muted,
+    transition: 'all 0.2s',
+  });
+
+  const Chip = ({ label, active, color }) => (
+    <span style={pill(label, active, color)}>{label}</span>
+  );
+
+  const Btn = ({ label, active, onClick, color, desc }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+      <span style={{ fontSize: '10px', color: c.muted, fontFamily: 'monospace', letterSpacing: '0.06em' }}>{label}</span>
+      <button
+        onClick={onClick}
+        style={{
+          width: '64px', height: '64px', borderRadius: '50%',
+          border: `3px solid ${active ? color : c.border}`,
+          backgroundColor: active ? `${color}18` : c.card,
+          color: active ? color : c.muted,
+          fontSize: '10px', fontWeight: '800', fontFamily: 'monospace', letterSpacing: '0.04em',
+          cursor: 'pointer', transition: 'all 0.2s',
+          boxShadow: active ? `0 0 18px ${color}55` : 'none',
+        }}
+      >
+        {active ? 'ON' : 'OFF'}
+      </button>
+      <span style={{ fontSize: '9px', color: c.muted, textAlign: 'center', maxWidth: '84px', lineHeight: '1.4' }}>{desc}</span>
+    </div>
+  );
+
+  const ModeSwitch = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+      <span style={{ fontSize: '10px', color: c.muted, fontFamily: 'monospace', letterSpacing: '0.06em' }}>AutomaticManuel</span>
+      <div
+        onClick={() => setAutoManual(s => !s)}
+        style={{
+          display: 'flex', borderRadius: '20px', border: `1px solid ${c.border}`,
+          overflow: 'hidden', cursor: 'pointer', fontFamily: 'monospace',
+          fontSize: '10px', fontWeight: '800', letterSpacing: '0.04em',
+        }}
+      >
+        <div style={{ padding: '10px 14px', transition: 'all 0.2s', background: !autoManual ? `${c.blue}22` : 'transparent', color: !autoManual ? c.blue : c.muted }}>MANUAL</div>
+        <div style={{ padding: '10px 14px', transition: 'all 0.2s', background: autoManual ? `${c.kw}22` : 'transparent', color: autoManual ? c.kw : c.muted }}>AUTOMATIC</div>
+      </div>
+      <span style={{ fontSize: '9px', color: c.muted, textAlign: 'center', maxWidth: '110px', lineHeight: '1.4' }}>Mode selector — click to flip</span>
+    </div>
+  );
+
+  const stepBtnStyle = {
+    width: '26px', height: '26px', borderRadius: '6px', border: `1px solid ${c.border}`,
+    backgroundColor: c.card, color: c.text, fontSize: '14px', fontWeight: '800',
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+  };
+
+  const Stepper = ({ label, value, onChange, preset, color, unit }) => {
+    const ge = value >= preset;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '10px', color: c.muted, fontFamily: 'monospace', letterSpacing: '0.06em' }}>{label}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button style={stepBtnStyle} onClick={() => onChange(v => Math.max(0, v - 1))}>−</button>
+          <div style={{ minWidth: '38px', textAlign: 'center', fontFamily: 'monospace', fontSize: '15px', fontWeight: '800', color: c.text }}>{value}{unit}</div>
+          <button style={stepBtnStyle} onClick={() => onChange(v => Math.min(10, v + 1))}>+</button>
+        </div>
+        <span style={{ fontSize: '9px', color: c.muted, fontFamily: 'monospace' }}>Pre-set ≥ {preset}{unit}</span>
+        <Chip label={`GE = ${ge ? '1' : '0'}`} active={ge} color={color} />
+      </div>
+    );
+  };
+
+  const LogicBlock = ({ label, inputs, output, active, color }) => (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+      backgroundColor: active ? `${color}12` : c.card,
+      border: `2px solid ${active ? color : c.border}`,
+      borderRadius: '10px', padding: '12px 18px',
+      minWidth: '92px', transition: 'all 0.3s',
+      boxShadow: active ? `0 0 20px ${color}33` : 'none',
+    }}>
+      <span style={{ fontSize: '9px', color: c.muted, letterSpacing: '0.06em' }}>BLOCK</span>
+      <span style={{ fontSize: '18px', fontWeight: '900', color: active ? color : c.muted, letterSpacing: '-0.02em', fontFamily: 'monospace' }}>{label}</span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', justifyContent: 'center', marginTop: '4px', maxWidth: '160px' }}>
+        {inputs.map(i => <Chip key={i.label} label={i.label} active={i.active} color={color} />)}
+      </div>
+      <div style={{ width: '1px', height: '8px', backgroundColor: c.border }} />
+      <Chip label={output.label} active={output.active} color={color} />
+    </div>
+  );
+
+  const Wire = ({ active, vertical }) => (
+    <div style={{
+      ...(vertical
+        ? { width: '3px', height: '20px' }
+        : { flex: '1', minWidth: '20px', height: '3px', alignSelf: 'center' }),
+      backgroundColor: active ? c.blue : c.border,
+      borderRadius: '2px', transition: 'background-color 0.3s',
+      boxShadow: active ? `0 0 8px ${c.blue}88` : 'none',
+    }} />
+  );
+
+  const PumpLamp = ({ on }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+      <span style={{ fontSize: '10px', color: c.muted, fontFamily: 'monospace', letterSpacing: '0.06em' }}>PUMP OUT</span>
+      <div style={{
+        width: '64px', height: '64px', borderRadius: '50%',
+        backgroundColor: on ? `${c.green}20` : c.card,
+        border: `3px solid ${on ? c.green : c.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: on ? `0 0 24px ${c.green}66` : 'none',
+        transition: 'all 0.3s',
+      }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke={on ? c.green : c.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 12h4l3 8 4-16 3 8h4" />
+        </svg>
+      </div>
+      <span style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.08em', color: on ? c.green : c.muted, fontFamily: 'monospace' }}>{on ? 'RUNNING' : 'STOPPED'}</span>
+    </div>
+  );
+
+  const explanationCard = (title, body, color) => (
+    <div style={{
+      backgroundColor: c.card, border: `1px solid ${c.border}`, borderLeft: `4px solid ${color}`,
+      borderRadius: '8px', padding: '1rem 1.2rem', marginTop: '0.75rem',
+    }}>
+      <div style={{ fontSize: '10px', fontWeight: '800', color: color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{title}</div>
+      <p style={{ fontSize: '12px', color: c.muted, margin: 0, lineHeight: '1.7' }}>{body}</p>
+    </div>
+  );
+
+  /* ── code highlight helper (variable declaration block) ── */
+  const tokenColor = (t) => {
+    if (t === 'kw')   return c.kw;
+    if (t === 'type') return c.type;
+    if (t === 'var')  return c.var;
+    if (t === 'num')  return c.num;
+    if (t === 'str')  return c.str;
+    if (t === 'comment') return c.comment;
+    return c.muted;
+  };
+
+  const declLines = [
+    { t: 'kw',      s: 'PROGRAM ' },{ t: 'var', s: 'POU\n' },
+    { t: 'kw',      s: 'VAR\n' },
+    { t: 'comment', s: '    // RS latch instance driving the pump\n' },
+    { t: 'var',     s: '    PumpActivateBlock' },{ t: 'text', s: ': ' },{ t: 'type', s: 'RS' },{ t: 'text', s: ';\n\n' },
+    { t: 'comment', s: '    // discrete process inputs\n' },
+    { t: 'var',     s: '    Valve1' },{ t: 'text',          s: ': ' },{ t: 'type', s: 'BOOL' },{ t: 'text', s: ';\n' },
+    { t: 'var',     s: '    Valve2' },{ t: 'text',          s: ': ' },{ t: 'type', s: 'BOOL' },{ t: 'text', s: ';\n' },
+    { t: 'var',     s: '    Valve3' },{ t: 'text',          s: ': ' },{ t: 'type', s: 'BOOL' },{ t: 'text', s: ';\n' },
+    { t: 'var',     s: '    AutomaticManuel' },{ t: 'text', s: ': ' },{ t: 'type', s: 'BOOL' },{ t: 'text', s: ';\n\n' },
+    { t: 'comment', s: '    // analog process inputs and their pre-sets\n' },
+    { t: 'var',     s: '    PressureSensor' },{ t: 'text',  s: ': ' },{ t: 'type', s: 'INT' },{ t: 'text', s: ';\n' },
+    { t: 'var',     s: '    Pressure_PreSet' },{ t: 'text', s: ': ' },{ t: 'type', s: 'INT' },{ t: 'text', s: ' := ' },{ t: 'num', s: '6' },{ t: 'text', s: ';\n' },
+    { t: 'var',     s: '    LevelSensor' },{ t: 'text',     s: ': ' },{ t: 'type', s: 'INT' },{ t: 'text', s: ';\n' },
+    { t: 'var',     s: '    Level_PreSet' },{ t: 'text',    s: ': ' },{ t: 'type', s: 'INT' },{ t: 'text', s: ' := ' },{ t: 'num', s: '2' },{ t: 'text', s: ';\n\n' },
+    { t: 'comment', s: '    // fault / safety inputs\n' },
+    { t: 'var',     s: '    Emgc' },{ t: 'text',             s: ': ' },{ t: 'type', s: 'BOOL' },{ t: 'text', s: ';\n' },
+    { t: 'var',     s: '    Overload' },{ t: 'text',         s: ': ' },{ t: 'type', s: 'BOOL' },{ t: 'text', s: ';\n\n' },
+    { t: 'comment', s: '    // final output to the contactor / VFD enable\n' },
+    { t: 'var',     s: '    PumpOut' },{ t: 'text',          s: ': ' },{ t: 'type', s: 'BOOL' },{ t: 'text', s: ';\n' },
+    { t: 'kw',      s: 'END_VAR' },
+  ];
+
+  const CodeBlock = ({ tokens }) => (
+    <pre style={{
+      background: c.codeBase, border: `1px solid ${c.border}`, borderRadius: '8px',
+      padding: '1.2rem 1.4rem', overflowX: 'auto', margin: '0',
+      fontSize: '13px', lineHeight: '1.8', fontFamily: '"Fira Code", "Cascadia Code", monospace',
+    }}>
+      {tokens.map((tok, i) => (
+        <span key={i} style={{ color: tokenColor(tok.t), whiteSpace: 'pre' }}>{tok.s}</span>
+      ))}
+    </pre>
+  );
+
+  /* ── watch-table row ── */
+  const WatchRow = ({ name, type, value, highlight }) => (
+    <tr style={{ borderBottom: `1px solid ${c.border}55`, backgroundColor: highlight ? `${c.green}08` : 'transparent' }}>
+      <td style={{ padding: '6px 12px', fontFamily: 'monospace', fontSize: '11px', color: c.text }}>{name}</td>
+      <td style={{ padding: '6px 12px', fontFamily: 'monospace', fontSize: '11px', color: c.muted }}>{type}</td>
+      <td style={{
+        padding: '6px 12px', fontFamily: 'monospace', fontSize: '11px', fontWeight: '800', textAlign: 'right',
+        color: typeof value === 'boolean' ? (value ? c.green : c.red) : c.type,
+      }}>
+        {typeof value === 'boolean' ? (value ? 'TRUE' : 'FALSE') : value}
+      </td>
+    </tr>
+  );
+
+  /* ─────────────── RENDER ─────────────── */
+  return (
+    <div style={{ backgroundColor: c.bg, minHeight: '100vh', padding: '0 0 4rem' }}>
+      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '0 1.5rem' }}>
+
+        {/* ── Hero ── */}
+        <div style={{ backgroundColor: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            <span style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', color: c.accent, background: `${c.accent}18`, border: `1px solid ${c.accent}44`, borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace' }}>IEC 61131-3</span>
+            <span style={{ fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em', color: c.blue, background: `${c.blue}18`, border: `1px solid ${c.blue}44`, borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace' }}>FBD</span>
+          </div>
+          <h1 style={{ fontSize: '22px', fontWeight: '800', color: c.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            Functional Block Diagram — Pump Activation
+          </h1>
+          <p style={{ fontSize: '13px', color: c.muted, margin: '0 0 12px', lineHeight: '1.7', maxWidth: '700px' }}>
+            A Functional Block Diagram (FBD) is one of the five IEC 61131-3 PLC programming languages. Instead of writing
+            text-based statements (as in Structured Text) or stacking contacts on rails (as in Ladder Diagram), the programmer
+            wires together graphical <em>function blocks</em> — AND, OR, comparators, timers, latches — connecting each block's
+            output to the next block's input, much like an electronic schematic. Signal flow runs left to right, each block is
+            evaluated once per scan cycle, and the resulting network reads almost like a circuit diagram of the control logic.
+            FBD is especially popular for continuous-process and analog-heavy logic, where chains of comparisons and Boolean
+            combinations are easier to read as wired blocks than as nested IF statements.
+          </p>
+          <p style={{ fontSize: '13px', color: c.muted, margin: 0, lineHeight: '1.7', maxWidth: '700px' }}>
+            The example below is a <strong style={{ color: c.text }}>combinational pump-activation problem</strong>: three valves
+            must be open, the system must be in the correct mode (manual or automatic), and — in automatic mode — the pressure
+            and level sensors must clear their pre-set thresholds before the pump may start. A safety OR (emergency stop / overload)
+            can drop the pump at any time. An RS latch holds the pump state until either condition changes.
+          </p>
+        </div>
+
+        {/* ── What is FBD — concept cards ── */}
+        {sectionTitle('FBD Building Blocks')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+          {[
+            { color: c.blue,  label: 'AND / OR (≥1)', body: 'Multi-input Boolean blocks. AND outputs TRUE only when every input is TRUE; OR (drawn "≥1" in IEC notation) outputs TRUE when at least one input is TRUE. Chains of these blocks express combinational logic visually.' },
+            { color: c.kw,    label: 'Comparator (GE / ≥)', body: 'Converts an analog signal into a Boolean. A GE block outputs TRUE when its first input is greater than or equal to its second — typically a live sensor value compared against a configurable pre-set.' },
+            { color: c.green, label: 'RS Latch', body: 'A bistable memory block with SET and RESET inputs and a Q output. Once set, Q stays TRUE until reset — even if the SET input drops. The "RS" variant is reset-dominant: if both inputs are TRUE simultaneously, RESET wins.' },
+          ].map(card => (
+            <div key={card.label} style={{ backgroundColor: c.card, border: `1px solid ${c.border}`, borderLeft: `4px solid ${card.color}`, borderRadius: '8px', padding: '0.9rem 1rem' }}>
+              <div style={{ fontSize: '10px', fontWeight: '800', color: card.color, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '5px' }}>{card.label}</div>
+              <p style={{ fontSize: '11px', color: c.muted, margin: 0, lineHeight: '1.6' }}>{card.body}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Combinational Logic Problem — interactive ── */}
+        {sectionTitle('Combinational Logic Problem — Try It')}
+        <div style={{ backgroundColor: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', padding: '1.5rem' }}>
+          <p style={{ fontSize: '11px', color: c.muted, margin: '0 0 1.5rem', lineHeight: '1.6' }}>
+            Click <strong style={{ color: c.text }}>Valve 1/2/3</strong>, flip the <strong style={{ color: c.text }}>mode switch</strong>,
+            adjust the <strong style={{ color: c.text }}>Pressure</strong> / <strong style={{ color: c.text }}>Level</strong> readings, or
+            trigger <strong style={{ color: c.text }}>Emgc</strong> / <strong style={{ color: c.text }}>Overload</strong> — then watch the
+            logic propagate block by block until the RS latch decides whether the pump runs.
+          </p>
+
+          {/* Inputs */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <Btn label="Valve1" active={v1} onClick={() => setV1(s => !s)} color={c.blue} desc="Inlet valve 1" />
+            <Btn label="Valve2" active={v2} onClick={() => setV2(s => !s)} color={c.blue} desc="Inlet valve 2" />
+            <Btn label="Valve3" active={v3} onClick={() => setV3(s => !s)} color={c.blue} desc="Inlet valve 3" />
+            <ModeSwitch />
+            <Stepper label="PressureSensor" value={pressure} onChange={setPressure} preset={pressurePreset} color={c.kw} unit=" bar" />
+            <Stepper label="LevelSensor" value={level} onChange={setLevel} preset={levelPreset} color={c.kw} unit=" m" />
+            <Btn label="Emgc" active={emgc} onClick={() => setEmgc(s => !s)} color={c.red} desc="Emergency stop" />
+            <Btn label="Overload" active={ovld} onClick={() => setOvld(s => !s)} color={c.red} desc="Motor overload trip" />
+          </div>
+
+          {/* Manual / Automatic AND gates */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            <LogicBlock
+              label="AND"
+              inputs={[{ label: 'Valve1', active: v1 }, { label: 'Valve2', active: v2 }, { label: 'Valve3', active: v3 }, { label: '¬Mode', active: !autoManual }]}
+              output={{ label: 'ManualPath', active: manPath }}
+              active={manPath}
+              color={c.blue}
+            />
+            <Wire active={manPath || autoPath} />
+            <LogicBlock
+              label="OR ≥1"
+              inputs={[{ label: 'ManualPath', active: manPath }, { label: 'AutoPath', active: autoPath }]}
+              output={{ label: 'LogicResult', active: logicResult }}
+              active={logicResult}
+              color={c.green}
+            />
+            <Wire active={logicResult} />
+            <LogicBlock
+              label="RS"
+              inputs={[{ label: 'SET', active: logicResult }, { label: 'RESET', active: faultReset }]}
+              output={{ label: 'Q1 = PumpOut', active: pump }}
+              active={pump}
+              color={c.accent}
+            />
+            <Wire active={pump} />
+            <PumpLamp on={pump} />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '10px 0' }}>
+            <Wire vertical active={autoPath} />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
+            <LogicBlock
+              label="AND"
+              inputs={[
+                { label: 'Valve1', active: v1 }, { label: 'Valve2', active: v2 }, { label: 'Valve3', active: v3 },
+                { label: 'Mode', active: autoManual }, { label: 'Press≥', active: press }, { label: 'Level≥', active: levelOk },
+              ]}
+              output={{ label: 'AutoPath', active: autoPath }}
+              active={autoPath}
+              color={c.kw}
+            />
+            <Wire active={faultReset} />
+            <LogicBlock
+              label="OR ≥1"
+              inputs={[{ label: 'Emgc', active: emgc }, { label: 'Overload', active: ovld }]}
+              output={{ label: 'FaultReset', active: faultReset }}
+              active={faultReset}
+              color={c.red}
+            />
+          </div>
+
+          {/* Status row */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '1.5rem', padding: '10px 14px', backgroundColor: c.bg, borderRadius: '8px', border: `1px solid ${c.border}`, alignItems: 'center' }}>
+            <span style={{ fontSize: '10px', color: c.muted, fontWeight: '700', marginRight: '4px', letterSpacing: '0.06em' }}>SIGNALS</span>
+            {[
+              { label: 'ManualPath', v: manPath },
+              { label: 'AutoPath',   v: autoPath },
+              { label: 'LogicResult', v: logicResult },
+              { label: 'FaultReset', v: faultReset },
+              { label: 'PumpOut',    v: pump },
+            ].map(s => (
+              <span key={s.label} style={{
+                fontSize: '10px', fontFamily: 'monospace', padding: '2px 8px', borderRadius: '4px', fontWeight: '700',
+                backgroundColor: s.v ? `${c.green}15` : `${c.red}12`,
+                border: `1px solid ${s.v ? c.green : c.red}55`,
+                color: s.v ? c.green : c.red,
+              }}>{s.label}={s.v ? '1' : '0'}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* ── FBD Scheme explanation ── */}
+        {sectionTitle('FBD Scheme — How the Network Is Wired')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          The diagram above <em>is</em> the FBD network for this problem — every box is a function block, and every line is a
+          signal wire. Reading it left to right:
+        </p>
+        {explanationCard('Two parallel AND chains', 'The top AND block tests the manual-start condition: Valve1, Valve2, and Valve3 open AND the mode switch is NOT in Automatic (a small negation, drawn as a bubble on the input in the real FBD editor — modelled here as the ¬Mode chip). The lower AND block tests the automatic-start condition: the same three valves, the mode switch IS in Automatic, AND both analog interlocks (pressure and level) have cleared their pre-sets.', c.blue)}
+        {explanationCard('GE comparators feed the AND', 'PressureSensor and LevelSensor are INT values from analog input cards. Each is wired into a GE ("≥") comparator alongside its pre-set (Pressure_PreSet = 6, Level_PreSet = 2). The comparator collapses the analog reading into a single BOOL that the AND block can consume — this is the standard FBD pattern for mixing analog interlocks into Boolean start logic.', c.kw)}
+        {explanationCard('OR (≥1) merges the two start paths', 'Whichever AND chain becomes TRUE — manual or automatic — its output passes through an OR (drawn ≥1 in IEC FBD notation) into a single LogicResult signal. This is the same "Manuel OR Automatic" merge point seen in the original block diagram: only one path needs to be satisfied for the system to request a start.', c.green)}
+        {explanationCard('RS latch holds the output', 'LogicResult drives the SET input of an RS function block instance (PumpActivateBlock). A second OR block combines Emgc and Overload into FaultReset, which drives RESET. Because this is the reset-dominant "RS" block, a fault always wins: PumpOut (Q1) latches TRUE on SET and stays there — surviving brief drops in the start condition — until FaultReset forces it back to FALSE, regardless of the state of SET.', c.accent)}
+
+        {/* ── Code block ── */}
+        {sectionTitle('Variable Declaration (POU)')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          Every signal wired into the FBD network must first be declared in the Program Organization Unit (POU). The RS latch
+          itself is declared as a typed instance (<code style={{ color: c.type }}>PumpActivateBlock : RS</code>), and the analog
+          pre-sets are given default values directly in the declaration:
+        </p>
+        <CodeBlock tokens={declLines} />
+
+        {/* ── FBD scheme — exact redraw of the PLC editor screenshot ── */}
+        {sectionTitle('FBD Scheme — PumpActivateBlock (as drawn in the PLC editor)')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          This is a direct redraw of the PumpActivateBlock network exactly as it appears in the PLC editor — same blocks,
+          same labels, same layout, same wiring, on the editor's pale canvas:
+        </p>
+        <div style={{ backgroundColor: '#fdf6d8', border: `1px solid ${c.border}`, borderRadius: '12px', padding: '1rem', overflowX: 'auto' }}>
+          <svg viewBox="0 0 1040 640" style={{ width: '100%', height: 'auto', minWidth: '760px', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+            {/* title */}
+            <text x="858" y="18" fontFamily="monospace" fontSize="10" fill="#555">PumpActivateBlock</text>
+
+            {/* ── RS latch ── */}
+            <rect x="860" y="30" width="130" height="560" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.3" />
+            <text x="918" y="58" fontFamily="monospace" fontSize="13" fontWeight="700" fill="#1f3864">RS</text>
+            <path d="M 900 70 L 913 70 L 906.5 81 Z" fill="none" stroke="#1f3864" strokeWidth="1" />
+            <circle cx="906.5" cy="85" r="3" fill="none" stroke="#1f3864" strokeWidth="1" />
+            <text x="866" y="106" fontFamily="monospace" fontSize="9.5" fill="#1f3864">SET</text>
+            <text x="866" y="537" fontFamily="monospace" fontSize="9.5" fill="#1f3864">RESET1</text>
+            <text x="942" y="72" fontFamily="monospace" fontSize="10" fontWeight="700" fill="#1f3864">Q1</text>
+            <line x1="990" y1="70" x2="1014" y2="70" stroke="#1f3864" strokeWidth="1.2" />
+            <text x="1018" y="74" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">PumpOut</text>
+
+            {/* ── Block r1: AND(Valve1, Valve2) — top ── */}
+            <text x="308" y="58" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Valve1</text>
+            <text x="308" y="78" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Valve2</text>
+            <line x1="312" y1="55" x2="320" y2="55" stroke="#3f5e8a" strokeWidth="1" />
+            <line x1="312" y1="75" x2="320" y2="75" stroke="#3f5e8a" strokeWidth="1" />
+            <rect x="320" y="40" width="64" height="50" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="331" y="58" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">AND</text>
+            <text x="346" y="76" fontFamily="monospace" fontSize="12" fontWeight="700" fill="#1f3864">&amp;</text>
+
+            {/* ── Block r3: AND(Valve3, AutomaticManuel) — upper-mid ── */}
+            <text x="308" y="147" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Valve3</text>
+            <text x="308" y="165" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">AutomaticManuel</text>
+            <line x1="312" y1="144" x2="320" y2="144" stroke="#3f5e8a" strokeWidth="1" />
+            <line x1="312" y1="162" x2="320" y2="162" stroke="#3f5e8a" strokeWidth="1" />
+            <rect x="320" y="130" width="64" height="46" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="331" y="147" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">AND</text>
+            <text x="346" y="165" fontFamily="monospace" fontSize="12" fontWeight="700" fill="#1f3864">&amp;</text>
+
+            {/* r1, r3 → OR (r2) */}
+            <path d="M 384 65 H 440 V 99 H 500" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+            <path d="M 384 153 H 440 V 119 H 500" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+
+            {/* ── Block r2: OR ≥1 — feeds SET ── */}
+            <rect x="500" y="84" width="64" height="50" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="511" y="103" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">OR</text>
+            <text x="509" y="121" fontFamily="monospace" fontSize="10" fontWeight="700" fill="#1f3864">≥1</text>
+
+            {/* OR(r2) output → RS.SET (straight run; rFinal joins it at the dot) */}
+            <path d="M 564 109 H 860" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+            <circle cx="800" cy="109" r="2.6" fill="#1f3864" />
+
+            {/* ── Block r4: AND(Valve1, Valve2) — mid ── */}
+            <text x="308" y="238" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Valve1</text>
+            <text x="308" y="258" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Valve2</text>
+            <line x1="312" y1="235" x2="320" y2="235" stroke="#3f5e8a" strokeWidth="1" />
+            <line x1="312" y1="255" x2="320" y2="255" stroke="#3f5e8a" strokeWidth="1" />
+            <rect x="320" y="220" width="64" height="50" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="331" y="238" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">AND</text>
+            <text x="346" y="256" fontFamily="monospace" fontSize="12" fontWeight="700" fill="#1f3864">&amp;</text>
+
+            {/* ── Block r5: AND(Valve3, AutomaticManuel) — mid ── */}
+            <text x="308" y="327" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Valve3</text>
+            <text x="308" y="345" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">AutomaticManuel</text>
+            <line x1="312" y1="324" x2="320" y2="324" stroke="#3f5e8a" strokeWidth="1" />
+            <line x1="312" y1="342" x2="320" y2="342" stroke="#3f5e8a" strokeWidth="1" />
+            <rect x="320" y="310" width="64" height="46" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="331" y="327" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">AND</text>
+            <text x="346" y="345" fontFamily="monospace" fontSize="12" fontWeight="700" fill="#1f3864">&amp;</text>
+
+            {/* r4, r5 → AND (r4·r5 cascade) */}
+            <path d="M 384 245 H 440 V 279 H 500" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+            <path d="M 384 333 H 440 V 299 H 500" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+
+            {/* ── Block: AND combining r4·r5 cascade ── */}
+            <rect x="500" y="264" width="64" height="50" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="511" y="283" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">AND</text>
+            <text x="526" y="300" fontFamily="monospace" fontSize="12" fontWeight="700" fill="#1f3864">&amp;</text>
+
+            {/* ── Block r7: GE ≥ — Pressure ── */}
+            <text x="130" y="397" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">PressureSensor</text>
+            <text x="130" y="415" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Pressure_PreSet</text>
+            <line x1="134" y1="394" x2="140" y2="394" stroke="#3f5e8a" strokeWidth="1" />
+            <line x1="134" y1="412" x2="140" y2="412" stroke="#3f5e8a" strokeWidth="1" />
+            <rect x="140" y="380" width="64" height="46" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="151" y="398" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">GE</text>
+            <text x="154" y="415" fontFamily="monospace" fontSize="11" fontWeight="700" fill="#1f3864">≥</text>
+
+            {/* ── Block r8: GE ≥ — Level ── */}
+            <text x="130" y="487" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">LevelSensor</text>
+            <text x="130" y="505" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Level_PreSet</text>
+            <line x1="134" y1="484" x2="140" y2="484" stroke="#3f5e8a" strokeWidth="1" />
+            <line x1="134" y1="502" x2="140" y2="502" stroke="#3f5e8a" strokeWidth="1" />
+            <rect x="140" y="470" width="64" height="46" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="151" y="488" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">GE</text>
+            <text x="154" y="505" fontFamily="monospace" fontSize="11" fontWeight="700" fill="#1f3864">≥</text>
+
+            {/* r7, r8 → AND (SensorsOK) */}
+            <path d="M 204 403 H 260 V 427 H 320" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+            <path d="M 204 493 H 260 V 447 H 320" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+
+            {/* ── Block r6: AND — SensorsOK (Pressure ∧ Level interlocks) ── */}
+            <rect x="320" y="412" width="64" height="50" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="331" y="431" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">AND</text>
+            <text x="346" y="448" fontFamily="monospace" fontSize="12" fontWeight="700" fill="#1f3864">&amp;</text>
+
+            {/* r4·r5 cascade and SensorsOK both → final AND, which then joins SET line at the dot */}
+            <path d="M 564 289 H 620 V 353 H 680" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+            <path d="M 384 437 H 470 V 373 H 680" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+
+            {/* ── Block: final AND — gates the lower path before it merges into SET ── */}
+            <rect x="680" y="338" width="64" height="50" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="691" y="357" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">AND</text>
+            <text x="706" y="374" fontFamily="monospace" fontSize="12" fontWeight="700" fill="#1f3864">&amp;</text>
+            <path d="M 744 363 H 800 V 109" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+
+            {/* ── Bottom OR ≥1: Emgc / Overload → RESET1 ── */}
+            <text x="668" y="533" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Emgc</text>
+            <text x="668" y="553" fontFamily="monospace" fontSize="9" fill="#1f3864" textAnchor="end">Overload</text>
+            <line x1="672" y1="530" x2="680" y2="530" stroke="#c0392b" strokeWidth="1" />
+            <line x1="672" y1="550" x2="680" y2="550" stroke="#c0392b" strokeWidth="1" />
+            <rect x="680" y="515" width="64" height="50" fill="#bdd3ee" stroke="#3f5e8a" strokeWidth="1.2" />
+            <text x="691" y="534" fontFamily="monospace" fontSize="9.5" fontWeight="700" fill="#1f3864">OR</text>
+            <text x="689" y="552" fontFamily="monospace" fontSize="10" fontWeight="700" fill="#1f3864">≥1</text>
+            <path d="M 744 540 H 860" fill="none" stroke="#3f5e8a" strokeWidth="1" />
+          </svg>
+        </div>
+        {explanationCard('Reading the network', 'Signal flow runs left to right: process inputs (Valve1–3, AutomaticManuel, the two analog sensors and their pre-sets, Emgc, Overload) enter on the far left, pass through cascaded AND, OR (≥1) and GE (≥) blocks, and finally arrive at the PumpActivateBlock RS instance. Its Q1 output is wired straight to PumpOut.', c.blue)}
+        {explanationCard('Two AND/AND→OR groups feed SET', 'The upper-left pair — AND(Valve1, Valve2) and AND(Valve3, AutomaticManuel) — converges on the OR (≥1) block, whose output runs directly into SET. A second, lower group repeats the same Valve1/Valve2 and Valve3/AutomaticManuel pairing, this time cascading onward through the pressure and level interlocks before joining the same SET line at a wire junction (the small dot) — so either group can latch the pump.', c.kw)}
+        {explanationCard('GE comparators gate the lower path', 'PressureSensor is compared against Pressure_PreSet and LevelSensor against Level_PreSet, each through its own GE (≥) block. Their two BOOL results are combined through a chain of AND blocks before merging into the lower path that ultimately reaches SET — exactly the analog-to-Boolean interlock pattern common in FBD.', c.accent)}
+        {explanationCard('Emgc / Overload drive RESET1', 'Independently of all of the above, Emgc and Overload feed a dedicated OR (≥1) block at the bottom whose output goes straight into the RS instance’s RESET1 input. Because PumpActivateBlock is an RS (reset-dominant) latch, this fault path always wins over SET, and Q1 — wired to PumpOut — drops immediately.', c.red)}
+
+        {/* ── Simulation mode ── */}
+        {sectionTitle('Simulation Mode — Live Signal Values')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          PLC IDEs let you drop into <strong style={{ color: c.text }}>simulation mode</strong> and watch every declared variable
+          update in real time as the FBD network runs. The table below mirrors that watch window — it reflects the exact same
+          state as the interactive diagram above, so anything you toggled there shows up here too.
+        </p>
+        <div style={{ overflowX: 'auto', border: `1px solid ${c.border}`, borderRadius: '8px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', backgroundColor: c.card }}>
+            <thead>
+              <tr style={{ backgroundColor: '#1e1e22', borderBottom: `1px solid ${c.border}` }}>
+                {['Expression', 'Type', 'Value'].map(h => (
+                  <th key={h} style={{ padding: '8px 12px', textAlign: h === 'Value' ? 'right' : 'left', fontFamily: 'monospace', fontSize: '10px', fontWeight: '800', letterSpacing: '0.06em', color: c.muted }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <WatchRow name="PumpOut"          type="BOOL" value={pump} highlight={pump} />
+              <WatchRow name="Valve1"           type="BOOL" value={v1} />
+              <WatchRow name="Valve2"           type="BOOL" value={v2} />
+              <WatchRow name="Valve3"           type="BOOL" value={v3} />
+              <WatchRow name="AutomaticManuel"  type="BOOL" value={autoManual} />
+              <WatchRow name="PressureSensor"   type="INT"  value={pressure} />
+              <WatchRow name="Pressure_PreSet"  type="INT"  value={pressurePreset} />
+              <WatchRow name="LevelSensor"      type="INT"  value={level} />
+              <WatchRow name="Level_PreSet"     type="INT"  value={levelPreset} />
+              <WatchRow name="Emgc"             type="BOOL" value={emgc} />
+              <WatchRow name="Overload"         type="BOOL" value={ovld} />
+              <WatchRow name="LogicResult (SET)"   type="BOOL" value={logicResult} />
+              <WatchRow name="FaultReset (RESET)"  type="BOOL" value={faultReset} />
+            </tbody>
+          </table>
+        </div>
+        <p style={{ fontSize: '11px', color: c.muted, margin: '0.75rem 0 0', lineHeight: '1.6' }}>
+          Tip: set all three valves and the comparators to TRUE, flip the mode switch to AUTOMATIC, then trigger
+          <strong style={{ color: c.text }}> Overload</strong> — you'll see <code style={{ color: c.type }}>PumpOut</code> latch
+          TRUE and then drop immediately to FALSE, exactly as the reset-dominant RS block defines it.
+        </p>
+
+      </div>
+    </div>
+  );
+};
+
+<FBDPage />
