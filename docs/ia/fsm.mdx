@@ -1,0 +1,562 @@
+---
+sidebar_position: 8
+title: Finite State Machine — Conveyor & Robot Cell
+description: "Designing sequential control with a finite state machine in Structured Text — a Stage : INT variable and a CASE Stage OF dispatcher driving a conveyor, a proximity sensor, and a pick-and-place robot through four repeating stages."
+hide_table_of_contents: true
+---
+
+import React, { useState, useEffect } from 'react';
+
+export const FSMPage = () => {
+  /* ── palette (matches the rest of the IA section) ── */
+  const c = {
+    bg:        '#111113',
+    card:      '#1a1a1c',
+    border:    '#2a2a2e',
+    accent:    '#F68B1F',
+    blue:      '#3b82f6',
+    green:     '#22c55e',
+    red:       '#ef4444',
+    muted:     '#88888f',
+    text:      '#e3e3e8',
+    codeBase:  '#0d0d0f',
+    kw:        '#c792ea',
+    type:      '#82aaff',
+    str:       '#c3e88d',
+    comment:   '#546e7a',
+    num:       '#f78c6c',
+    var:       '#eeffff',
+  };
+
+  /* ── helpers ── */
+  const sectionTitle = (text) => (
+    <h2 style={{ color: c.text, fontSize: '15px', fontWeight: '700', marginBottom: '1rem', marginTop: '2.5rem', paddingBottom: '0.5rem', borderBottom: `1px solid ${c.border}`, letterSpacing: '-0.01em' }}>
+      {text}
+    </h2>
+  );
+
+  const explanationCard = (title, body, color) => (
+    <div style={{
+      backgroundColor: c.card, border: `1px solid ${c.border}`, borderLeft: `4px solid ${color}`,
+      borderRadius: '8px', padding: '1rem 1.2rem', marginTop: '0.75rem',
+    }}>
+      <div style={{ fontSize: '10px', fontWeight: '800', color: color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{title}</div>
+      <p style={{ fontSize: '12px', color: c.muted, margin: 0, lineHeight: '1.7' }}>{body}</p>
+    </div>
+  );
+
+  const tokenColor = (t) => {
+    if (t === 'kw')   return c.kw;
+    if (t === 'type') return c.type;
+    if (t === 'var')  return c.var;
+    if (t === 'num')  return c.num;
+    if (t === 'str')  return c.str;
+    return c.muted;
+  };
+
+  const CodeBlock = ({ tokens }) => (
+    <pre style={{
+      background: c.codeBase, border: `1px solid ${c.border}`, borderRadius: '8px',
+      padding: '1.2rem 1.4rem', overflowX: 'auto', margin: '0',
+      fontSize: '13px', lineHeight: '1.8', fontFamily: '"Fira Code", "Cascadia Code", monospace',
+    }}>
+      {tokens.map((tok, i) => (
+        <span key={i} style={{ color: tokenColor(tok.t), whiteSpace: 'pre' }}>{tok.s}</span>
+      ))}
+    </pre>
+  );
+
+  /* ── variable reference table ── */
+  const vars = [
+    { name: 'Stage',           type: 'INT',  role: 'Holds the number of the current step (0–3). CASE Stage OF reads it once per scan to choose which block of logic runs; writing a new value into Stage is how the program advances — or holds — its position in the sequence.' },
+    { name: 'AutoStart',       type: 'BOOL', role: 'The operator’s start command — the green START button in the cell. While the machine sits in Stage 0, AutoStart = 1 is the only thing that lets a cycle begin.' },
+    { name: 'Conveyor',        type: 'BOOL', role: 'Drives the conveyor motor contactor. TRUE runs the belt (and the box riding on it); FALSE stops it. Set on entry to Stage 1, cleared again partway through Stage 2.' },
+    { name: 'ProximitySensor', type: 'BOOL', role: 'TRUE while the sensor’s field is broken by the box. This is the trigger that starts the run-on timer in Stage 2 — the instant the box first arrives under the sensor.' },
+    { name: 'Robot',           type: 'BOOL', role: 'A command output toward the robot controller: TRUE means “a box is in position — begin your pick sequence.” Set in Stage 3, once the robot reports itself free.' },
+    { name: 'RobotBusy',       type: 'BOOL', role: 'Feedback input from the robot controller — TRUE while the robot is still finishing a previous pick-and-place move and cannot accept a new command. Stage 3 simply waits while this is TRUE.' },
+    { name: 'ConveyorTimer',   type: 'TON',  role: 'An instance of the IEC 61131-3 standard “Timer On-Delay” function block. Its Q output goes TRUE once input IN has been held TRUE continuously for the preset time PT — here T#3S, three seconds.' },
+    { name: 'ElapsedTime',     type: 'TIME', role: 'Wired to ConveyorTimer’s ET (elapsed time) output: a live read-out of how much of the three-second preset has elapsed so far. Handy for an HMI display; the transition logic itself only checks the Q bit.' },
+  ];
+
+  /* ── code: variable declarations ── */
+  const declLines = [
+    { t: 'kw',  s: 'PROGRAM ' }, { t: 'var', s: 'PG\n' },
+    { t: 'kw',  s: 'VAR\n' },
+    { t: 'var', s: '    Stage' },           { t: 'text', s: ' : ' }, { t: 'type', s: 'INT' },  { t: 'text', s: ';\n' },
+    { t: 'var', s: '    AutoStart' },       { t: 'text', s: ' : ' }, { t: 'type', s: 'BOOL' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '    Conveyor' },        { t: 'text', s: ' : ' }, { t: 'type', s: 'BOOL' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '    ProximitySensor' }, { t: 'text', s: ' : ' }, { t: 'type', s: 'BOOL' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '    Robot' },           { t: 'text', s: ' : ' }, { t: 'type', s: 'BOOL' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '    RobotBusy' },       { t: 'text', s: ' : ' }, { t: 'type', s: 'BOOL' }, { t: 'text', s: ';\n\n' },
+    { t: 'var', s: '    ConveyorTimer' },   { t: 'text', s: ' : ' }, { t: 'type', s: 'TON' },  { t: 'text', s: ';\n' },
+    { t: 'var', s: '    ElapsedTime' },     { t: 'text', s: ' : ' }, { t: 'type', s: 'TIME' }, { t: 'text', s: ';\n' },
+    { t: 'kw',  s: 'END_VAR' },
+  ];
+
+  /* ── code: CASE Stage OF sequencer ── */
+  const caseLines = [
+    { t: 'kw', s: 'CASE ' }, { t: 'var', s: 'Stage' }, { t: 'kw', s: ' OF\n\n' },
+
+    { t: 'num', s: '0' }, { t: 'text', s: ':\n' },
+    { t: 'kw', s: '    IF ' }, { t: 'var', s: 'AutoStart' }, { t: 'text', s: ' = ' }, { t: 'num', s: '1' }, { t: 'text', s: ' ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: '        Stage' }, { t: 'text', s: ' := ' }, { t: 'num', s: '1' }, { t: 'text', s: ';\n' },
+    { t: 'kw', s: '    ELSE\n' },
+    { t: 'var', s: '        Stage' }, { t: 'text', s: ' := ' }, { t: 'num', s: '0' }, { t: 'text', s: ';\n' },
+    { t: 'kw', s: '    END_IF\n\n' },
+
+    { t: 'num', s: '1' }, { t: 'text', s: ':\n' },
+    { t: 'var', s: '    Conveyor' }, { t: 'text', s: ' := ' }, { t: 'num', s: '1' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '    Stage' }, { t: 'text', s: ' := ' }, { t: 'num', s: '2' }, { t: 'text', s: ';\n\n' },
+
+    { t: 'num', s: '2' }, { t: 'text', s: ':\n' },
+    { t: 'kw', s: '    IF ' }, { t: 'var', s: 'ProximitySensor' }, { t: 'text', s: ' = ' }, { t: 'num', s: '1' }, { t: 'text', s: ' ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: '        ConveyorTimer' }, { t: 'text', s: '(' },
+      { t: 'var', s: 'IN' }, { t: 'text', s: ' := ' }, { t: 'kw', s: 'TRUE' }, { t: 'text', s: ', ' },
+      { t: 'var', s: 'PT' }, { t: 'text', s: ' := ' }, { t: 'num', s: 'T#3S' }, { t: 'text', s: ', ' },
+      { t: 'var', s: 'Q' }, { t: 'text', s: ' => , ' },
+      { t: 'var', s: 'ET' }, { t: 'text', s: ' => ' }, { t: 'var', s: 'ElapsedTime' }, { t: 'text', s: ');\n' },
+    { t: 'kw', s: '        IF ' }, { t: 'var', s: 'ConveyorTimer.Q' }, { t: 'text', s: ' = ' }, { t: 'num', s: '1' }, { t: 'text', s: ' ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: '            Conveyor' }, { t: 'text', s: ' := ' }, { t: 'num', s: '0' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '            Stage' }, { t: 'text', s: ' := ' }, { t: 'num', s: '3' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '            ConveyorTimer' }, { t: 'text', s: '(' },
+      { t: 'var', s: 'IN' }, { t: 'text', s: ' := ' }, { t: 'kw', s: 'FALSE' }, { t: 'text', s: ', ' },
+      { t: 'var', s: 'PT' }, { t: 'text', s: ' := ' }, { t: 'num', s: 'T#3S' }, { t: 'text', s: ', ' },
+      { t: 'var', s: 'Q' }, { t: 'text', s: ' => , ' },
+      { t: 'var', s: 'ET' }, { t: 'text', s: ' => ' }, { t: 'var', s: 'ElapsedTime' }, { t: 'text', s: ');\n' },
+    { t: 'kw', s: '        END_IF\n' },
+    { t: 'kw', s: '    ELSE\n' },
+    { t: 'var', s: '        Stage' }, { t: 'text', s: ' := ' }, { t: 'num', s: '2' }, { t: 'text', s: ';\n' },
+    { t: 'kw', s: '    END_IF\n\n' },
+
+    { t: 'num', s: '3' }, { t: 'text', s: ':\n' },
+    { t: 'kw', s: '    IF ' }, { t: 'var', s: 'RobotBusy' }, { t: 'text', s: ' = ' }, { t: 'num', s: '0' }, { t: 'text', s: ' ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: '        Robot' }, { t: 'text', s: ' := ' }, { t: 'num', s: '1' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '        Stage' }, { t: 'text', s: ' := ' }, { t: 'num', s: '0' }, { t: 'text', s: ';\n' },
+    { t: 'kw', s: '    ELSE\n' },
+    { t: 'var', s: '        Stage' }, { t: 'text', s: ' := ' }, { t: 'num', s: '3' }, { t: 'text', s: ';\n' },
+    { t: 'kw', s: '    END_IF\n\n' },
+
+    { t: 'kw', s: 'END_CASE' },
+  ];
+
+  /* ── code: global abort placed after END_CASE ── */
+  const abortLines = [
+    { t: 'kw', s: 'END_CASE\n\n' },
+    { t: 'kw', s: 'IF ' }, { t: 'var', s: 'AutoStart' }, { t: 'text', s: ' = ' }, { t: 'num', s: '0' }, { t: 'text', s: ' ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: '    Stage' }, { t: 'text', s: ' := ' }, { t: 'num', s: '0' }, { t: 'text', s: ';\n' },
+    { t: 'kw', s: 'END_IF' },
+  ];
+
+  /* ── interactive simulation state ── */
+  const initialSim = {
+    stage: 0, conveyor: false, boxVisible: false, boxPos: 0,
+    proximitySensor: false, elapsed: 0, robot: false, cycles: 0,
+  };
+  const [sim, setSim]           = useState(initialSim);
+  const [running, setRunning]   = useState(false);
+  const [autoStart, setAutoStart] = useState(false);
+  const [robotBusy, setRobotBusy] = useState(false);
+
+  const SENSOR_AT   = 55;   // % position along the belt where the sensor sits
+  const BOX_SPEED   = 1.5;  // % per tick while the conveyor runs
+  const TIMER_STEP  = 0.12; // simulated seconds added to ElapsedTime per tick
+  const TICK_MS     = 120;
+
+  useEffect(() => {
+    if (!running) return undefined;
+    const id = setInterval(() => {
+      setSim(s => {
+        /* global abort — mirrors "IF AutoStart = 0 THEN Stage := 0" placed right after END_CASE:
+           it runs every scan, no matter which stage is active, and snaps the sequence back to idle */
+        if (!autoStart && s.stage !== 0) {
+          return { ...initialSim, stage: 0, cycles: s.cycles };
+        }
+        const next = { ...s };
+        switch (s.stage) {
+          case 0:
+            if (autoStart) next.stage = 1;
+            break;
+          case 1:
+            next.conveyor = true;
+            next.boxVisible = true;
+            next.boxPos = 0;
+            next.proximitySensor = false;
+            next.elapsed = 0;
+            next.stage = 2;
+            break;
+          case 2: {
+            let pos = s.conveyor ? Math.min(100, s.boxPos + BOX_SPEED) : s.boxPos;
+            next.boxPos = pos;
+            const prox = s.proximitySensor || pos >= SENSOR_AT;
+            next.proximitySensor = prox;
+            if (prox) {
+              const e = Math.min(3, s.elapsed + TIMER_STEP);
+              next.elapsed = e;
+              if (e >= 3) {
+                next.conveyor = false;
+                next.proximitySensor = false;
+                next.elapsed = 0;
+                next.stage = 3;
+              }
+            }
+            break;
+          }
+          case 3:
+            if (!robotBusy) {
+              next.robot = true;
+              next.boxVisible = false;
+              next.cycles = s.cycles + 1;
+              next.stage = 0;
+            } else {
+              next.robot = false;
+            }
+            break;
+          default:
+            break;
+        }
+        return next;
+      });
+    }, TICK_MS);
+    return () => clearInterval(id);
+  }, [running, autoStart, robotBusy]);
+
+  /* pulse the Robot indicator briefly so the hand-off is visible, then clear it */
+  useEffect(() => {
+    if (sim.robot) {
+      const t = setTimeout(() => setSim(s => ({ ...s, robot: false })), 650);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [sim.robot, sim.cycles]);
+
+  const handleStart = () => { setAutoStart(true); setRunning(true); };
+  const handleStop  = () => { setAutoStart(false); };
+  const handleReset = () => { setRunning(false); setAutoStart(false); setRobotBusy(false); setSim(initialSim); };
+
+  const stageActive = (n) => sim.stage === n;
+  const stageStroke = (n) => stageActive(n) ? c.accent : c.border;
+  const stageFill   = (n) => stageActive(n) ? `${c.accent}1f` : c.card;
+  const stageLabelColor = (n) => stageActive(n) ? c.accent : c.text;
+
+  const signalChip = (label, value, isBool = true) => (
+    <span key={label} style={{
+      fontSize: '10px', fontFamily: 'monospace', padding: '2px 8px', borderRadius: '4px', fontWeight: '700',
+      backgroundColor: isBool ? (value ? `${c.green}15` : `${c.red}12`) : `${c.blue}12`,
+      border: `1px solid ${isBool ? (value ? c.green : c.red) : c.blue}55`,
+      color: isBool ? (value ? c.green : c.red) : c.blue,
+    }}>{label}={isBool ? (value ? '1' : '0') : value}</span>
+  );
+
+  /* ─────────────── RENDER ─────────────── */
+  return (
+    <div style={{ padding: '0 0 4rem' }}>
+      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '0 1.5rem' }}>
+
+        {/* ── Hero ── */}
+        <div style={{
+          backgroundColor: c.card, border: `1px solid ${c.border}`,
+          borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', marginTop: '1rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            <span style={{
+              fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em',
+              color: c.accent, background: `${c.accent}18`, border: `1px solid ${c.accent}44`,
+              borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace',
+            }}>IEC 61131-3</span>
+            <span style={{
+              fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em',
+              color: c.blue, background: `${c.blue}18`, border: `1px solid ${c.blue}44`,
+              borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace',
+            }}>FINITE STATE MACHINE</span>
+          </div>
+          <h1 style={{ fontSize: '22px', fontWeight: '800', color: c.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            One Integer, One CASE Statement, Four Stages
+          </h1>
+          <p style={{ fontSize: '13px', color: c.muted, margin: '0 0 12px', lineHeight: '1.7', maxWidth: '680px' }}>
+            A <strong style={{ color: c.text }}>finite state machine</strong> describes a process as a small, fixed set of
+            named conditions — <em>states</em> — together with the rules that move it from one state to the next. Sequential
+            machinery (load, run, unload, repeat) is the textbook use case, and Structured Text has a clean idiom for
+            building one: keep the current state in a single integer variable and let a <code style={{ color: c.type, fontFamily: 'monospace' }}>CASE … OF</code> statement
+            dispatch to the matching block of logic each scan. In the program below that variable is literally
+            named <code style={{ color: c.type, fontFamily: 'monospace' }}>Stage</code> — which is why engineers often call this
+            the <strong style={{ color: c.text }}>"stage" pattern</strong>: the same idea as a state machine, named after the variable that drives it.
+          </p>
+          <p style={{ fontSize: '13px', color: c.muted, margin: 0, lineHeight: '1.7', maxWidth: '680px' }}>
+            The example is a small pick-and-place cell: a <strong style={{ color: c.text }}>conveyor</strong> carries a box
+            toward a <strong style={{ color: c.text }}>proximity sensor</strong>, a short <strong style={{ color: c.text }}>timer</strong> runs
+            the belt on just long enough to park the box at the pickup point, and a <strong style={{ color: c.text }}>robot
+            arm</strong> takes it from there — then the whole sequence repeats. Four stages, numbered 0 to 3, cover the
+            entire cycle.
+          </p>
+        </div>
+
+        {/* ── The interactive process ── */}
+        {sectionTitle('The Process — Conveyor, Sensor & Robot Cell')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 1rem', lineHeight: '1.7' }}>
+          Press <strong style={{ color: c.green }}>START</strong> to switch <code style={{ color: c.type, fontFamily: 'monospace' }}>AutoStart</code> on
+          and watch the cycle run: the conveyor starts, the box travels to the sensor, the belt runs on for exactly
+          three simulated seconds (the same <code style={{ color: c.type, fontFamily: 'monospace' }}>T#3S</code> preset
+          the real program uses), then the robot picks the box up and the cycle restarts. Toggle{' '}
+          <strong style={{ color: c.text }}>RobotBusy</strong> at any time to see the machine wait, exactly as Stage 3 does
+          in the code, until the robot reports itself free — and press <strong style={{ color: c.red }}>■ STOP</strong> mid-cycle
+          to see the global abort below in action: the sequence snaps straight back to Stage 0 instead of running to completion.
+        </p>
+        <div style={{ backgroundColor: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', padding: '1.5rem' }}>
+
+          {/* controls */}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+            <button onClick={handleStart} disabled={autoStart} style={{
+              padding: '10px 22px', borderRadius: '24px', fontSize: '11px', fontWeight: '800',
+              fontFamily: 'monospace', letterSpacing: '0.06em',
+              border: `2px solid ${c.green}`, backgroundColor: autoStart ? `${c.green}30` : `${c.green}18`,
+              color: c.green, cursor: autoStart ? 'default' : 'pointer', opacity: autoStart ? 0.65 : 1,
+              transition: 'all 0.15s',
+            }}>● START</button>
+            <button onClick={handleStop} disabled={!autoStart} style={{
+              padding: '10px 18px', borderRadius: '24px', fontSize: '11px', fontWeight: '800', fontFamily: 'monospace',
+              letterSpacing: '0.06em',
+              border: `2px solid ${c.red}`, backgroundColor: autoStart ? `${c.red}18` : c.bg,
+              color: autoStart ? c.red : c.muted, cursor: autoStart ? 'pointer' : 'default', opacity: autoStart ? 1 : 0.5,
+              transition: 'all 0.15s',
+            }}>■ STOP</button>
+            <button onClick={handleReset} style={{
+              padding: '10px 18px', borderRadius: '24px', fontSize: '11px', fontWeight: '700', fontFamily: 'monospace',
+              border: `1px solid ${c.border}`, backgroundColor: c.bg, color: c.muted, cursor: 'pointer',
+            }}>Reset</button>
+            <button onClick={() => setRobotBusy(b => !b)} style={{
+              padding: '10px 16px', borderRadius: '24px', fontSize: '11px', fontWeight: '700', fontFamily: 'monospace',
+              border: `1px solid ${robotBusy ? c.red : c.border}`,
+              backgroundColor: robotBusy ? `${c.red}18` : c.bg,
+              color: robotBusy ? c.red : c.muted, cursor: 'pointer', transition: 'all 0.15s',
+            }}>RobotBusy: {robotBusy ? 'TRUE' : 'FALSE'}</button>
+            <span style={{ fontSize: '10px', color: c.muted, fontFamily: 'monospace', marginLeft: 'auto' }}>
+              Cycles completed: <strong style={{ color: c.text }}>{sim.cycles}</strong>
+            </span>
+          </div>
+
+          {/* scene */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap', justifyContent: 'center', padding: '3rem 0.5rem 1.25rem' }}>
+
+            {/* AutoStart indicator */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', minWidth: '92px' }}>
+              <span style={{ fontSize: '9px', color: c.muted, fontFamily: 'monospace', letterSpacing: '0.06em', textTransform: 'uppercase' }}>AutoStart</span>
+              <div style={{
+                width: '60px', height: '60px', borderRadius: '50%',
+                backgroundColor: autoStart ? `${c.green}22` : c.bg,
+                border: `3px solid ${autoStart ? c.green : c.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: autoStart ? `0 0 18px ${c.green}66` : 'none',
+                fontFamily: 'monospace', fontWeight: '800', fontSize: '10px',
+                color: autoStart ? c.green : c.muted, transition: 'all 0.2s',
+              }}>{autoStart ? 'ON' : 'OFF'}</div>
+              <span style={{ fontSize: '8.5px', color: c.muted, textAlign: 'center', lineHeight: '1.4' }}>green START button on the cell</span>
+            </div>
+
+            {/* conveyor + sensor + box */}
+            <div style={{ position: 'relative', flex: '1 1 320px', minWidth: '270px', paddingTop: '54px' }}>
+              {/* sensor */}
+              <div style={{ position: 'absolute', left: `${SENSOR_AT}%`, top: '0', transform: 'translateX(-50%)', textAlign: 'center', width: '110px' }}>
+                <span style={{ fontSize: '8.5px', fontWeight: '700', color: sim.proximitySensor ? c.accent : c.muted, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>Proximity Sensor</span>
+                <div style={{
+                  width: '10px', height: '20px', margin: '4px auto 0', borderRadius: '2px',
+                  backgroundColor: sim.proximitySensor ? c.accent : c.blue,
+                  boxShadow: sim.proximitySensor ? `0 0 10px ${c.accent}aa` : 'none', transition: 'all 0.15s',
+                }} />
+                <div style={{ width: '1px', height: '18px', backgroundColor: c.border, margin: '0 auto' }} />
+              </div>
+
+              {/* belt */}
+              <div style={{
+                position: 'relative', height: '20px', border: `2px solid ${c.text}`, borderRadius: '10px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px', marginTop: '40px',
+              }}>
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div key={i} style={{ width: '13px', height: '13px', borderRadius: '50%', border: `2px solid ${c.text}`, backgroundColor: c.bg }} />
+                ))}
+                {sim.boxVisible && (
+                  <div style={{
+                    position: 'absolute', top: '50%', left: `${sim.boxPos}%`, transform: 'translate(-50%, -50%)',
+                    width: '40px', height: '30px', backgroundColor: c.blue, border: `1px solid ${c.text}`, borderRadius: '3px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', transition: `left ${TICK_MS}ms linear`,
+                  }}>
+                    <span style={{ fontSize: '7px', fontWeight: '800', color: '#fff', fontFamily: 'monospace' }}>BOX</span>
+                  </div>
+                )}
+              </div>
+              <div style={{ textAlign: 'center', marginTop: '8px' }}>
+                <span style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: '700', color: sim.conveyor ? c.green : c.muted }}>
+                  Conveyor Band {sim.conveyor ? '— running →' : '— stopped'}
+                </span>
+              </div>
+            </div>
+
+            {/* robot */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', minWidth: '100px' }}>
+              <span style={{ fontSize: '9px', color: c.muted, fontFamily: 'monospace', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Robot Arm</span>
+              <div style={{
+                width: '54px', height: '54px', borderRadius: '50%',
+                backgroundColor: sim.robot ? `${c.green}22` : c.text,
+                border: `3px solid ${sim.robot ? c.green : c.border}`,
+                boxShadow: sim.robot ? `0 0 22px ${c.green}77` : 'none', transition: 'all 0.2s',
+              }} />
+              <span style={{ fontSize: '9px', fontWeight: '700', fontFamily: 'monospace', color: sim.robot ? c.green : c.muted }}>
+                {sim.robot ? 'PICKING…' : 'idle'}
+              </span>
+              <span style={{ fontSize: '8.5px', color: c.muted, textAlign: 'center', lineHeight: '1.4' }}>on a fixed pedestal beside the belt</span>
+            </div>
+          </div>
+
+          {/* live signals */}
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center',
+            padding: '10px 14px', backgroundColor: c.bg, borderRadius: '8px', border: `1px solid ${c.border}`,
+          }}>
+            <span style={{ fontSize: '10px', color: c.muted, fontWeight: '700', marginRight: '2px', letterSpacing: '0.06em' }}>SIGNALS</span>
+            {signalChip('Stage', sim.stage, false)}
+            {signalChip('AutoStart', autoStart)}
+            {signalChip('Conveyor', sim.conveyor)}
+            {signalChip('ProximitySensor', sim.proximitySensor)}
+            {signalChip('Robot', sim.robot)}
+            {signalChip('RobotBusy', robotBusy)}
+            <span style={{
+              fontSize: '10px', fontFamily: 'monospace', padding: '2px 8px', borderRadius: '4px', fontWeight: '700',
+              backgroundColor: `${c.accent}12`, border: `1px solid ${c.accent}55`, color: c.accent,
+            }}>ElapsedTime={sim.elapsed.toFixed(1)}s / 3.0s</span>
+          </div>
+        </div>
+
+        {/* ── Variables ── */}
+        {sectionTitle('Variables — What Each Signal Means')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          Eight variables are enough to describe the entire cell — one to track <em>where the sequence is</em>, and
+          seven to carry the physical signals in and out of it:
+        </p>
+        <div style={{ backgroundColor: c.card, border: `1px solid ${c.border}`, borderRadius: '10px', overflow: 'hidden' }}>
+          {vars.map((v, i) => (
+            <div key={v.name} style={{
+              display: 'flex', gap: '14px', padding: '0.85rem 1.1rem',
+              borderTop: i === 0 ? 'none' : `1px solid ${c.border}`,
+            }}>
+              <div style={{ minWidth: '152px' }}>
+                <div style={{ fontFamily: 'monospace', fontSize: '12px', fontWeight: '700', color: c.var }}>{v.name}</div>
+                <span style={{
+                  display: 'inline-block', marginTop: '4px', fontSize: '9px', fontFamily: 'monospace', fontWeight: '700',
+                  color: c.type, border: `1px solid ${c.border}`, borderRadius: '4px', padding: '1px 6px',
+                }}>{v.type}</span>
+              </div>
+              <p style={{ fontSize: '11.5px', color: c.muted, margin: 0, lineHeight: '1.7' }}>{v.role}</p>
+            </div>
+          ))}
+        </div>
+        {explanationCard('Inputs, outputs, and one piece of memory', 'ProximitySensor, RobotBusy, and AutoStart are inputs — the world telling the program what is happening. Conveyor and Robot are outputs — the program telling the world what to do. ConveyorTimer / ElapsedTime are a built-in timing utility. And Stage is the odd one out: it is neither a physical signal nor a function block, just one integer the program uses to remember which step of the sequence it is currently performing — its entire "memory" of where things stand.', c.blue)}
+
+        {/* ── State diagram ── */}
+        {sectionTitle('The State Diagram — Four Stages, Four Transitions')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 1rem', lineHeight: '1.7' }}>
+          This is the same machine drawn as a state diagram — the design sketch a programmer would make{' '}
+          <em>before</em> writing the CASE statement below. Each circle is a value of <code style={{ color: c.type, fontFamily: 'monospace' }}>Stage</code>;
+          each arrow is a condition that moves the program from one circle to the next. The diagram stays in sync with
+          the simulation above — run it and watch the matching stage light up:
+        </p>
+        <div style={{ backgroundColor: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', padding: '1.25rem' }}>
+          <svg viewBox="0 0 620 460" style={{ width: '100%', height: 'auto', display: 'block' }} xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="fsmArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L6,3 L0,6 Z" fill={c.muted} />
+              </marker>
+            </defs>
+
+            {/* transitions (drawn first, so circles sit on top) */}
+            <line x1="208" y1="110" x2="398" y2="110" stroke={c.muted} strokeWidth="1.5" markerEnd="url(#fsmArrow)" />
+            <text x="303" y="100" textAnchor="middle" fontFamily="monospace" fontSize="10" fontWeight="700" fill={c.blue}>Start = 1</text>
+
+            <line x1="460" y1="168" x2="460" y2="282" stroke={c.muted} strokeWidth="1.5" markerEnd="url(#fsmArrow)" />
+            <text x="476" y="230" fontFamily="monospace" fontSize="10" fontWeight="700" fill={c.blue}>No Condition</text>
+
+            <line x1="402" y1="340" x2="212" y2="340" stroke={c.muted} strokeWidth="1.5" markerEnd="url(#fsmArrow)" />
+            <text x="307" y="330" textAnchor="middle" fontFamily="monospace" fontSize="10" fontWeight="700" fill={c.blue}>Timer Elapsed</text>
+
+            <line x1="150" y1="282" x2="150" y2="172" stroke={c.muted} strokeWidth="1.5" markerEnd="url(#fsmArrow)" />
+            <text x="135" y="230" textAnchor="end" fontFamily="monospace" fontSize="10" fontWeight="700" fill={c.blue}>Robot = 1</text>
+
+            {/* Stage 0 */}
+            <circle cx="150" cy="110" r="58" fill={stageFill(0)} stroke={stageStroke(0)} strokeWidth="2.5" />
+            <text x="150" y="103" textAnchor="middle" fontFamily="monospace" fontSize="12" fontWeight="800" fill={stageLabelColor(0)}>STAGE 0</text>
+            <text x="150" y="120" textAnchor="middle" fontFamily="monospace" fontSize="8.5" fill={c.muted}>idle — wait for Start</text>
+
+            {/* Stage 1 */}
+            <circle cx="460" cy="110" r="58" fill={stageFill(1)} stroke={stageStroke(1)} strokeWidth="2.5" />
+            <text x="460" y="101" textAnchor="middle" fontFamily="monospace" fontSize="12" fontWeight="800" fill={stageLabelColor(1)}>STAGE 1</text>
+            <text x="460" y="116" textAnchor="middle" fontFamily="monospace" fontSize="8.5" fill={c.green}>Conveyor := 1</text>
+            <text x="460" y="128" textAnchor="middle" fontFamily="monospace" fontSize="8" fill={c.muted}>(one scan, then on)</text>
+
+            {/* Stage 2 */}
+            <circle cx="460" cy="340" r="58" fill={stageFill(2)} stroke={stageStroke(2)} strokeWidth="2.5" />
+            <text x="460" y="320" textAnchor="middle" fontFamily="monospace" fontSize="12" fontWeight="800" fill={stageLabelColor(2)}>STAGE 2</text>
+            <text x="460" y="334" textAnchor="middle" fontFamily="monospace" fontSize="8" fill={c.muted}>If Proximity = 1:</text>
+            <text x="460" y="346" textAnchor="middle" fontFamily="monospace" fontSize="8" fill={c.muted}>run timer 3 s, then</text>
+            <text x="460" y="358" textAnchor="middle" fontFamily="monospace" fontSize="8" fill={c.red}>Conveyor := 0</text>
+
+            {/* Stage 3 */}
+            <circle cx="150" cy="340" r="58" fill={stageFill(3)} stroke={stageStroke(3)} strokeWidth="2.5" />
+            <text x="150" y="326" textAnchor="middle" fontFamily="monospace" fontSize="12" fontWeight="800" fill={stageLabelColor(3)}>STAGE 3</text>
+            <text x="150" y="340" textAnchor="middle" fontFamily="monospace" fontSize="8" fill={c.muted}>If RobotBusy = 0:</text>
+            <text x="150" y="352" textAnchor="middle" fontFamily="monospace" fontSize="8" fill={c.green}>Robot := 1</text>
+
+            {/* self-loop badges */}
+            <rect x="38" y="16" width="160" height="22" rx="11" fill={c.card} stroke={c.border} />
+            <text x="118" y="30" textAnchor="middle" fontFamily="monospace" fontSize="9" fill={c.muted}>↻ stays while Start = 0</text>
+
+            <rect x="486" y="412" width="128" height="22" rx="11" fill={c.card} stroke={c.border} />
+            <text x="550" y="426" textAnchor="middle" fontFamily="monospace" fontSize="9" fill={c.muted}>↻ Proximity = 0</text>
+
+            <rect x="6" y="412" width="172" height="22" rx="11" fill={c.card} stroke={c.border} />
+            <text x="92" y="426" textAnchor="middle" fontFamily="monospace" fontSize="9" fill={c.muted}>↻ stays while RobotBusy = 1</text>
+          </svg>
+        </div>
+        {explanationCard('Reading the diagram', 'Follow the arrows clockwise from STAGE 0: the machine waits there until Start = 1, jumps to STAGE 1 to switch the conveyor on, falls straight through to STAGE 2 ("No Condition" — nothing needs to be true, the program simply continues), waits there for the box and its three-second run-on, then moves to STAGE 3 to hand the box to the robot and loops back to STAGE 0 to begin again. The three small badges mark every place the machine can also stand still — looping on itself — while a condition has not yet been met.', c.accent)}
+
+        {/* ── Program code ── */}
+        {sectionTitle('The ST Program — PROGRAM PG')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          The variable declarations exactly as written in the PLC editor — eight signals, two of them (the timer pair)
+          drawn from the controller’s standard function-block library:
+        </p>
+        <CodeBlock tokens={declLines} />
+        {explanationCard('TON — a ready-made building block', 'TON (Timer On-Delay) ships with every IEC 61131-3 controller. Declaring ConveyorTimer : TON; brings a complete, tested timing circuit into the program — start input, preset time, done bit, and a live elapsed-time read-out — without writing a single line of timing logic by hand. ElapsedTime simply gives that read-out a name of its own so it can be displayed or logged.', c.type)}
+
+        <p style={{ fontSize: '12px', color: c.muted, margin: '1.5rem 0 0.75rem', lineHeight: '1.7' }}>
+          And here is the sequencer itself — one <code style={{ color: c.type, fontFamily: 'monospace' }}>CASE Stage OF</code> block,
+          four numbered branches, end to end:
+        </p>
+        <CodeBlock tokens={caseLines} />
+
+        <p style={{ fontSize: '12px', color: c.muted, margin: '1.5rem 0 0.75rem', lineHeight: '1.7' }}>
+          One more block belongs right after <code style={{ color: c.type, fontFamily: 'monospace' }}>END_CASE</code> —
+          a small addition that does not fit inside any single stage, because by design it has to apply to{' '}
+          <em>all</em> of them at once:
+        </p>
+        <CodeBlock tokens={abortLines} />
+        {explanationCard('A global override, not a fifth stage', 'Everything inside CASE … OF only executes for the one stage the machine currently occupies — the Stage 0 branch, for example, only ever looks at AutoStart while the machine is already idle. Writing this IF after END_CASE moves it outside the dispatcher entirely, so it runs on every scan no matter which stage is active. The effect: the instant the operator switches AutoStart off — whether the conveyor is running, the timer is counting, or the robot is mid-handoff — Stage is forced straight back to 0. Without this block, turning AutoStart off mid-sequence would do nothing at all: none of the Stage 1, 2, or 3 branches ever check it, so the cycle would simply run to completion regardless, and only then would Stage 0’s own test notice AutoStart is low and stay put.', c.red)}
+        {explanationCard('Try it in the simulation above', 'Press ● START, let the cycle get underway, then press ■ STOP partway through it — during the conveyor run, mid-timer, anywhere at all. The machine snaps straight back to Stage 0 immediately, exactly as this block makes the real program do, instead of waiting for the box already in motion to finish its trip to the robot.', c.blue)}
+        {explanationCard('What it resets — and what it leaves alone', 'Notice the block only ever touches Stage; it does not also drive Conveyor, Robot, or the timer back to a safe condition. In this listing, those outputs simply keep whatever value they last held until the freshly-entered Stage 0 logic — or a later stage — changes them again. A production-grade abort routine would typically also be responsible for parking the conveyor, releasing the timer, and confirming the robot is clear before calling the machine truly idle; this short addition solves only the "which step are we on" half of the problem — which is exactly what makes it such a clean illustration of how narrowly a state-machine variable can be scoped, and how much can still be left for the individual stages to handle.', c.accent)}
+
+        {/* ── Stage-by-stage walkthrough ── */}
+        {sectionTitle('Stage by Stage — How the Code Works')}
+
+        {explanationCard('Stage 0 — Idle, Waiting for the Operator', 'The branch does exactly one thing: check AutoStart. If it is 1, jump to Stage 1 and the cycle begins. If it is still 0, the ELSE branch writes Stage := 0 — the program deliberately re-assigns the very state it is already in. That explicit self-assignment is what the "↻ stays while Start = 0" loop in the diagram represents: the machine is not stuck or broken, it is patiently re-checking the same condition every single scan until the operator presses START.', c.blue)}
+
+        {explanationCard('Stage 1 — Start the Conveyor (a one-scan step)', 'Conveyor := 1 switches the belt motor on, and the very next line, Stage := 2, moves on immediately — there is no IF, no condition, nothing to wait for. This branch exists to run for exactly one PLC scan: just long enough to issue the "go" command before handing control to Stage 2, which is where the actual waiting happens. That instant hand-off is the "No Condition" arrow in the diagram.', c.green)}
+
+        {explanationCard('Stage 2 — Wait for the Box, Then Run On for Three Seconds', 'The IF ProximitySensor = 1 gate holds the program here — its ELSE branch writes Stage := 2, the "Proximity = 0" self-loop — until the box reaches the sensor. The instant ProximitySensor goes TRUE, ConveyorTimer is started (IN := TRUE, PT := T#3S): the belt keeps running and the box keeps moving while ElapsedTime counts up toward three seconds. Only when the timer’s Q output reaches 1 does the program stop the belt (Conveyor := 0), advance to Stage 3, and reset the timer (IN := FALSE) so it is ready for the next box. Those three seconds are the box’s travel time from "just detected by the sensor" to "parked exactly where the robot can reach it" — the timer is doing the job of a second sensor, more cheaply.', c.accent)}
+
+        {explanationCard('Stage 3 — Hand Off to the Robot', 'One more IF, this time on RobotBusy. If the robot reports itself free (RobotBusy = 0), the program issues the pick command (Robot := 1) and returns to Stage 0 — Stage := 0 — closing the loop and arming the machine for the next box. If the robot is still finishing a previous move (RobotBusy = 1), the ELSE branch writes Stage := 3, the "RobotBusy = 1" self-loop: the conveyor stays stopped, the box stays parked, and the program simply waits, scan after scan, until the robot frees up. (In this listing Robot is latched TRUE and never explicitly cleared — a real installation would typically pulse it or clear it on the robot’s acknowledgement; the simulator above flashes it briefly purely so the hand-off is visible.)', c.red)}
+
+        {explanationCard('The CASE Stage OF pattern, in one sentence', 'This is the textbook way to build sequential control in Structured Text: keep the current step in a single integer, dispatch on it once per scan with CASE … OF, and make every branch responsible for two things — do this step’s job (drive an output, start a timer, issue a command) and decide what Stage should become next. The whole machine is described by one variable and one statement, which makes it easy to trace, easy to extend (just add a 4: branch), and — because Stage can only ever hold one value at a time — structurally impossible to be in two states at once.', c.kw)}
+
+      </div>
+    </div>
+  );
+};
+
+<FSMPage />

@@ -8,10 +8,6 @@ const config: Config = {
     'Hire an experienced contract technical writer with strong AI-driven documentation expertise to create clear, scalable, and high-quality technical content tailored to your needs.',
   favicon: 'img/favicon.ico',
 
-  future: {
-    v4: true,
-  },
-
   // IMPORTANT: must match the actual deployed URL to avoid noindex injection
   url: 'https://tw-portfolio-en.netlify.app',
   baseUrl: '/',
