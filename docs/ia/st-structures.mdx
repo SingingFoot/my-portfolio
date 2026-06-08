@@ -1,0 +1,364 @@
+---
+sidebar_position: 7
+title: Structured Text — Structures
+description: IEC 61131-3 Structured Text user-defined structures (STRUCT) explained through a Pump data type — bundling related signals of mixed types into one reusable type, dot-notation field access with IDE autocomplete, and two independent pump instances built from the same definition.
+hide_table_of_contents: true
+---
+
+import React, { useState } from 'react';
+
+export const STStructPage = () => {
+  /* ── interactive state ── */
+  const [pumpSel, setPumpSel]   = useState('Pump1');
+  const [fieldSel, setFieldSel] = useState('Coil');
+  const [open, setOpen]         = useState(true);
+  const [scaleTab, setScaleTab] = useState('array');
+
+  /* ── palette (matches the rest of the IA section) ── */
+  const c = {
+    bg:        '#111113',
+    card:      '#1a1a1c',
+    border:    '#2a2a2e',
+    accent:    '#F68B1F',
+    blue:      '#3b82f6',
+    green:     '#22c55e',
+    red:       '#ef4444',
+    muted:     '#88888f',
+    text:      '#e3e3e8',
+    codeBase:  '#0d0d0f',
+    kw:        '#c792ea',
+    type:      '#82aaff',
+    str:       '#c3e88d',
+    comment:   '#546e7a',
+    num:       '#f78c6c',
+    var:       '#eeffff',
+  };
+
+  /* ── helpers ── */
+  const sectionTitle = (text) => (
+    <h2 style={{ color: c.text, fontSize: '15px', fontWeight: '700', marginBottom: '1rem', marginTop: '2.5rem', paddingBottom: '0.5rem', borderBottom: `1px solid ${c.border}`, letterSpacing: '-0.01em' }}>
+      {text}
+    </h2>
+  );
+
+  const explanationCard = (title, body, color) => (
+    <div style={{
+      backgroundColor: c.card, border: `1px solid ${c.border}`, borderLeft: `4px solid ${color}`,
+      borderRadius: '8px', padding: '1rem 1.2rem', marginTop: '0.75rem',
+    }}>
+      <div style={{ fontSize: '10px', fontWeight: '800', color: color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{title}</div>
+      <p style={{ fontSize: '12px', color: c.muted, margin: 0, lineHeight: '1.7' }}>{body}</p>
+    </div>
+  );
+
+  const tokenColor = (t) => {
+    if (t === 'kw')   return c.kw;
+    if (t === 'type') return c.type;
+    if (t === 'var')  return c.var;
+    if (t === 'num')  return c.num;
+    if (t === 'str')  return c.str;
+    if (t === 'field') return c.accent;
+    return c.muted;
+  };
+
+  const CodeBlock = ({ tokens }) => (
+    <pre style={{
+      background: c.codeBase, border: `1px solid ${c.border}`, borderRadius: '8px',
+      padding: '1.2rem 1.4rem', overflowX: 'auto', margin: '0',
+      fontSize: '13px', lineHeight: '1.8', fontFamily: '"Fira Code", "Cascadia Code", monospace',
+    }}>
+      {tokens.map((tok, i) => (
+        <span key={i} style={{ color: tokenColor(tok.t), whiteSpace: 'pre' }}>{tok.s}</span>
+      ))}
+    </pre>
+  );
+
+  /* ── field list of the Pump structure (alphabetical, as the IDE autocomplete shows them) ── */
+  const pumpFields = [
+    { name: 'Automatic_Start',  type: 'BOOL', desc: 'Start command from the automatic-mode sequencer' },
+    { name: 'AutomaticManuel',  type: 'BOOL', desc: 'Mode selector — TRUE = automatic, FALSE = manual' },
+    { name: 'Coil',             type: 'BOOL', desc: 'Output driving the pump contactor / starter coil' },
+    { name: 'EMGC',             type: 'BOOL', desc: 'Emergency-stop signal for this pump' },
+    { name: 'Level_PreSet',     type: 'INT',  desc: 'Configured tank-level setpoint' },
+    { name: 'LevelSensor',      type: 'INT',  desc: 'Live analog level reading' },
+    { name: 'Manuel_Start',     type: 'BOOL', desc: 'Start command from the local push-button (manual mode)' },
+    { name: 'Overload',         type: 'BOOL', desc: 'Thermal overload trip from the motor protection relay' },
+    { name: 'Pressure_PreSet',  type: 'INT',  desc: 'Configured discharge-pressure setpoint' },
+    { name: 'PressureSensor',   type: 'INT',  desc: 'Live analog pressure reading' },
+    { name: 'Stop',             type: 'BOOL', desc: 'Stop command from the local push-button' },
+  ];
+  const fieldByName = (n) => pumpFields.find(f => f.name === n);
+
+  /* ── TYPE Pump : STRUCT … END_STRUCT END_TYPE ── */
+  const fieldDecl = (name, type) => ([
+    { t: 'var',  s: `    ${name}` },
+    { t: 'text', s: ' : ' },
+    { t: 'type', s: type },
+    { t: 'text', s: ';\n' },
+  ]);
+  const structLines = [
+    { t: 'kw',  s: 'TYPE ' }, { t: 'type', s: 'Pump' }, { t: 'text', s: ' :\n' },
+    { t: 'kw',  s: 'STRUCT\n' },
+    ...fieldDecl('Manuel_Start',    'BOOL'),
+    ...fieldDecl('Automatic_Start', 'BOOL'),
+    ...fieldDecl('Coil',            'BOOL'),
+    ...fieldDecl('AutomaticManuel', 'BOOL'),
+    ...fieldDecl('EMGC',            'BOOL'),
+    ...fieldDecl('Overload',        'BOOL'),
+    ...fieldDecl('Stop',            'BOOL'),
+    ...fieldDecl('PressureSensor',  'INT'),
+    ...fieldDecl('Pressure_PreSet', 'INT'),
+    ...fieldDecl('LevelSensor',     'INT'),
+    ...fieldDecl('Level_PreSet',    'INT'),
+    { t: 'kw',  s: 'END_STRUCT\n' },
+    { t: 'kw',  s: 'END_TYPE' },
+  ];
+
+  /* ── PROGRAM POU declaring two Pump instances ── */
+  const declLines = [
+    { t: 'kw',  s: 'PROGRAM ' }, { t: 'var', s: 'POU\n' },
+    { t: 'kw',  s: 'VAR\n' },
+    { t: 'var', s: '    Pump1' }, { t: 'text', s: ' : ' }, { t: 'type', s: 'Pump' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '    Pump2' }, { t: 'text', s: ' : ' }, { t: 'type', s: 'Pump' }, { t: 'text', s: ';\n' },
+    { t: 'kw',  s: 'END_VAR' },
+  ];
+
+  /* ── full program logic for both pumps, using dot notation ── */
+  const pumpBlock = (n) => ([
+    { t: 'kw',  s: 'IF ' },
+    { t: 'var', s: `Pump${n}` }, { t: 'text', s: '.' }, { t: 'field', s: 'Manuel_Start' }, { t: 'text', s: '=' }, { t: 'num', s: '1' }, { t: 'text', s: ' ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: `    Pump${n}` }, { t: 'text', s: '.' }, { t: 'field', s: 'Coil' }, { t: 'text', s: ' := ' }, { t: 'num', s: '1' }, { t: 'text', s: ';\n' },
+    { t: 'kw',  s: 'ELSIF ' },
+    { t: 'var', s: `Pump${n}` }, { t: 'text', s: '.' }, { t: 'field', s: 'Stop' }, { t: 'text', s: '=' }, { t: 'num', s: '1' }, { t: 'text', s: ' ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: `    Pump${n}` }, { t: 'text', s: '.' }, { t: 'field', s: 'Coil' }, { t: 'text', s: ' := ' }, { t: 'num', s: '0' }, { t: 'text', s: ';\n' },
+    { t: 'kw',  s: 'END_IF' },
+  ]);
+  const fullLogicLines = [
+    ...pumpBlock(1),
+    { t: 'text', s: '\n\n' },
+    ...pumpBlock(2),
+  ];
+
+  /* ── scaling comparison: named instances vs. an array of structures ── */
+  const namedInstancesLines = [
+    { t: 'kw',  s: 'PROGRAM ' }, { t: 'var', s: 'POU\n' },
+    { t: 'kw',  s: 'VAR\n' },
+    { t: 'var', s: '    Pump1' }, { t: 'text', s: ' : ' }, { t: 'type', s: 'Pump' }, { t: 'text', s: ';\n' },
+    { t: 'var', s: '    Pump2' }, { t: 'text', s: ' : ' }, { t: 'type', s: 'Pump' }, { t: 'text', s: ';\n' },
+    { t: 'kw',  s: 'END_VAR\n\n' },
+    { t: 'kw',  s: 'IF ' },
+    { t: 'var', s: 'Pump1' }, { t: 'text', s: '.' }, { t: 'field', s: 'Manuel_Start' }, { t: 'text', s: ' = ' }, { t: 'num', s: '1' }, { t: 'text', s: ' ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: '    Pump1' }, { t: 'text', s: '.' }, { t: 'field', s: 'Coil' }, { t: 'text', s: ':= ' }, { t: 'num', s: '1' }, { t: 'text', s: ';\n' },
+    { t: 'kw',  s: 'END_IF' },
+  ];
+
+  const arrayOfStructLines = [
+    { t: 'kw',  s: 'PROGRAM ' }, { t: 'var', s: 'POU\n' },
+    { t: 'kw',  s: 'VAR\n' },
+    { t: 'var', s: '    Pumps' }, { t: 'text', s: ' : ' }, { t: 'kw', s: 'ARRAY' }, { t: 'text', s: '[' }, { t: 'num', s: '1' }, { t: 'text', s: '..' }, { t: 'num', s: '10' }, { t: 'text', s: '] ' }, { t: 'kw', s: 'OF ' }, { t: 'type', s: 'pump' }, { t: 'text', s: ' ;\n' },
+    { t: 'kw',  s: 'END_VAR\n\n' },
+    { t: 'kw',  s: 'IF ' },
+    { t: 'var', s: 'Pumps' }, { t: 'text', s: '[' }, { t: 'num', s: '4' }, { t: 'text', s: ']' }, { t: 'text', s: '.' }, { t: 'field', s: 'Manuel_Start' }, { t: 'text', s: ' = ' }, { t: 'num', s: '1' }, { t: 'text', s: ' ' }, { t: 'kw', s: 'THEN\n' },
+    { t: 'var', s: '    Pumps' }, { t: 'text', s: '[' }, { t: 'num', s: '4' }, { t: 'text', s: ']' }, { t: 'text', s: '.' }, { t: 'field', s: 'Coil' }, { t: 'text', s: ':= ' }, { t: 'num', s: '1' }, { t: 'text', s: ';\n' },
+    { t: 'kw',  s: 'END_IF' },
+  ];
+
+  /* ─────────────── RENDER ─────────────── */
+  return (
+    <div style={{ backgroundColor: c.bg, minHeight: '100vh', padding: '0 0 4rem' }}>
+      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '0 1.5rem' }}>
+
+        {/* ── Hero ── */}
+        <div style={{
+          backgroundColor: c.card, border: `1px solid ${c.border}`,
+          borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', marginTop: '1rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+            <span style={{
+              fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em',
+              color: c.accent, background: `${c.accent}18`, border: `1px solid ${c.accent}44`,
+              borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace',
+            }}>IEC 61131-3</span>
+            <span style={{
+              fontSize: '10px', fontWeight: '800', letterSpacing: '0.1em',
+              color: c.blue, background: `${c.blue}18`, border: `1px solid ${c.blue}44`,
+              borderRadius: '4px', padding: '2px 8px', fontFamily: 'monospace',
+            }}>STRUCTURES</span>
+          </div>
+          <h1 style={{ fontSize: '22px', fontWeight: '800', color: c.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+            One Pump Type, Two Pump Instances
+          </h1>
+          <p style={{ fontSize: '13px', color: c.muted, margin: '0 0 12px', lineHeight: '1.7', maxWidth: '680px' }}>
+            A <strong style={{ color: c.text }}>structure</strong> (<code style={{ color: c.type, fontFamily: 'monospace' }}>STRUCT</code>) is a
+            user-defined complex data type: a single named type that bundles several fields of <em>different</em> types
+            — BOOL, INT, REAL, even other structures — under one umbrella. It is declared once, in a{' '}
+            <code style={{ color: c.type, fontFamily: 'monospace' }}>TYPE … END_TYPE</code> block, and from then on behaves
+            like any built-in type: you can declare as many variables of it as you like, each one a fully independent
+            copy carrying every field the structure defines. Where an <strong style={{ color: c.text }}>array</strong> groups
+            many values of the <em>same</em> type under one index, a structure groups many values of <em>mixed</em> types
+            under named fields — the two features solve complementary problems.
+          </p>
+          <p style={{ fontSize: '13px', color: c.muted, margin: 0, lineHeight: '1.7', maxWidth: '680px' }}>
+            The example below defines a <code style={{ color: c.type, fontFamily: 'monospace' }}>Pump</code> structure
+            that bundles eleven related signals — start/stop commands, mode selection, faults, a coil output, and four
+            analog process values — then declares two independent pumps, <code style={{ color: c.type, fontFamily: 'monospace' }}>Pump1</code> and{' '}
+            <code style={{ color: c.type, fontFamily: 'monospace' }}>Pump2</code>, from that single definition.
+          </p>
+        </div>
+
+        {/* ── The Pump structure ── */}
+        {sectionTitle('Defining the Structure — TYPE Pump : STRUCT')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          This is the structure definition exactly as written in the PLC editor. Eleven fields of two different
+          built-in types (BOOL and INT) are grouped under one new type name, <code style={{ color: c.type, fontFamily: 'monospace' }}>Pump</code>:
+        </p>
+        <CodeBlock tokens={structLines} />
+        {explanationCard('TYPE … STRUCT … END_STRUCT … END_TYPE', 'This block does not declare a variable — it declares a new data type called Pump, built from existing types. STRUCT opens the field list, each line names one field and gives it a type exactly like a normal variable declaration, and END_STRUCT / END_TYPE close the definition. Once compiled, Pump is available everywhere in the project, alongside BOOL, INT, and the other built-in types.', c.type)}
+        {explanationCard('Mixed types under one name', 'Notice the structure freely mixes BOOL fields (Manuel_Start, Coil, EMGC, Overload …) with INT fields (PressureSensor, Pressure_PreSet, LevelSensor, Level_PreSet). An array could not do this — every element of an array must share one type. A structure is the IEC 61131-3 tool for grouping a heterogeneous bundle of related signals — exactly the set of signals one physical pump needs — into a single coherent unit.', c.kw)}
+        {explanationCard('Modeled directly on the physical device', 'Each field corresponds to something real on or around the pump: two start sources and a stop button, a mode selector, an emergency stop, two protection trips, a coil output, and two analog loops (pressure and level) each with a live reading and a configured setpoint. The structure is, in effect, a software description of "everything one pump needs" — written once and reusable for every pump that has the same hardware profile.', c.accent)}
+
+        {/* ── Declaring instances ── */}
+        {sectionTitle('Declaring Instances — Pump1 : Pump; Pump2 : Pump;')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          With the type defined, the POU declares two variables of type <code style={{ color: c.type, fontFamily: 'monospace' }}>Pump</code> —
+          one line each, just like declaring a BOOL or an INT:
+        </p>
+        <CodeBlock tokens={declLines} />
+        {explanationCard('Two lines, twenty-two fields', 'Pump1 : Pump; and Pump2 : Pump; each create a complete, independent instance of the structure — every one of the eleven fields, fully present, for each pump. That is 22 typed signals brought into existence by two short declarations, with no risk of misnaming a field or forgetting one: the structure guarantees both instances have an identical, complete signal set.', c.blue)}
+        {explanationCard('Independent copies, shared shape', 'Pump1 and Pump2 do not share storage — changing Pump1.Coil has no effect on Pump2.Coil. What they share is shape: both are guaranteed, by the type system, to expose exactly the same eleven named fields with exactly the same types. Add a twelfth field to the Pump structure and both instances gain it automatically — there is one definition to maintain, not two.', c.green)}
+
+        {/* ── Dot notation + IDE autocomplete ── */}
+        {sectionTitle('Dot Notation — Picking a Field from the IDE Dropdown')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 1rem', lineHeight: '1.7' }}>
+          Once <code style={{ color: c.type, fontFamily: 'monospace' }}>Pump1</code> exists as a typed variable, the editor
+          knows its shape. Type the instance name, add a dot, and the IDE pops up the complete field list — with types —
+          so you select a field instead of retyping its name. Try it: pick a pump and a field below, just as you would
+          in the editor's autocomplete:
+        </p>
+        <div style={{ backgroundColor: c.card, border: `1px solid ${c.border}`, borderRadius: '12px', padding: '1.25rem' }}>
+          {/* pump selector */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
+            {['Pump1', 'Pump2'].map(p => (
+              <button key={p} onClick={() => { setPumpSel(p); setOpen(true); }} style={{
+                padding: '6px 16px', fontSize: '11px', fontWeight: '700', borderRadius: '6px',
+                border: `1px solid ${pumpSel === p ? c.accent : c.border}`,
+                backgroundColor: pumpSel === p ? `${c.accent}18` : c.bg,
+                color: pumpSel === p ? c.accent : c.muted,
+                cursor: 'pointer', fontFamily: 'monospace', transition: 'all 0.15s',
+              }}>{p}</button>
+            ))}
+          </div>
+
+          {/* fake editor line + dropdown */}
+          <div style={{ position: 'relative', maxWidth: '420px' }}>
+            <div
+              onClick={() => setOpen(o => !o)}
+              style={{
+                background: c.codeBase, border: `1px solid ${c.border}`, borderRadius: '6px 6px 0 0',
+                padding: '8px 12px', fontFamily: '"Fira Code", "Cascadia Code", monospace', fontSize: '13px',
+                cursor: 'pointer', userSelect: 'none',
+              }}>
+              <span style={{ color: c.kw }}>IF </span>
+              <span style={{ color: c.var }}>{pumpSel}</span>
+              <span style={{ color: c.text }}>.</span>
+              <span style={{ color: c.accent, fontWeight: '700' }}>{fieldSel}</span>
+              <span style={{ display: 'inline-block', width: '7px', height: '15px', backgroundColor: c.muted, marginLeft: '2px', verticalAlign: 'text-bottom', opacity: open ? 0 : 1 }} />
+              <span style={{ float: 'right', fontSize: '9px', color: c.muted, fontFamily: 'monospace' }}>{open ? '▲ hide list' : '▼ show fields'}</span>
+            </div>
+            {open && (
+              <div style={{
+                background: '#1c1c20', border: `1px solid ${c.border}`, borderTop: 'none', borderRadius: '0 0 6px 6px',
+                maxHeight: '230px', overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              }}>
+                {pumpFields.map(f => (
+                  <div key={f.name}
+                    onClick={() => { setFieldSel(f.name); setOpen(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+                      padding: '5px 12px', cursor: 'pointer',
+                      backgroundColor: fieldSel === f.name ? `${c.accent}1c` : 'transparent',
+                      borderLeft: `3px solid ${fieldSel === f.name ? c.accent : 'transparent'}`,
+                    }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: '11.5px', color: fieldSel === f.name ? c.accent : c.var, fontWeight: fieldSel === f.name ? '700' : '400' }}>{f.name}</span>
+                    <span style={{ fontFamily: 'monospace', fontSize: '9.5px', color: c.muted, border: `1px solid ${c.border}`, borderRadius: '3px', padding: '1px 6px' }}>{f.type}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* resolved expression */}
+          <div style={{ marginTop: '1rem', padding: '10px 14px', backgroundColor: c.bg, borderRadius: '8px', border: `1px solid ${c.border}` }}>
+            <div style={{ fontSize: '9px', color: c.muted, fontWeight: '700', letterSpacing: '0.08em', marginBottom: '4px' }}>RESOLVED FIELD ACCESS</div>
+            <div style={{ fontFamily: 'monospace', fontSize: '13px' }}>
+              <span style={{ color: c.var }}>{pumpSel}</span><span style={{ color: c.text }}>.</span><span style={{ color: c.accent, fontWeight: '700' }}>{fieldSel}</span>
+              <span style={{ color: c.muted }}> : </span><span style={{ color: c.type }}>{fieldByName(fieldSel)?.type}</span>
+            </div>
+            <p style={{ fontSize: '11px', color: c.muted, margin: '6px 0 0', lineHeight: '1.6' }}>{fieldByName(fieldSel)?.desc}</p>
+          </div>
+        </div>
+        {explanationCard('The dot is the whole interface', 'Pump1.Coil means "the Coil field that belongs to the Pump1 instance." The dot is IEC 61131-3’s member-access operator — it walks from an instance of a structured type into one of its named fields, and the result has exactly that field’s declared type (BOOL for Coil, INT for PressureSensor, and so on). Pump2.Coil is a completely different piece of memory, reached the same way through the Pump2 instance.', c.blue)}
+        {explanationCard('Why the dropdown matters in practice', 'Because the editor knows Pump1 is of type Pump, and knows every field Pump declares, it can offer the complete, correctly-typed field list the instant you type the dot — exactly as captured in the screenshot dropdown (Automatic_Start, AutomaticManuel, Coil, EMGC, Level_PreSet … Stop, alphabetically, each tagged with its type). You select instead of typing, which removes an entire category of bugs: misspelled field names, wrong field on the wrong pump, or typos that the compiler would otherwise have to catch later.', c.accent)}
+
+        {/* ── Full program ── */}
+        {sectionTitle('The Full Program — Two Pumps, One Set of Logic')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 0.75rem', lineHeight: '1.7' }}>
+          Putting it together: the same start/stop logic is written twice — once addressed through{' '}
+          <code style={{ color: c.type, fontFamily: 'monospace' }}>Pump1.…</code>, once through{' '}
+          <code style={{ color: c.type, fontFamily: 'monospace' }}>Pump2.…</code> — and every reference resolves
+          unambiguously to one specific pump's specific signal:
+        </p>
+        <CodeBlock tokens={fullLogicLines} />
+        {explanationCard('Reading the two blocks', 'Each IF/ELSIF pair is self-contained and instantly identifiable: every line names both the pump (Pump1 or Pump2) and the signal (Manuel_Start, Stop, Coil) in one short, dotted expression. There is no need for a naming convention to imply the relationship between, say, "Pump1Start" and "Pump1Coil" — the structure makes that relationship explicit and enforced by the compiler, not just by how the engineer happened to spell the names.', c.kw)}
+        {explanationCard('Saving space and gaining readability', 'Compare this to the flat-variable alternative: Pump1ManuelStart, Pump1AutomaticStart, Pump1Coil, Pump1AutomaticManuel … repeated for Pump2 — 22 separate top-level names, declared on 22 lines, with the "which pump / which signal" relationship visible only in how consistently the names happen to be spelled. The structured version needs two declaration lines (Pump1 : Pump; Pump2 : Pump;) instead of 22, and every reference in the logic reads as "instance, dot, field" — a self-describing pattern that scales to five pumps, fifty pumps, or a Pump nested inside a larger Station structure, without the code growing any harder to read.', c.green)}
+
+        {/* ── Going further: arrays of structures ── */}
+        {sectionTitle('Going Further — Arrays of Structures')}
+        <p style={{ fontSize: '12px', color: c.muted, margin: '0 0 1rem', lineHeight: '1.7' }}>
+          Two named instances (<code style={{ color: c.type, fontFamily: 'monospace' }}>Pump1</code>,{' '}
+          <code style={{ color: c.type, fontFamily: 'monospace' }}>Pump2</code>) are easy to read — but Arrays and
+          Structures are not alternatives, they <em>compose</em>. An array's elements can themselves be of a structured
+          type, which means a whole fleet of devices, each with a full set of typed parameters, can be created — and
+          addressed — from a single declaration. Switch between the two tabs to see the same "start the device"
+          logic written both ways:
+        </p>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '1rem' }}>
+          {[
+            { id: 'instances', label: 'Named Instances', desc: 'Pump1, Pump2 — 2 devices' },
+            { id: 'array',     label: 'Array of Structures', desc: 'Pumps[1..10] — 10 devices' },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setScaleTab(tab.id)} style={{
+              padding: '7px 14px', fontSize: '11px', fontWeight: '700', borderRadius: '6px',
+              border: `1px solid ${scaleTab === tab.id ? c.accent : c.border}`,
+              backgroundColor: scaleTab === tab.id ? `${c.accent}18` : c.card,
+              color: scaleTab === tab.id ? c.accent : c.muted,
+              cursor: 'pointer', transition: 'all 0.2s',
+            }}>
+              {tab.label}
+              <span style={{ fontSize: '9px', display: 'block', fontWeight: '400', marginTop: '1px', color: c.muted }}>{tab.desc}</span>
+            </button>
+          ))}
+        </div>
+
+        {scaleTab === 'instances' && (
+          <div>
+            <CodeBlock tokens={namedInstancesLines} />
+            {explanationCard('Fine for two — awkward for a fleet', 'Pump1 and Pump2 read naturally because there are only two of them. Stretch this pattern to ten pumps and the VAR block alone needs ten declaration lines (Pump1 … Pump10), the start/stop logic must be written or copy-pasted ten times with a different instance name each time, and adding an eleventh pump means touching the declarations and duplicating the logic block again. The instance name carries the device identity, so the device identity is baked into the source code itself.', c.red)}
+          </div>
+        )}
+
+        {scaleTab === 'array' && (
+          <div>
+            <CodeBlock tokens={arrayOfStructLines} />
+            {explanationCard('ARRAY[1..10] OF Pump — one line, ten complete pumps', 'This single VAR line creates ten independent Pump instances at once — 10 × 11 = 110 typed fields — the same way ARRAY[1..5] OF BOOL created five independent BOOLs on the Arrays page. Each element Pumps[n] is not a plain value but a full Pump structure, with all eleven of its fields present and addressable. Raising the bound to [1..50] would create a 50-pump fleet without adding a single new name to the program.', c.blue)}
+            {explanationCard('Pumps[4].Manuel_Start — index, then dot', 'Reading the expression left to right: Pumps[4] uses the array index to step to element 4 — "the fourth pump" — and .Manuel_Start then uses the dot to step into that pump’s structure and reach its start signal. The two features stack cleanly: indexing answers "which device", the dot answers "which signal on that device", and Pumps[4].Coil := 1; assigns to that one pump’s coil, leaving the other nine completely untouched.', c.kw)}
+            {explanationCard('The space saving compounds', 'This is exactly the saving you get from arrays and the saving you get from structures, multiplied together. Ten devices × eleven parameters — 110 individually-named flat variables in the worst case — collapse into one declaration line and one structure definition. And because the device is now just an integer index, the same IF/ELSIF block can be wrapped in FOR i := 1 TO 10 DO … Pumps[i].Manuel_Start … Pumps[i].Coil … END_FOR — one block of logic running the entire fleet, however large it grows.', c.green)}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+<STStructPage />
