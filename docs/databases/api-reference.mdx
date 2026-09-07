@@ -1,0 +1,291 @@
+---
+sidebar_position: 6
+title: API Reference
+description: Endpoint contract for the Axioma Demo API — resource model, parameters, responses, status codes, error envelopes, pagination and versioning.
+---
+
+# Axioma Demo API — Reference
+
+**Version** `1.0.0` · **OpenAPI** 3.1 · **Base URL** `http://127.0.0.1:8000`
+
+The contract for the service built in [Integration API](./api.mdx). This page is
+normative: it states what a caller may rely on. Anything not stated here is an
+implementation detail and may change without a version increment.
+
+---
+
+## Conventions
+
+| Property | Value |
+|---|---|
+| Protocol | HTTP/1.1 |
+| Transport security | none in development; TLS required in any deployment |
+| Authentication | none in v1.0 — see [Security](#security) |
+| Request format | query and path parameters only; no request bodies |
+| Response format | `application/json`, UTF-8 |
+| Character encoding | UTF-8 throughout |
+| Empty result | `200` with an empty `items` array — never `404` |
+| Unknown query parameters | ignored |
+| Machine-readable description | `GET /openapi.json` |
+
+**Empty is not missing.** A collection request that matches nothing succeeded — it
+returned the complete, empty answer. `404` is reserved for a named resource that does
+not exist. Callers that treat an empty list as an error will break on the first quiet
+day.
+
+---
+
+## Resource: HCP
+
+The healthcare professional. Backed by `healthcare_professionals` — see the
+[data dictionary](./database.mdx#healthcare_professionals).
+
+| Field | Type | Nullable | Description |
+|---|---|---|---|
+| `id` | integer | no | Stable identifier. Used as the path parameter for single-resource requests. |
+| `name` | string | no | Full name including title, e.g. `Dr. Anna Kovacs`. |
+| `specialty` | string | yes | Medical specialty, e.g. `Cardiology`. |
+| `city` | string | yes | Practice location. |
+| `organization_id` | integer | yes | Identifier of the employing organisation. `null` where no affiliation is recorded. |
+
+```json
+{
+  "id": 1,
+  "name": "Dr. Anna Kovacs",
+  "specialty": "Cardiology",
+  "city": "Budapest",
+  "organization_id": 1
+}
+```
+
+> **Note — `organization_id` is an identifier, not a link**
+>
+> v1.0 returns the raw foreign key. Resolving it requires a second call, and there is no
+> `GET /hco` endpoint yet. Embedding the organisation object is planned for v1.1 and is
+> an additive change — see [Versioning](#versioning).
+
+---
+
+## `GET /hcp`
+
+Returns a page of healthcare professionals, ordered by `id` ascending.
+
+### Query parameters
+
+| Name | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `limit` | integer | no | `50` | Maximum number of records to return. |
+| `offset` | integer | no | `0` | Number of records to skip before collecting the page. |
+
+The ordering is part of the contract. Pagination over an unordered result set can
+return the same record on two pages and omit another entirely, so `ORDER BY id` is
+applied before `LIMIT` and `OFFSET` rather than left to the database.
+
+### Response `200`
+
+| Field | Type | Description |
+|---|---|---|
+| `count` | integer | Number of records **in this page**. Not the size of the collection. |
+| `items` | array of HCP | The records. |
+
+> **Caution — `count` is a page count**
+>
+> It is the length of `items`, so it never exceeds `limit`. A caller must not use it to
+> decide whether more data exists. Continue paging while `count` equals `limit`; stop
+> when it is smaller. A total-record count is planned for v1.1.
+
+### Example
+
+```bash
+curl -X GET \
+  'http://127.0.0.1:8000/hcp?limit=50&offset=0' \
+  -H 'accept: application/json'
+```
+
+![Swagger UI showing the executed GET /hcp request: the curl command, the request URL, response code 200, the JSON response body listing professionals, and the response headers](/img/bi/BI_5.png)
+
+*Executed through Swagger UI. The response body shows `count: 8` and the first records
+of `items`; the response headers report `content-type: application/json`,
+`content-length: 791` and `server: uvicorn`.*
+
+```json
+{
+  "count": 8,
+  "items": [
+    { "id": 1, "name": "Dr. Anna Kovacs",   "specialty": "Cardiology",  "city": "Budapest", "organization_id": 1 },
+    { "id": 2, "name": "Dr. Peter Nagy",    "specialty": "Oncology",    "city": "Budapest", "organization_id": 1 },
+    { "id": 3, "name": "Dr. Julia Horvath", "specialty": "Dermatology", "city": "Budapest", "organization_id": 2 }
+  ]
+}
+```
+
+### Status codes
+
+| Code | Meaning |
+|---|---|
+| `200` | Success. `items` may be empty. |
+| `422` | `limit` or `offset` is not an integer. |
+| `500` | The database is unreachable or the query failed. |
+
+### Paging through the collection
+
+```bash
+curl 'http://127.0.0.1:8000/hcp?limit=50&offset=0'
+curl 'http://127.0.0.1:8000/hcp?limit=50&offset=50'
+curl 'http://127.0.0.1:8000/hcp?limit=50&offset=100'
+```
+
+Stop when `count` is less than `limit`.
+
+Offset pagination is correct only against a stable dataset. If records are inserted
+between two requests, rows shift by one position and a record can be skipped. For a
+reference database synchronised in scheduled batches this is acceptable; for a
+continuously changing table it is not, and keyset pagination — `WHERE id > last_seen`
+— is the alternative.
+
+---
+
+## `GET /hcp/{hcp_id}`
+
+Returns a single healthcare professional.
+
+### Path parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `hcp_id` | integer | yes | The `id` of the record. |
+
+### Response `200`
+
+The HCP object itself, **not** wrapped in an envelope. This differs deliberately from
+the collection endpoint: there is nothing to count and nothing to page.
+
+### Example
+
+```bash
+curl -X GET \
+  'http://127.0.0.1:8000/hcp/1' \
+  -H 'accept: application/json'
+```
+
+```json
+{
+  "id": 1,
+  "name": "Dr. Anna Kovacs",
+  "specialty": "Cardiology",
+  "city": "Budapest",
+  "organization_id": 1
+}
+```
+
+### Status codes
+
+| Code | Meaning |
+|---|---|
+| `200` | The record exists and is returned. |
+| `404` | No record with that `id`. |
+| `422` | `hcp_id` is not an integer. |
+| `500` | The database is unreachable or the query failed. |
+
+---
+
+## Errors
+
+Two distinct error shapes exist, and callers must handle both.
+
+### `404` — resource not found
+
+```json
+{ "detail": "HCP not found" }
+```
+
+`detail` is a human-readable string. It is intended for a developer reading a log,
+not for display to an end user.
+
+### `422` — validation failure
+
+Generated by FastAPI from the endpoint's type annotations before any application code
+runs. `detail` is an **array of objects**, not a string.
+
+```json
+{
+  "detail": [
+    {
+      "type": "int_parsing",
+      "loc": ["path", "hcp_id"],
+      "msg": "Input should be a valid integer, unable to parse string as an integer",
+      "input": "abc"
+    }
+  ]
+}
+```
+
+| Field | Description |
+|---|---|
+| `type` | Machine-readable failure category. |
+| `loc` | Path to the offending value: the location kind, then the parameter name. |
+| `msg` | Human-readable explanation. |
+| `input` | The value that was rejected. |
+
+> **Important — `detail` changes type between error classes**
+>
+> A client that assumes `detail` is always a string will raise a type error on the first
+> validation failure. Branch on the status code before reading the body. Normalising
+> both shapes into one envelope is a known improvement, deferred because it would be a
+> breaking change.
+
+### `500` — server error
+
+Returned when the database is unreachable, the credentials are wrong, or a referenced
+column no longer exists. The response body carries no diagnostic detail by design; the
+cause is in the uvicorn console log.
+
+---
+
+## Security
+
+**v1.0 has no authentication.** Any client able to reach port 8000 receives the full
+dataset. This is acceptable only because the service binds to `127.0.0.1` and is
+therefore unreachable from outside the virtual machine.
+
+Requirements before any deployment:
+
+| Control | Requirement |
+|---|---|
+| Transport | TLS. Personal data must not cross a network in plaintext. |
+| Authentication | Bearer token or OAuth 2.0 client credentials. |
+| Authorisation | Per-caller scope. Not every consumer needs every field. |
+| Rate limiting | Per caller, per minute. |
+| `limit` ceiling | Hard maximum, enforced server-side. |
+| Audit logging | Caller identity, endpoint, parameters, timestamp. |
+
+Healthcare professional records are personal data under GDPR. The controls above are
+regulatory obligations, not hardening options.
+
+---
+
+## Versioning
+
+The version is stated in the OpenAPI document and follows semantic versioning.
+
+| Change | Version impact |
+|---|---|
+| New endpoint | minor — additive |
+| New field in a response | minor — additive |
+| New optional query parameter | minor — additive |
+| Field renamed or removed | **major** — breaking |
+| Field type changed | **major** — breaking |
+| Status code for an existing condition changed | **major** — breaking |
+| Default value of a parameter changed | **major** — breaking in effect |
+
+Consumers must ignore unknown fields. A client that rejects responses containing
+fields it does not recognise converts every additive change into a breaking one.
+
+### Planned for v1.1
+
+| Change | Purpose |
+|---|---|
+| `GET /hcp?modified_since=` | Incremental synchronisation — see the [integration specification](./integration-spec.mdx#6-synchronisation) |
+| `total` in the collection response | Lets a caller size the job before paging |
+| `GET /hco` and `GET /hco/{hco_id}` | Organisations as first-class resources |
+| Embedded `organization` object | Removes the second round trip |

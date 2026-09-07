@@ -1,0 +1,184 @@
+---
+sidebar_position: 3
+title: Power BI Integration
+description: Connecting Power BI Desktop to the axioma_demo PostgreSQL database — connection parameters, Import versus DirectQuery, building a report, and troubleshooting.
+---
+
+# Power BI Integration
+
+This page documents the first of the two consumers: **Power BI Desktop**, connected
+directly to `axioma_demo` and used to build an analyst-facing report.
+
+---
+
+## Prerequisites
+
+| Requirement | Detail |
+|---|---|
+| PostgreSQL running | Service `postgresql-x64-18`, status `Running` |
+| Database | `axioma_demo` with data loaded — see [Database Design](./database.mdx) |
+| Power BI Desktop | Installed on the same Windows guest |
+| Credentials | The `postgres` user and the password set during PostgreSQL installation |
+| Network | Loopback only. No firewall rule is needed because nothing leaves the guest. |
+
+---
+
+## Connecting
+
+### 1. Open the connector
+
+**Home** → **Get data** → **More…** → **Database** → **PostgreSQL database** → **Connect**.
+
+### 2. Enter the connection parameters
+
+![The PostgreSQL database connection dialog in Power BI Desktop, with Server set to localhost, Database set to axioma_demo, and Import mode selected](/img/bi/BI_2.png)
+
+| Field | Value | Notes |
+|---|---|---|
+| **Server** | `localhost` | The network address of the database host. Add `:5432` only if the default port was changed. |
+| **Database** | `axioma_demo` | The database name, not the schema. |
+| **Data Connectivity mode** | `Import` | See the comparison below. |
+
+> **Important — The most common failure**
+>
+> Entering `postgres` in the **Server** field. It looks plausible because `postgres` is
+> both the default superuser and the name of the maintenance database — but it is
+> neither a hostname nor an IP address, and the connection fails with a resolution
+> error rather than an authentication error. **Server** takes a machine address;
+> `localhost` is that machine.
+
+### 3. Authenticate
+
+The credentials dialog opens with three tabs on the left. Choose **Database** — not
+Windows, which would attempt integrated authentication that PostgreSQL is not
+configured for.
+
+| Field | Value |
+|---|---|
+| User name | `postgres` |
+| Password | the password set during installation |
+
+An encryption warning may appear. For a loopback connection to a local instance,
+proceed. On any non-local server this warning must be resolved properly by enabling
+TLS, not dismissed.
+
+### 4. Select tables
+
+The **Navigator** window lists the objects in the database. Tick the four tables under
+the `public` schema and choose **Load**.
+
+Use **Transform Data** instead of **Load** when the data needs shaping before it
+enters the model — renaming columns, changing types, filtering rows. That opens Power
+Query rather than committing the tables as they are.
+
+---
+
+## Import versus DirectQuery
+
+The connection dialog forces this choice before any data is seen, and it is not easily
+reversed, so it deserves a decision rather than a default.
+
+| | **Import** | **DirectQuery** |
+|---|---|---|
+| Where the data lives | copied into the `.pbix` file | stays in PostgreSQL |
+| Report speed | fast — data is local and compressed | depends on database load |
+| Freshness | as of the last refresh | live at every interaction |
+| Database load | one burst per refresh | continuous |
+| Model size limit | bounded by file and memory | none |
+| Available modelling | full DAX, calculated tables and columns | restricted subset |
+| Works offline | yes | no |
+
+**Import was chosen here** because the dataset is small, the reporting need is
+analytical rather than operational, and the report must be openable without the
+database being up — the ordinary case for reference data, which changes on a
+synchronisation schedule rather than continuously.
+
+DirectQuery earns its cost in the opposite situation: large tables, live operational
+dashboards, or a governance requirement that data must never be copied out of the
+source system.
+
+---
+
+## Building the report
+
+![Power BI Desktop with a column chart of organisation count by region, showing the Data pane, Visualizations pane and the X-axis and Y-axis field wells](/img/bi/BI_3.png)
+
+*A clustered column chart of `healthcare_organizations` grouped by `region`: Central
+Hungary with two organisations, Northern Great Plain, Southern Great Plain and
+Southern Transdanubia with one each.*
+
+### Field wells
+
+Dragging a field onto the canvas is not the same as assigning it. A visual is
+configured through the **field wells** in the Visualizations pane, and each well means
+something specific:
+
+| Well | Role | Here |
+|---|---|---|
+| **X-axis** | the categories along the bottom | `region` |
+| **Y-axis** | the value measured for each category | `Count of region` |
+| **Legend** | splits each category into coloured series | empty |
+| **Small multiples** | repeats the whole chart per value | empty |
+
+A field placed in **X-axis** and **Legend** with **Y-axis** left empty produces a
+blank chart — categories are defined and coloured, but nothing is being measured.
+This is the single most frequent cause of "Power BI shows nothing" and it is a
+configuration error, not a data error.
+
+### Aggregation
+
+Dropping a text column such as `region` into **Y-axis** makes Power BI aggregate it
+automatically as `Count of region`, since a string cannot be summed. The aggregation
+can be changed from the well's dropdown — `Count`, `Count (Distinct)`, `First`,
+`Last`. The distinction matters: counting `region` counts *rows*, not *regions*.
+
+---
+
+## Readability
+
+Two settings control text size independently, and they are frequently confused.
+
+| Symptom | Setting | Where |
+|---|---|---|
+| The report itself is tiny | **Canvas zoom** | slider in the bottom-right status bar; set to 100% or **Fit to page** |
+| Axis labels and titles are small | **Font size** | Format visual (paintbrush icon) → the relevant element → Text; 14–16 pt reads well |
+| The whole Power BI interface is tiny | **Windows display scaling** | Settings → System → Display → Scale; 150% on a high-DPI virtual machine |
+
+In the screenshot above the canvas zoom reads 43%, which is why the chart appears
+small relative to the panes around it. It is a viewing state, not a property of the
+report.
+
+---
+
+## Refreshing
+
+In Import mode the data in the report is a snapshot. **Home** → **Refresh** re-runs
+every query against PostgreSQL and rebuilds the model.
+
+A refresh will fail if the PostgreSQL service is stopped, if the password has changed,
+or if a column referenced by the model has been renamed or dropped. The third case is
+the one that matters for integration work: a schema change upstream breaks every
+downstream report silently until someone refreshes. This is the argument for
+versioning the schema and announcing changes — the same argument that governs the
+[API contract](./api-reference.mdx#versioning).
+
+---
+
+## Troubleshooting
+
+| Message | Cause | Resolution |
+|---|---|---|
+| Cannot resolve the server name | `postgres` or a schema name entered in **Server** | Use `localhost` |
+| Connection refused | PostgreSQL service stopped, or a non-default port | Start the service in `services.msc`; try `localhost:5432` |
+| Authentication failed | Windows tab selected instead of Database | Switch to the **Database** tab and use the `postgres` credentials |
+| Navigator opens but is empty | Connected to the wrong database | Reconnect with `axioma_demo`, not `postgres` |
+| The visual is blank | No field in **Y-axis** | Drag a field into **Y-axis**; it will aggregate as a count |
+| Everything is unreadably small | Canvas zoom, not font size | Set the zoom slider to 100% |
+
+---
+
+## Next
+
+Power BI Desktop is a single-user tool. Delivering the same report to customers
+inside another application is a different architecture with different licensing —
+that is [Power BI Embedded](./powerbi-embedded.mdx).
